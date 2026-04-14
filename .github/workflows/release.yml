@@ -1,0 +1,39 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+      - uses: goreleaser/goreleaser-action@v6
+        with:
+          version: "~> v2"
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build binary checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f dist/binary-checksums.txt
+          while IFS= read -r -d '' file; do
+            rel="${file#dist/}"
+            sha256sum "$file" >> dist/binary-checksums.txt
+          done < <(find dist -type f \( -name fakturownia -o -name 'fakturownia.exe' \) -print0)
+      - name: Upload binary checksums
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "${GITHUB_REF_NAME}" dist/binary-checksums.txt --clobber

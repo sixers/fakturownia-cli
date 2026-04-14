@@ -1,0 +1,48 @@
+version: 2
+
+project_name: fakturownia
+
+before:
+  hooks:
+    - go mod tidy
+    - go test ./...
+
+builds:
+  - id: fakturownia
+    main: ./cmd/fakturownia
+    binary: fakturownia
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - linux
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X github.com/sixers/fakturownia-cli/internal/spec.Version={{ .Version }}
+      - -X github.com/sixers/fakturownia-cli/internal/spec.Commit={{ .Commit }}
+      - -X github.com/sixers/fakturownia-cli/internal/spec.BuildDate={{ .Date }}
+
+archives:
+  - id: default
+    formats:
+      - tar.gz
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+
+checksum:
+  name_template: checksums.txt
+
+sboms:
+  - artifacts: archive
+
+release:
+  github:
+    owner: sixers
+    name: fakturownia-cli

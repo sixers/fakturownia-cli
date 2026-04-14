@@ -1,0 +1,66 @@
+{
+  "schema_version": "fakturownia-cli/v1alpha1",
+  "status": "success",
+  "data": [
+    {
+      "noun": "auth",
+      "summary": "Persist a Fakturownia profile and API token",
+      "use": "login --url URL|--prefix PREFIX --api-token TOKEN",
+      "verb": "login"
+    },
+    {
+      "noun": "auth",
+      "summary": "Show the resolved authentication state",
+      "use": "status",
+      "verb": "status"
+    },
+    {
+      "noun": "auth",
+      "summary": "Remove a persisted profile and token",
+      "use": "logout --yes",
+      "verb": "logout"
+    },
+    {
+      "noun": "invoice",
+      "summary": "List invoices",
+      "use": "list",
+      "verb": "list"
+    },
+    {
+      "noun": "invoice",
+      "summary": "Fetch a single invoice by ID",
+      "use": "get --id ID",
+      "verb": "get"
+    },
+    {
+      "noun": "invoice",
+      "summary": "Download a single invoice PDF",
+      "use": "download --id ID",
+      "verb": "download"
+    },
+    {
+      "noun": "doctor",
+      "summary": "Validate local auth and API reachability",
+      "use": "run",
+      "verb": "run"
+    },
+    {
+      "noun": "schema",
+      "summary": "List all supported commands",
+      "use": "list",
+      "verb": "list"
+    },
+    {
+      "noun": "schema",
+      "summary": "Describe a command as JSON schema",
+      "use": "<noun> <verb>",
+      "verb": "<noun> <verb>"
+    }
+  ],
+  "errors": [],
+  "warnings": null,
+  "meta": {
+    "command": "schema list",
+    "duration_ms": 0
+  }
+}

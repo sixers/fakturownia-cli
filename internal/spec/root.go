@@ -1,0 +1,614 @@
+package spec
+
+import (
+	"context"
+	"fmt"
+	"io"
+	"os"
+	"strings"
+	"time"
+
+	"github.com/spf13/cobra"
+
+	"github.com/sixers/fakturownia-cli/internal/auth"
+	"github.com/sixers/fakturownia-cli/internal/config"
+	"github.com/sixers/fakturownia-cli/internal/doctor"
+	"github.com/sixers/fakturownia-cli/internal/invoice"
+	"github.com/sixers/fakturownia-cli/internal/output"
+)
+
+type AuthService interface {
+	Login(context.Context, auth.LoginRequest) (*auth.LoginResult, error)
+	Status(context.Context, auth.StatusRequest) (*auth.StatusResult, error)
+	Logout(context.Context, auth.LogoutRequest) (*auth.LogoutResult, error)
+}
+
+type InvoiceService interface {
+	List(context.Context, invoice.ListRequest) (*invoice.ListResponse, error)
+	Get(context.Context, invoice.GetRequest) (*invoice.GetResponse, error)
+	Download(context.Context, invoice.DownloadRequest) (*invoice.DownloadResponse, error)
+}
+
+type DoctorService interface {
+	Run(context.Context, doctor.RunRequest) (*doctor.RunResult, error)
+}
+
+type Dependencies struct {
+	Auth    AuthService
+	Invoice InvoiceService
+	Doctor  DoctorService
+	Stdout  io.Writer
+	Stderr  io.Writer
+}
+
+type globalOptions struct {
+	Profile        string
+	JSON           bool
+	Output         string
+	Quiet          bool
+	Fields         []string
+	Columns        []string
+	Raw            bool
+	DryRun         bool
+	TimeoutMS      int
+	MaxRetries     int
+	NonInteractive bool
+	Config         string
+}
+
+func NewRootCommand(deps Dependencies) *cobra.Command {
+	if deps.Stdout == nil {
+		deps.Stdout = os.Stdout
+	}
+	if deps.Stderr == nil {
+		deps.Stderr = os.Stderr
+	}
+
+	globals := globalOptions{}
+	root := &cobra.Command{
+		Use:           "fakturownia",
+		Short:         "Agent-first CLI for the Fakturownia API",
+		SilenceUsage:  true,
+		SilenceErrors: true,
+	}
+	root.SetOut(deps.Stdout)
+	root.SetErr(deps.Stderr)
+	root.PersistentFlags().StringVar(&globals.Profile, "profile", "", "select a named profile")
+	root.PersistentFlags().BoolVar(&globals.JSON, "json", false, "alias for --output json")
+	root.PersistentFlags().StringVar(&globals.Output, "output", "human", "output format: human|json")
+	root.PersistentFlags().BoolVarP(&globals.Quiet, "quiet", "q", false, "emit bare values when exactly one field or column remains")
+	root.PersistentFlags().StringSliceVar(&globals.Fields, "fields", nil, "project JSON envelope data fields")
+	root.PersistentFlags().StringSliceVar(&globals.Columns, "columns", nil, "select human table columns")
+	root.PersistentFlags().BoolVar(&globals.Raw, "raw", false, "emit the upstream JSON response body directly when supported")
+	root.PersistentFlags().BoolVar(&globals.DryRun, "dry-run", false, "accepted on read-only commands and reserved for future mutating previews")
+	root.PersistentFlags().IntVar(&globals.TimeoutMS, "timeout-ms", 30000, "HTTP timeout in milliseconds")
+	root.PersistentFlags().IntVar(&globals.MaxRetries, "max-retries", 2, "maximum retries for idempotent reads")
+	root.PersistentFlags().BoolVar(&globals.NonInteractive, "non-interactive", true, "disable interactive behavior")
+	root.PersistentFlags().StringVar(&globals.Config, "config", "", "override the config file path")
+
+	root.AddCommand(newAuthCommand(deps, &globals))
+	root.AddCommand(newInvoiceCommand(deps, &globals))
+	root.AddCommand(newDoctorCommand(deps, &globals))
+	root.AddCommand(newSchemaCommand(deps, &globals))
+	root.Version = Version
+	root.SetVersionTemplate("{{printf \"%s\\n\" .Version}}")
+	return root
+}
+
+func newAuthCommand(deps Dependencies, globals *globalOptions) *cobra.Command {
+	authCmd := &cobra.Command{
+		Use:   "auth",
+		Short: "Persist and inspect credentials",
+	}
+
+	loginSpec, _ := FindCommand("auth", "login")
+	var loginReq auth.LoginRequest
+	loginCmd := &cobra.Command{
+		Use:   loginSpec.Use,
+		Short: loginSpec.Short,
+		Long:  BuildLongDescription(loginSpec),
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			opts, appErr := prepareOutputOptions(cmd, loginSpec, globals)
+			if appErr != nil {
+				return writeCommandError(cmd, opts, output.Meta{Command: "auth login"}, appErr)
+			}
+			if loginReq.APIToken == "" {
+				loginReq.APIToken = config.LookupEnv().APIToken
+			}
+			if loginReq.URL == "" && loginReq.Prefix == "" {
+				loginReq.URL = config.LookupEnv().URL
+			}
+			loginReq.ConfigPath = globals.Config
+			loginReq.Profile = globals.Profile
+
+			start := time.Now()
+			result, err := deps.Auth.Login(cmd.Context(), loginReq)
+			meta := output.Meta{
+				Command:    "auth login",
+				Profile:    resultProfile(result),
+				DurationMS: time.Since(start).Milliseconds(),
+			}
+			if err != nil {
+				return writeCommandError(cmd, opts, meta, err)
+			}
+			return output.RenderSuccess(cmd.OutOrStdout(), opts, output.Result{
+				Data: result,
+				Meta: meta,
+				HumanRenderer: output.LinesRenderer{
+					Lines: func(data any) ([]string, error) {
+						res := data.(*auth.LoginResult)
+						return []string{
+							fmt.Sprintf("profile: %s", res.Profile),
+							fmt.Sprintf("url: %s", res.URL),
+							fmt.Sprintf("default_profile: %s", res.DefaultProfile),
+						}, nil
+					},
+				},
+			})
+		},
+	}
+	loginCmd.Flags().StringVar(&loginReq.URL, "url", "", "explicit HTTPS account URL")
+	loginCmd.Flags().StringVar(&loginReq.Prefix, "prefix", "", "account prefix")
+	loginCmd.Flags().StringVar(&loginReq.APIToken, "api-token", "", "Fakturownia API token")
+	loginCmd.Flags().BoolVar(&loginReq.SetDefault, "set-default", false, "mark the saved profile as default")
+
+	statusSpec, _ := FindCommand("auth", "status")
+	statusCmd := &cobra.Command{
+		Use:   statusSpec.Use,
+		Short: statusSpec.Short,
+		Long:  BuildLongDescription(statusSpec),
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			opts, appErr := prepareOutputOptions(cmd, statusSpec, globals)
+			if appErr != nil {
+				return writeCommandError(cmd, opts, output.Meta{Command: "auth status"}, appErr)
+			}
+			start := time.Now()
+			result, err := deps.Auth.Status(cmd.Context(), auth.StatusRequest{
+				ConfigPath: globals.Config,
+				Profile:    globals.Profile,
+				Env:        config.LookupEnv(),
+			})
+			meta := output.Meta{
+				Command:    "auth status",
+				Profile:    resultProfile(result),
+				DurationMS: time.Since(start).Milliseconds(),
+			}
+			if err != nil {
+				return writeCommandError(cmd, opts, meta, err)
+			}
+			return output.RenderSuccess(cmd.OutOrStdout(), opts, output.Result{
+				Data:          result,
+				Meta:          meta,
+				HumanRenderer: output.JSONRenderer{},
+			})
+		},
+	}
+
+	logoutSpec, _ := FindCommand("auth", "logout")
+	var yes bool
+	logoutCmd := &cobra.Command{
+		Use:   logoutSpec.Use,
+		Short: logoutSpec.Short,
+		Long:  BuildLongDescription(logoutSpec),
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			opts, appErr := prepareOutputOptions(cmd, logoutSpec, globals)
+			if appErr != nil {
+				return writeCommandError(cmd, opts, output.Meta{Command: "auth logout"}, appErr)
+			}
+			if !yes {
+				return writeCommandError(cmd, opts, output.Meta{Command: "auth logout"}, output.Usage("confirmation_required", "--yes is required for auth logout", "rerun with --yes to remove the stored profile"))
+			}
+			start := time.Now()
+			result, err := deps.Auth.Logout(cmd.Context(), auth.LogoutRequest{
+				ConfigPath: globals.Config,
+				Profile:    globals.Profile,
+				Env:        config.LookupEnv(),
+			})
+			meta := output.Meta{
+				Command:    "auth logout",
+				Profile:    resultProfile(result),
+				DurationMS: time.Since(start).Milliseconds(),
+			}
+			if err != nil {
+				return writeCommandError(cmd, opts, meta, err)
+			}
+			return output.RenderSuccess(cmd.OutOrStdout(), opts, output.Result{
+				Data: result,
+				Meta: meta,
+				HumanRenderer: output.LinesRenderer{
+					Lines: func(data any) ([]string, error) {
+						res := data.(*auth.LogoutResult)
+						return []string{fmt.Sprintf("removed profile %s", res.Profile)}, nil
+					},
+				},
+			})
+		},
+	}
+	logoutCmd.Flags().BoolVar(&yes, "yes", false, "confirm profile removal")
+
+	authCmd.AddCommand(loginCmd, statusCmd, logoutCmd)
+	return authCmd
+}
+
+func newInvoiceCommand(deps Dependencies, globals *globalOptions) *cobra.Command {
+	invoiceCmd := &cobra.Command{
+		Use:   "invoice",
+		Short: "Read invoice data and PDF files",
+	}
+
+	listSpec, _ := FindCommand("invoice", "list")
+	listReq := invoice.ListRequest{Page: 1, PerPage: 25}
+	listCmd := &cobra.Command{
+		Use:   listSpec.Use,
+		Short: listSpec.Short,
+		Long:  BuildLongDescription(listSpec),
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			opts, appErr := prepareOutputOptions(cmd, listSpec, globals)
+			if appErr != nil {
+				return writeCommandError(cmd, opts, output.Meta{Command: "invoice list"}, appErr)
+			}
+			listReq.ConfigPath = globals.Config
+			listReq.Profile = globals.Profile
+			listReq.Env = config.LookupEnv()
+			listReq.Timeout = timeoutFromGlobals(globals)
+			listReq.MaxRetries = globals.MaxRetries
+
+			start := time.Now()
+			result, err := deps.Invoice.List(cmd.Context(), listReq)
+			meta := output.Meta{
+				Command:    "invoice list",
+				Profile:    resultProfile(result),
+				DurationMS: time.Since(start).Milliseconds(),
+			}
+			if result != nil {
+				meta.RequestID = result.RequestID
+				meta.Pagination = &result.Pagination
+			}
+			if err != nil {
+				return writeCommandError(cmd, opts, meta, err)
+			}
+			return output.RenderSuccess(cmd.OutOrStdout(), opts, output.Result{
+				Data:           result.Invoices,
+				RawBody:        result.RawBody,
+				Meta:           meta,
+				HumanRenderer:  output.TableRenderer{},
+				DefaultColumns: []string{"id", "number", "issue_date", "buyer_name", "price_gross", "status"},
+			})
+		},
+	}
+	listCmd.Flags().IntVar(&listReq.Page, "page", 1, "requested result page")
+	listCmd.Flags().IntVar(&listReq.PerPage, "per-page", 25, "requested result count per page")
+	listCmd.Flags().StringVar(&listReq.Period, "period", "", "date period filter")
+	listCmd.Flags().StringVar(&listReq.DateFrom, "date-from", "", "lower date bound for period=more")
+	listCmd.Flags().StringVar(&listReq.DateTo, "date-to", "", "upper date bound for period=more")
+	listCmd.Flags().BoolVar(&listReq.IncludePositions, "include-positions", false, "include invoice positions")
+	listCmd.Flags().StringVar(&listReq.ClientID, "client-id", "", "filter by client ID")
+	listCmd.Flags().StringSliceVar(&listReq.InvoiceIDs, "invoice-ids", nil, "filter by specific invoice IDs")
+	listCmd.Flags().StringVar(&listReq.Number, "number", "", "filter by invoice number")
+	listCmd.Flags().StringSliceVar(&listReq.Kinds, "kind", nil, "filter by invoice kind")
+	listCmd.Flags().StringVar(&listReq.SearchDateType, "search-date-type", "", "date field to search by")
+	listCmd.Flags().StringVar(&listReq.Order, "order", "", "sort order")
+	listCmd.Flags().StringVar(&listReq.Income, "income", "", "income selector")
+
+	getSpec, _ := FindCommand("invoice", "get")
+	var getReq invoice.GetRequest
+	getCmd := &cobra.Command{
+		Use:   getSpec.Use,
+		Short: getSpec.Short,
+		Long:  BuildLongDescription(getSpec),
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			opts, appErr := prepareOutputOptions(cmd, getSpec, globals)
+			if appErr != nil {
+				return writeCommandError(cmd, opts, output.Meta{Command: "invoice get"}, appErr)
+			}
+			getReq.ConfigPath = globals.Config
+			getReq.Profile = globals.Profile
+			getReq.Env = config.LookupEnv()
+			getReq.Timeout = timeoutFromGlobals(globals)
+			getReq.MaxRetries = globals.MaxRetries
+
+			start := time.Now()
+			result, err := deps.Invoice.Get(cmd.Context(), getReq)
+			meta := output.Meta{
+				Command:    "invoice get",
+				Profile:    resultProfile(result),
+				DurationMS: time.Since(start).Milliseconds(),
+			}
+			if result != nil {
+				meta.RequestID = result.RequestID
+			}
+			if err != nil {
+				return writeCommandError(cmd, opts, meta, err)
+			}
+			return output.RenderSuccess(cmd.OutOrStdout(), opts, output.Result{
+				Data:          result.Invoice,
+				RawBody:       result.RawBody,
+				Meta:          meta,
+				HumanRenderer: output.JSONRenderer{},
+			})
+		},
+	}
+	getCmd.Flags().StringVar(&getReq.ID, "id", "", "invoice ID")
+	_ = getCmd.MarkFlagRequired("id")
+
+	downloadSpec, _ := FindCommand("invoice", "download")
+	var downloadReq invoice.DownloadRequest
+	downloadCmd := &cobra.Command{
+		Use:   downloadSpec.Use,
+		Short: downloadSpec.Short,
+		Long:  BuildLongDescription(downloadSpec),
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			opts, appErr := prepareOutputOptions(cmd, downloadSpec, globals)
+			if appErr != nil {
+				return writeCommandError(cmd, opts, output.Meta{Command: "invoice download"}, appErr)
+			}
+			downloadReq.ConfigPath = globals.Config
+			downloadReq.Profile = globals.Profile
+			downloadReq.Env = config.LookupEnv()
+			downloadReq.Timeout = timeoutFromGlobals(globals)
+			downloadReq.MaxRetries = globals.MaxRetries
+
+			start := time.Now()
+			result, err := deps.Invoice.Download(cmd.Context(), downloadReq)
+			meta := output.Meta{
+				Command:    "invoice download",
+				Profile:    resultProfile(result),
+				DurationMS: time.Since(start).Milliseconds(),
+			}
+			if result != nil {
+				meta.RequestID = result.RequestID
+			}
+			if err != nil {
+				return writeCommandError(cmd, opts, meta, err)
+			}
+			return output.RenderSuccess(cmd.OutOrStdout(), opts, output.Result{
+				Data: result,
+				Meta: meta,
+				HumanRenderer: output.LinesRenderer{
+					Lines: func(data any) ([]string, error) {
+						res := data.(*invoice.DownloadResponse)
+						return []string{res.Path}, nil
+					},
+				},
+			})
+		},
+	}
+	downloadCmd.Flags().StringVar(&downloadReq.ID, "id", "", "invoice ID")
+	downloadCmd.Flags().StringVar(&downloadReq.Path, "path", "", "explicit output file path")
+	downloadCmd.Flags().StringVar(&downloadReq.Dir, "dir", "", "output directory")
+	downloadCmd.Flags().StringVar(&downloadReq.PrintOption, "print-option", "", "PDF print option")
+	_ = downloadCmd.MarkFlagRequired("id")
+
+	invoiceCmd.AddCommand(listCmd, getCmd, downloadCmd)
+	return invoiceCmd
+}
+
+func newDoctorCommand(deps Dependencies, globals *globalOptions) *cobra.Command {
+	doctorSpec, _ := FindCommand("doctor", "run")
+	var checkReleaseIntegrity bool
+	doctorCmd := &cobra.Command{
+		Use:   "doctor",
+		Short: "Validate local configuration and API reachability",
+	}
+	runCmd := &cobra.Command{
+		Use:   doctorSpec.Use,
+		Short: doctorSpec.Short,
+		Long:  BuildLongDescription(doctorSpec),
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			opts, appErr := prepareOutputOptions(cmd, doctorSpec, globals)
+			if appErr != nil {
+				return writeCommandError(cmd, opts, output.Meta{Command: "doctor run"}, appErr)
+			}
+			start := time.Now()
+			result, err := deps.Doctor.Run(cmd.Context(), doctor.RunRequest{
+				ConfigPath:            globals.Config,
+				Profile:               globals.Profile,
+				Env:                   config.LookupEnv(),
+				Timeout:               timeoutFromGlobals(globals),
+				MaxRetries:            globals.MaxRetries,
+				Version:               Version,
+				CheckReleaseIntegrity: checkReleaseIntegrity,
+			})
+			meta := output.Meta{
+				Command:    "doctor run",
+				Profile:    resultProfile(result),
+				DurationMS: time.Since(start).Milliseconds(),
+			}
+			if err != nil {
+				return writeCommandError(cmd, opts, meta, err)
+			}
+			return output.RenderSuccess(cmd.OutOrStdout(), opts, output.Result{
+				Data:     result.Report,
+				Warnings: result.Warnings,
+				Meta:     meta,
+				HumanRenderer: output.LinesRenderer{
+					Lines: func(data any) ([]string, error) {
+						report := data.(doctor.Report)
+						lines := []string{fmt.Sprintf("status: %s", report.Status)}
+						for _, check := range report.Checks {
+							lines = append(lines, fmt.Sprintf("%s: %s - %s", check.Name, check.Status, check.Message))
+						}
+						return lines, nil
+					},
+				},
+			})
+		},
+	}
+	runCmd.Flags().BoolVar(&checkReleaseIntegrity, "check-release-integrity", false, "verify the running binary against published release metadata")
+	doctorCmd.AddCommand(runCmd)
+	return doctorCmd
+}
+
+func newSchemaCommand(_ Dependencies, globals *globalOptions) *cobra.Command {
+	listSpec, _ := FindCommand("schema", "list")
+	describeSpec, _ := FindCommand("schema", "<noun> <verb>")
+
+	schemaCmd := &cobra.Command{
+		Use:   "schema",
+		Short: "Describe commands and schemas",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			opts, appErr := prepareOutputOptions(cmd, describeSpec, globals)
+			if appErr != nil {
+				return writeCommandError(cmd, opts, output.Meta{Command: "schema"}, appErr)
+			}
+			if len(args) != 2 {
+				return writeCommandError(cmd, opts, output.Meta{Command: "schema"}, output.Usage("invalid_args", "schema requires either `list` or `<noun> <verb>`", "use `fakturownia schema list` or `fakturownia schema invoice list`"))
+			}
+			target, ok := FindCommand(args[0], args[1])
+			if !ok {
+				return writeCommandError(cmd, opts, output.Meta{Command: "schema " + strings.Join(args, " ")}, output.NotFound("command_not_found", fmt.Sprintf("command %s %s was not found", args[0], args[1]), "use `fakturownia schema list` to inspect the supported surface"))
+			}
+			schema, err := BuildCommandSchema(target)
+			if err != nil {
+				return writeCommandError(cmd, opts, output.Meta{Command: "schema " + strings.Join(args, " ")}, err)
+			}
+			return output.RenderSuccess(cmd.OutOrStdout(), opts, output.Result{
+				Data:          schema,
+				Meta:          output.Meta{Command: "schema " + strings.Join(args, " "), DurationMS: 0},
+				HumanRenderer: output.JSONRenderer{},
+			})
+		},
+	}
+	schemaCmd.Long = BuildLongDescription(describeSpec)
+
+	listCmd := &cobra.Command{
+		Use:   listSpec.Use,
+		Short: listSpec.Short,
+		Long:  BuildLongDescription(listSpec),
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			opts, appErr := prepareOutputOptions(cmd, listSpec, globals)
+			if appErr != nil {
+				return writeCommandError(cmd, opts, output.Meta{Command: "schema list"}, appErr)
+			}
+			data := SchemaSummaries()
+			rows := make([]map[string]any, 0, len(data))
+			for _, item := range data {
+				rows = append(rows, map[string]any{
+					"noun":    item.Noun,
+					"verb":    item.Verb,
+					"use":     item.Use,
+					"summary": item.Summary,
+				})
+			}
+			return output.RenderSuccess(cmd.OutOrStdout(), opts, output.Result{
+				Data:           rows,
+				Meta:           output.Meta{Command: "schema list", DurationMS: 0},
+				HumanRenderer:  output.TableRenderer{},
+				DefaultColumns: []string{"noun", "verb", "summary"},
+			})
+		},
+	}
+	schemaCmd.AddCommand(listCmd)
+	return schemaCmd
+}
+
+func prepareOutputOptions(cmd *cobra.Command, spec CommandSpec, globals *globalOptions) (output.Options, *output.AppError) {
+	format := globals.Output
+	if globals.JSON {
+		format = "json"
+	}
+	format = strings.TrimSpace(format)
+	if format == "" {
+		format = "human"
+	}
+	if format != "human" && format != "json" {
+		return output.Options{}, output.Usage("invalid_output", fmt.Sprintf("unsupported output mode %q", format), "use --output human or --output json")
+	}
+	fields := trimValues(globals.Fields)
+	columns := trimValues(globals.Columns)
+	opts := output.Options{
+		Format:  format,
+		Raw:     globals.Raw,
+		Quiet:   globals.Quiet,
+		Fields:  fields,
+		Columns: columns,
+	}
+
+	if globals.Raw {
+		if !spec.RawSupported {
+			return output.Options{}, output.Usage("raw_unsupported", fmt.Sprintf("--raw is not supported for %s %s", spec.Noun, spec.Verb), "use --json for the structured CLI envelope")
+		}
+		if cmd.Flags().Changed("json") || cmd.Flags().Changed("output") || cmd.Flags().Changed("fields") || cmd.Flags().Changed("columns") || cmd.Flags().Changed("quiet") {
+			return output.Options{}, output.Usage("raw_conflict", "--raw cannot be combined with --json, --output, --fields, --columns, or --quiet", "drop the other output flags when using --raw")
+		}
+	}
+	if opts.Format == "json" && opts.Quiet {
+		return output.Options{}, output.Usage("quiet_json_conflict", "--quiet cannot be combined with JSON output", "use --fields with --json or use --quiet with human output")
+	}
+	if opts.Format == "json" && len(opts.Columns) > 0 {
+		return output.Options{}, output.Usage("columns_json_conflict", "--columns only applies to human table output", "use --fields for JSON projection")
+	}
+	return opts, nil
+}
+
+func timeoutFromGlobals(globals *globalOptions) time.Duration {
+	if globals.TimeoutMS <= 0 {
+		return 30 * time.Second
+	}
+	return time.Duration(globals.TimeoutMS) * time.Millisecond
+}
+
+func writeCommandError(cmd *cobra.Command, opts output.Options, meta output.Meta, err error) error {
+	appErr := output.AsAppError(err)
+	if renderErr := output.RenderError(cmd.OutOrStdout(), cmd.ErrOrStderr(), opts, meta, appErr); renderErr != nil {
+		return output.ExitError{Code: 9}
+	}
+	return output.ExitError{Code: appErr.ExitCode()}
+}
+
+func trimValues(values []string) []string {
+	out := make([]string, 0, len(values))
+	for _, value := range values {
+		for _, part := range strings.Split(value, ",") {
+			trimmed := strings.TrimSpace(part)
+			if trimmed != "" {
+				out = append(out, trimmed)
+			}
+		}
+	}
+	return out
+}
+
+func resultProfile(result any) string {
+	switch typed := result.(type) {
+	case interface{ GetProfile() string }:
+		return typed.GetProfile()
+	case *auth.LoginResult:
+		if typed == nil {
+			return ""
+		}
+		return typed.Profile
+	case *auth.StatusResult:
+		if typed == nil {
+			return ""
+		}
+		return typed.Profile
+	case *auth.LogoutResult:
+		if typed == nil {
+			return ""
+		}
+		return typed.Profile
+	case *invoice.ListResponse:
+		if typed == nil {
+			return ""
+		}
+		return typed.Profile
+	case *invoice.GetResponse:
+		if typed == nil {
+			return ""
+		}
+		return typed.Profile
+	case *invoice.DownloadResponse:
+		if typed == nil {
+			return ""
+		}
+		return typed.Profile
+	case *doctor.RunResult:
+		if typed == nil {
+			return ""
+		}
+		return typed.Profile
+	default:
+		return ""
+	}
+}

@@ -1,0 +1,93 @@
+List invoices
+
+Usage
+  fakturownia invoice list
+
+Required Flags
+
+Optional Flags
+  --page (int): Requested result page default=1
+  --per-page (int): Requested result count per page default=25
+  --period (string): Date period filter enum=all,last_12_months,last_30_days,last_month,last_year,more,this_month,this_year
+  --date-from (string): Lower date bound for period=more
+  --date-to (string): Upper date bound for period=more
+  --include-positions (bool): Include invoice positions default=false
+  --client-id (string): Filter by client ID
+  --invoice-ids (string[]): Filter by specific invoice IDs
+  --number (string): Filter by invoice number
+  --kind (string[]): Filter by invoice kind
+  --search-date-type (string): Date field to search by enum=issue_date,paid_date,transaction_date
+  --order (string): Sort order
+  --income (string): Income selector enum=no,yes
+
+Global Flags
+  --profile (string): Select a named profile
+  --json (bool): Alias for --output json default=false
+  --output (string): Output format default=human enum=human,json
+  --quiet (bool): Emit bare values when exactly one field or column remains default=false
+  --fields (string[]): Project JSON envelope data fields
+  --columns (string[]): Select human table columns
+  --raw (bool): Emit the upstream JSON response body directly when supported default=false
+  --dry-run (bool): Accepted on read-only commands and reserved for future mutating request previews default=false
+  --timeout-ms (int): HTTP timeout in milliseconds default=30000
+  --max-retries (int): Maximum retry attempts for idempotent reads on network or 5xx failures default=2
+  --non-interactive (bool): Disable interactive behavior default=true
+  --config (string): Override the config file path
+
+Environment Variables
+  FAKTUROWNIA_PROFILE: Select a profile unless --profile is provided
+  FAKTUROWNIA_URL: Override the base account URL from any profile
+  FAKTUROWNIA_API_TOKEN: Override the API token from any profile
+
+Output Modes
+  human, json
+  raw: supported
+
+Exit Codes
+  0: success
+  2: usage or validation error
+  3: not found
+  4: authentication or permission failure
+  5: conflict
+  6: network or timeout failure
+  7: reserved for throttling or retry budget exhaustion
+  8: remote API rejected the request
+  9: internal CLI failure
+
+Examples
+  fakturownia invoice list --json
+  fakturownia invoice list --period this_month --columns id,number,buyer_name,price_gross
+  fakturownia invoice list --page 2 --per-page 25 --raw
+
+Usage:
+  fakturownia invoice list [flags]
+
+Flags:
+      --client-id string          filter by client ID
+      --date-from string          lower date bound for period=more
+      --date-to string            upper date bound for period=more
+  -h, --help                      help for list
+      --include-positions         include invoice positions
+      --income string             income selector
+      --invoice-ids strings       filter by specific invoice IDs
+      --kind strings              filter by invoice kind
+      --number string             filter by invoice number
+      --order string              sort order
+      --page int                  requested result page (default 1)
+      --per-page int              requested result count per page (default 25)
+      --period string             date period filter
+      --search-date-type string   date field to search by
+
+Global Flags:
+      --columns strings   select human table columns
+      --config string     override the config file path
+      --dry-run           accepted on read-only commands and reserved for future mutating previews
+      --fields strings    project JSON envelope data fields
+      --json              alias for --output json
+      --max-retries int   maximum retries for idempotent reads (default 2)
+      --non-interactive   disable interactive behavior (default true)
+      --output string     output format: human|json (default "human")
+      --profile string    select a named profile
+  -q, --quiet             emit bare values when exactly one field or column remains
+      --raw               emit the upstream JSON response body directly when supported
+      --timeout-ms int    HTTP timeout in milliseconds (default 30000)
