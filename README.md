@@ -25,19 +25,51 @@ The architecture is intentionally structured so more API resources can be added 
 
 ## Install
 
-### Download a release
-
-Download the correct archive for macOS or Linux from [GitHub Releases](https://github.com/sixers/fakturownia-cli/releases), extract it, and place `fakturownia` on your `PATH`.
-
 ### Build from source
 
+This is the simplest copy-paste path during early development:
+
 ```bash
-brew install go
-brew install just
+brew install go just
 git clone https://github.com/sixers/fakturownia-cli.git
 cd fakturownia-cli
-go build ./cmd/fakturownia
+mkdir -p "$HOME/.local/bin"
+go build -o "$HOME/.local/bin/fakturownia" ./cmd/fakturownia
+case "$(basename "$SHELL")" in
+  zsh) rc_file="$HOME/.zshrc" ;;
+  bash) rc_file="$HOME/.bashrc" ;;
+  *) rc_file="$HOME/.profile" ;;
+esac
+grep -qxF 'export PATH="$HOME/.local/bin:$PATH"' "$rc_file" || echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$rc_file"
+export PATH="$HOME/.local/bin:$PATH"
+fakturownia version
 ```
+
+### Install from a release
+
+```bash
+mkdir -p "$HOME/.local/bin"
+tmpdir="$(mktemp -d)"
+cd "$tmpdir"
+curl -fsSLO "https://github.com/sixers/fakturownia-cli/releases/download/VERSION/fakturownia_VERSION_OS_ARCH.tar.gz"
+tar -xzf "fakturownia_VERSION_OS_ARCH.tar.gz"
+install -m 0755 fakturownia "$HOME/.local/bin/fakturownia"
+rm -rf "$tmpdir"
+case "$(basename "$SHELL")" in
+  zsh) rc_file="$HOME/.zshrc" ;;
+  bash) rc_file="$HOME/.bashrc" ;;
+  *) rc_file="$HOME/.profile" ;;
+esac
+grep -qxF 'export PATH="$HOME/.local/bin:$PATH"' "$rc_file" || echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$rc_file"
+export PATH="$HOME/.local/bin:$PATH"
+fakturownia version
+```
+
+Replace:
+
+- `VERSION` with a release tag such as `v0.1.0`
+- `OS` with `darwin` or `linux`
+- `ARCH` with `amd64` or `arm64`
 
 ## Authentication
 
