@@ -32,7 +32,7 @@ jobs:
           while IFS= read -r -d '' file; do
             rel="${file#dist/}"
             sha256sum "$file" >> dist/binary-checksums.txt
-          done < <(find dist -type f \( -name fakturownia -o -name 'fakturownia.exe' \) -print0)
+          done < <(find dist -type f -name fakturownia -print0)
       - name: Upload binary checksums
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -27,7 +27,7 @@ The architecture is intentionally structured so more API resources can be added 
 
 ### Download a release
 
-Download the correct archive for your platform from [GitHub Releases](https://github.com/sixers/fakturownia-cli/releases), extract it, and place `fakturownia` on your `PATH`.
+Download the correct archive for macOS or Linux from [GitHub Releases](https://github.com/sixers/fakturownia-cli/releases), extract it, and place `fakturownia` on your `PATH`.
 
 ### Build from source
 
