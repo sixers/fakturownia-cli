@@ -46,6 +46,7 @@ type CommandSpec struct {
 	ExitCodes     []ExitCodeSpec
 	RawSupported  bool
 	DataPrototype any
+	Output        *OutputSpec
 }
 
 type SchemaSummary struct {
@@ -68,6 +69,7 @@ type CommandSchema struct {
 	Examples       []string       `json:"examples"`
 	DataSchema     map[string]any `json:"data_schema"`
 	EnvelopeSchema map[string]any `json:"envelope_schema"`
+	Output         *OutputSpec    `json:"output,omitempty"`
 }
 
 func GlobalFlags() []FlagSpec {
@@ -76,8 +78,8 @@ func GlobalFlags() []FlagSpec {
 		{Name: "json", Type: "bool", Description: "Alias for --output json", Default: "false"},
 		{Name: "output", Type: "string", Description: "Output format", Default: "human", Enum: []string{"human", "json"}},
 		{Name: "quiet", Type: "bool", Description: "Emit bare values when exactly one field or column remains", Default: "false"},
-		{Name: "fields", Type: "string[]", Description: "Project JSON envelope data fields", Repeatable: true},
-		{Name: "columns", Type: "string[]", Description: "Select human table columns", Repeatable: true},
+		{Name: "fields", Type: "string[]", Description: "Project JSON envelope data fields using dot/bracket paths like number or positions[].name", Repeatable: true},
+		{Name: "columns", Type: "string[]", Description: "Select human table columns using dot/bracket paths like number or positions[].name", Repeatable: true},
 		{Name: "raw", Type: "bool", Description: "Emit the upstream JSON response body directly when supported", Default: "false"},
 		{Name: "dry-run", Type: "bool", Description: "Accepted on read-only commands and reserved for future mutating request previews", Default: "false"},
 		{Name: "timeout-ms", Type: "int", Description: "HTTP timeout in milliseconds", Default: "30000"},
@@ -165,6 +167,7 @@ func Registry() []CommandSpec {
 			Examples: []string{
 				"fakturownia invoice list --json",
 				"fakturownia invoice list --period this_month --columns id,number,buyer_name,price_gross",
+				"fakturownia invoice list --include-positions --fields number,positions[].name --json",
 				"fakturownia invoice list --page 2 --per-page 25 --raw",
 			},
 			EnvVars:      env,
@@ -187,6 +190,7 @@ func Registry() []CommandSpec {
 				{Name: "income", Type: "string", Description: "Income selector", Enum: []string{"yes", "no"}},
 			},
 			DataPrototype: []map[string]any{},
+			Output:        invoiceListOutputSpec(),
 		},
 		{
 			Noun:  "invoice",
@@ -196,6 +200,7 @@ func Registry() []CommandSpec {
 			Examples: []string{
 				"fakturownia invoice get --id 123",
 				"fakturownia invoice get --id 123 --fields id,number,status --json",
+				"fakturownia invoice get --id 123 --fields number,positions[].name --json",
 				"fakturownia invoice get --id 123 --raw",
 			},
 			EnvVars:      env,
@@ -206,6 +211,7 @@ func Registry() []CommandSpec {
 				{Name: "id", Type: "string", Description: "Invoice ID", Required: true},
 			},
 			DataPrototype: map[string]any{},
+			Output:        invoiceGetOutputSpec(),
 		},
 		{
 			Noun:  "invoice",
@@ -227,6 +233,13 @@ func Registry() []CommandSpec {
 				{Name: "print-option", Type: "string", Description: "PDF print option", Enum: []string{"original", "copy", "original_and_copy", "duplicate"}},
 			},
 			DataPrototype: invoice.DownloadResponse{},
+			Output: &OutputSpec{
+				Shape:     "file",
+				OpenEnded: false,
+				Notes: []string{
+					"download writes PDF bytes to disk and returns CLI-generated metadata",
+				},
+			},
 		},
 		{
 			Noun:  "doctor",
@@ -297,7 +310,13 @@ func SchemaSummaries() []SchemaSummary {
 }
 
 func BuildCommandSchema(spec CommandSpec) (CommandSchema, error) {
-	dataSchema, err := reflectSchema(spec.DataPrototype)
+	dataSchema, err := buildOutputDataSchema(spec.Output)
+	if err != nil {
+		return CommandSchema{}, err
+	}
+	if dataSchema == nil {
+		dataSchema, err = reflectSchema(spec.DataPrototype)
+	}
 	if err != nil {
 		return CommandSchema{}, err
 	}
@@ -329,6 +348,7 @@ func BuildCommandSchema(spec CommandSpec) (CommandSchema, error) {
 		Examples:       spec.Examples,
 		DataSchema:     dataSchema,
 		EnvelopeSchema: envelopeSchema(dataSchema, errorSchema, warningSchema, metaSchema),
+		Output:         spec.Output,
 	}, nil
 }
 

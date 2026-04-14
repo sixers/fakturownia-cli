@@ -1,6 +1,7 @@
 package output
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -70,12 +71,16 @@ func (TableRenderer) Render(w io.Writer, input HumanInput) error {
 		return err
 	}
 	columns := selectedColumns(input.Columns, input.DefaultColumns)
+	paths, err := ParsePaths(columns)
+	if err != nil {
+		return err
+	}
 	tw := tabwriter.NewWriter(w, 0, 8, 2, ' ', 0)
 	fmt.Fprintln(tw, strings.Join(columns, "\t"))
 	for _, row := range rows {
 		values := make([]string, 0, len(columns))
-		for _, column := range columns {
-			values = append(values, stringify(row[column]))
+		for _, path := range paths {
+			values = append(values, stringify(extractPathValue(row, path)))
 		}
 		fmt.Fprintln(tw, strings.Join(values, "\t"))
 	}
@@ -91,9 +96,13 @@ func (TableRenderer) QuietValues(input HumanInput) ([]string, error) {
 	if len(columns) != 1 {
 		return nil, fmt.Errorf("quiet mode requires exactly one column")
 	}
+	paths, err := ParsePaths(columns)
+	if err != nil {
+		return nil, err
+	}
 	lines := make([]string, 0, len(rows))
 	for _, row := range rows {
-		lines = append(lines, stringify(row[columns[0]]))
+		lines = append(lines, stringify(extractPathValue(row, paths[0])))
 	}
 	return lines, nil
 }
@@ -313,6 +322,20 @@ func stringify(value any) string {
 			return strconv.FormatInt(int64(typed), 10)
 		}
 		return strconv.FormatFloat(typed, 'f', -1, 64)
+	case []any:
+		parts := make([]string, 0, len(typed))
+		for _, item := range typed {
+			if rendered := stringify(item); rendered != "" {
+				parts = append(parts, rendered)
+			}
+		}
+		return strings.Join(parts, ", ")
+	case map[string]any:
+		body, err := json.Marshal(typed)
+		if err != nil {
+			return fmt.Sprint(typed)
+		}
+		return string(bytes.TrimSpace(body))
 	default:
 		return fmt.Sprint(typed)
 	}

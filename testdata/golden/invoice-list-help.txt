@@ -25,8 +25,8 @@ Global Flags
   --json (bool): Alias for --output json default=false
   --output (string): Output format default=human enum=human,json
   --quiet (bool): Emit bare values when exactly one field or column remains default=false
-  --fields (string[]): Project JSON envelope data fields
-  --columns (string[]): Select human table columns
+  --fields (string[]): Project JSON envelope data fields using dot/bracket paths like number or positions[].name
+  --columns (string[]): Select human table columns using dot/bracket paths like number or positions[].name
   --raw (bool): Emit the upstream JSON response body directly when supported default=false
   --dry-run (bool): Accepted on read-only commands and reserved for future mutating request previews default=false
   --timeout-ms (int): HTTP timeout in milliseconds default=30000
@@ -57,6 +57,7 @@ Exit Codes
 Examples
   fakturownia invoice list --json
   fakturownia invoice list --period this_month --columns id,number,buyer_name,price_gross
+  fakturownia invoice list --include-positions --fields number,positions[].name --json
   fakturownia invoice list --page 2 --per-page 25 --raw
 
 Usage:
@@ -79,10 +80,10 @@ Flags:
       --search-date-type string   date field to search by
 
 Global Flags:
-      --columns strings   select human table columns
+      --columns strings   select human table columns using dot/bracket paths like number or positions[].name
       --config string     override the config file path
       --dry-run           accepted on read-only commands and reserved for future mutating previews
-      --fields strings    project JSON envelope data fields
+      --fields strings    project JSON envelope data fields using dot/bracket paths like number or positions[].name
       --json              alias for --output json
       --max-retries int   maximum retries for idempotent reads (default 2)
       --non-interactive   disable interactive behavior (default true)

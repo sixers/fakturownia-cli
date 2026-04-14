@@ -3,9 +3,9 @@
   "status": "success",
   "data": {
     "schema_version": "fakturownia-cli/v1alpha1",
-    "command": "invoice list",
-    "use": "list",
-    "summary": "List invoices",
+    "command": "invoice get",
+    "use": "get --id ID",
+    "summary": "Fetch a single invoice by ID",
     "flags": [
       {
         "name": "profile",
@@ -94,106 +94,10 @@
         "required": false
       },
       {
-        "name": "page",
-        "type": "int",
-        "description": "Requested result page",
-        "required": false,
-        "default": "1"
-      },
-      {
-        "name": "per-page",
-        "type": "int",
-        "description": "Requested result count per page",
-        "required": false,
-        "default": "25"
-      },
-      {
-        "name": "period",
+        "name": "id",
         "type": "string",
-        "description": "Date period filter",
-        "required": false,
-        "enum": [
-          "last_12_months",
-          "this_month",
-          "last_30_days",
-          "last_month",
-          "this_year",
-          "last_year",
-          "all",
-          "more"
-        ]
-      },
-      {
-        "name": "date-from",
-        "type": "string",
-        "description": "Lower date bound for period=more",
-        "required": false
-      },
-      {
-        "name": "date-to",
-        "type": "string",
-        "description": "Upper date bound for period=more",
-        "required": false
-      },
-      {
-        "name": "include-positions",
-        "type": "bool",
-        "description": "Include invoice positions",
-        "required": false,
-        "default": "false"
-      },
-      {
-        "name": "client-id",
-        "type": "string",
-        "description": "Filter by client ID",
-        "required": false
-      },
-      {
-        "name": "invoice-ids",
-        "type": "string[]",
-        "description": "Filter by specific invoice IDs",
-        "required": false,
-        "repeatable": true
-      },
-      {
-        "name": "number",
-        "type": "string",
-        "description": "Filter by invoice number",
-        "required": false
-      },
-      {
-        "name": "kind",
-        "type": "string[]",
-        "description": "Filter by invoice kind",
-        "required": false,
-        "repeatable": true
-      },
-      {
-        "name": "search-date-type",
-        "type": "string",
-        "description": "Date field to search by",
-        "required": false,
-        "enum": [
-          "issue_date",
-          "paid_date",
-          "transaction_date"
-        ]
-      },
-      {
-        "name": "order",
-        "type": "string",
-        "description": "Sort order",
-        "required": false
-      },
-      {
-        "name": "income",
-        "type": "string",
-        "description": "Income selector",
-        "required": false,
-        "enum": [
-          "yes",
-          "no"
-        ]
+        "description": "Invoice ID",
+        "required": true
       }
     ],
     "env_vars": [
@@ -254,392 +158,143 @@
     ],
     "raw_supported": true,
     "examples": [
-      "fakturownia invoice list --json",
-      "fakturownia invoice list --period this_month --columns id,number,buyer_name,price_gross",
-      "fakturownia invoice list --include-positions --fields number,positions[].name --json",
-      "fakturownia invoice list --page 2 --per-page 25 --raw"
+      "fakturownia invoice get --id 123",
+      "fakturownia invoice get --id 123 --fields id,number,status --json",
+      "fakturownia invoice get --id 123 --fields number,positions[].name --json",
+      "fakturownia invoice get --id 123 --raw"
     ],
     "data_schema": {
-      "items": {
-        "additionalProperties": true,
-        "properties": {
-          "buyer_email": {
-            "type": "string"
-          },
-          "buyer_name": {
-            "type": "string"
-          },
-          "buyer_tax_no": {
-            "type": "string"
-          },
-          "currency": {
-            "type": "string"
-          },
-          "description": {
-            "type": "string"
-          },
-          "descriptions": {
-            "items": {
-              "additionalProperties": true,
-              "properties": {
-                "content": {
-                  "type": "string"
-                },
-                "id": {
-                  "type": "integer"
-                },
-                "kind": {
-                  "type": "string"
-                },
-                "position_index": {
-                  "type": [
-                    "integer",
-                    "null"
-                  ]
-                },
-                "row_number": {
-                  "type": "integer"
-                }
-              },
-              "type": "object"
-            },
-            "type": "array"
-          },
-          "id": {
-            "type": "integer"
-          },
-          "income": {
-            "enum": [
-              "1",
-              "0"
-            ],
-            "type": "string"
-          },
-          "issue_date": {
-            "type": "string"
-          },
-          "issuers": {
-            "items": {
-              "additionalProperties": true,
-              "properties": {
-                "email": {
-                  "type": "string"
-                },
-                "name": {
-                  "type": "string"
-                }
-              },
-              "type": "object"
-            },
-            "type": "array"
-          },
-          "kind": {
-            "enum": [
-              "vat",
-              "proforma",
-              "bill",
-              "receipt",
-              "advance",
-              "final",
-              "correction",
-              "invoice_other",
-              "vat_margin",
-              "kp",
-              "kw",
-              "estimate",
-              "vat_mp",
-              "vat_rr",
-              "correction_note",
-              "accounting_note"
-            ],
-            "type": "string"
-          },
-          "number": {
-            "type": "string"
-          },
-          "payment_to": {
-            "type": "string"
-          },
-          "payment_type": {
-            "enum": [
-              "transfer",
-              "card",
-              "cash",
-              "barter",
-              "cheque",
-              "bill_of_exchange",
-              "cash_on_delivery",
-              "compensation",
-              "letter_of_credit",
-              "payu",
-              "paypal",
-              "off"
-            ],
-            "type": "string"
-          },
-          "positions": {
-            "items": {
-              "additionalProperties": true,
-              "properties": {
-                "code": {
-                  "type": "string"
-                },
-                "description": {
-                  "type": "string"
-                },
-                "gtu_code": {
-                  "type": "string"
-                },
-                "name": {
-                  "type": "string"
-                },
-                "price_gross": {
-                  "type": "number"
-                },
-                "price_net": {
-                  "type": "number"
-                },
-                "quantity": {
-                  "type": "number"
-                },
-                "tax": {
-                  "type": "string"
-                },
-                "total_price_gross": {
-                  "type": "number"
-                },
-                "total_price_net": {
-                  "type": "number"
-                }
-              },
-              "type": "object"
-            },
-            "type": "array"
-          },
-          "price_gross": {
-            "type": "number"
-          },
-          "price_net": {
-            "type": "number"
-          },
-          "recipients": {
-            "items": {
-              "additionalProperties": true,
-              "properties": {
-                "email": {
-                  "type": "string"
-                },
-                "name": {
-                  "type": "string"
-                },
-                "phone": {
-                  "type": "string"
-                }
-              },
-              "type": "object"
-            },
-            "type": "array"
-          },
-          "sale_date": {
-            "type": "string"
-          },
-          "seller_name": {
-            "type": "string"
-          },
-          "seller_tax_no": {
-            "type": "string"
-          },
-          "settlement_positions": {
-            "items": {
-              "additionalProperties": true,
-              "properties": {
-                "amount": {
-                  "type": "number"
-                },
-                "description": {
-                  "type": "string"
-                },
-                "kind": {
-                  "type": "string"
-                }
-              },
-              "type": "object"
-            },
-            "type": "array"
-          },
-          "status": {
-            "enum": [
-              "issued",
-              "sent",
-              "paid",
-              "partial",
-              "rejected"
-            ],
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "type": "array"
-    },
-    "envelope_schema": {
+      "additionalProperties": true,
       "properties": {
-        "data": {
+        "buyer_email": {
+          "type": "string"
+        },
+        "buyer_name": {
+          "type": "string"
+        },
+        "buyer_tax_no": {
+          "type": "string"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "descriptions": {
           "items": {
             "additionalProperties": true,
             "properties": {
-              "buyer_email": {
+              "content": {
                 "type": "string"
               },
-              "buyer_name": {
+              "id": {
+                "type": "integer"
+              },
+              "kind": {
                 "type": "string"
               },
-              "buyer_tax_no": {
+              "position_index": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "row_number": {
+                "type": "integer"
+              }
+            },
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "id": {
+          "type": "integer"
+        },
+        "income": {
+          "enum": [
+            "1",
+            "0"
+          ],
+          "type": "string"
+        },
+        "issue_date": {
+          "type": "string"
+        },
+        "issuers": {
+          "items": {
+            "additionalProperties": true,
+            "properties": {
+              "email": {
                 "type": "string"
               },
-              "currency": {
+              "name": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "kind": {
+          "enum": [
+            "vat",
+            "proforma",
+            "bill",
+            "receipt",
+            "advance",
+            "final",
+            "correction",
+            "invoice_other",
+            "vat_margin",
+            "kp",
+            "kw",
+            "estimate",
+            "vat_mp",
+            "vat_rr",
+            "correction_note",
+            "accounting_note"
+          ],
+          "type": "string"
+        },
+        "number": {
+          "type": "string"
+        },
+        "payment_to": {
+          "type": "string"
+        },
+        "payment_type": {
+          "enum": [
+            "transfer",
+            "card",
+            "cash",
+            "barter",
+            "cheque",
+            "bill_of_exchange",
+            "cash_on_delivery",
+            "compensation",
+            "letter_of_credit",
+            "payu",
+            "paypal",
+            "off"
+          ],
+          "type": "string"
+        },
+        "positions": {
+          "items": {
+            "additionalProperties": true,
+            "properties": {
+              "code": {
                 "type": "string"
               },
               "description": {
                 "type": "string"
               },
-              "descriptions": {
-                "items": {
-                  "additionalProperties": true,
-                  "properties": {
-                    "content": {
-                      "type": "string"
-                    },
-                    "id": {
-                      "type": "integer"
-                    },
-                    "kind": {
-                      "type": "string"
-                    },
-                    "position_index": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ]
-                    },
-                    "row_number": {
-                      "type": "integer"
-                    }
-                  },
-                  "type": "object"
-                },
-                "type": "array"
-              },
-              "id": {
-                "type": "integer"
-              },
-              "income": {
-                "enum": [
-                  "1",
-                  "0"
-                ],
+              "gtu_code": {
                 "type": "string"
               },
-              "issue_date": {
+              "name": {
                 "type": "string"
-              },
-              "issuers": {
-                "items": {
-                  "additionalProperties": true,
-                  "properties": {
-                    "email": {
-                      "type": "string"
-                    },
-                    "name": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "type": "array"
-              },
-              "kind": {
-                "enum": [
-                  "vat",
-                  "proforma",
-                  "bill",
-                  "receipt",
-                  "advance",
-                  "final",
-                  "correction",
-                  "invoice_other",
-                  "vat_margin",
-                  "kp",
-                  "kw",
-                  "estimate",
-                  "vat_mp",
-                  "vat_rr",
-                  "correction_note",
-                  "accounting_note"
-                ],
-                "type": "string"
-              },
-              "number": {
-                "type": "string"
-              },
-              "payment_to": {
-                "type": "string"
-              },
-              "payment_type": {
-                "enum": [
-                  "transfer",
-                  "card",
-                  "cash",
-                  "barter",
-                  "cheque",
-                  "bill_of_exchange",
-                  "cash_on_delivery",
-                  "compensation",
-                  "letter_of_credit",
-                  "payu",
-                  "paypal",
-                  "off"
-                ],
-                "type": "string"
-              },
-              "positions": {
-                "items": {
-                  "additionalProperties": true,
-                  "properties": {
-                    "code": {
-                      "type": "string"
-                    },
-                    "description": {
-                      "type": "string"
-                    },
-                    "gtu_code": {
-                      "type": "string"
-                    },
-                    "name": {
-                      "type": "string"
-                    },
-                    "price_gross": {
-                      "type": "number"
-                    },
-                    "price_net": {
-                      "type": "number"
-                    },
-                    "quantity": {
-                      "type": "number"
-                    },
-                    "tax": {
-                      "type": "string"
-                    },
-                    "total_price_gross": {
-                      "type": "number"
-                    },
-                    "total_price_net": {
-                      "type": "number"
-                    }
-                  },
-                  "type": "object"
-                },
-                "type": "array"
               },
               "price_gross": {
                 "type": "number"
@@ -647,65 +302,308 @@
               "price_net": {
                 "type": "number"
               },
-              "recipients": {
-                "items": {
-                  "additionalProperties": true,
-                  "properties": {
-                    "email": {
-                      "type": "string"
-                    },
-                    "name": {
-                      "type": "string"
-                    },
-                    "phone": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "type": "array"
+              "quantity": {
+                "type": "number"
               },
-              "sale_date": {
+              "tax": {
                 "type": "string"
               },
-              "seller_name": {
+              "total_price_gross": {
+                "type": "number"
+              },
+              "total_price_net": {
+                "type": "number"
+              }
+            },
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "price_gross": {
+          "type": "number"
+        },
+        "price_net": {
+          "type": "number"
+        },
+        "recipients": {
+          "items": {
+            "additionalProperties": true,
+            "properties": {
+              "email": {
                 "type": "string"
               },
-              "seller_tax_no": {
+              "name": {
                 "type": "string"
               },
-              "settlement_positions": {
-                "items": {
-                  "additionalProperties": true,
-                  "properties": {
-                    "amount": {
-                      "type": "number"
-                    },
-                    "description": {
-                      "type": "string"
-                    },
-                    "kind": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "type": "array"
-              },
-              "status": {
-                "enum": [
-                  "issued",
-                  "sent",
-                  "paid",
-                  "partial",
-                  "rejected"
-                ],
+              "phone": {
                 "type": "string"
               }
             },
             "type": "object"
           },
           "type": "array"
+        },
+        "sale_date": {
+          "type": "string"
+        },
+        "seller_name": {
+          "type": "string"
+        },
+        "seller_tax_no": {
+          "type": "string"
+        },
+        "settlement_positions": {
+          "items": {
+            "additionalProperties": true,
+            "properties": {
+              "amount": {
+                "type": "number"
+              },
+              "description": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "status": {
+          "enum": [
+            "issued",
+            "sent",
+            "paid",
+            "partial",
+            "rejected"
+          ],
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "envelope_schema": {
+      "properties": {
+        "data": {
+          "additionalProperties": true,
+          "properties": {
+            "buyer_email": {
+              "type": "string"
+            },
+            "buyer_name": {
+              "type": "string"
+            },
+            "buyer_tax_no": {
+              "type": "string"
+            },
+            "currency": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            },
+            "descriptions": {
+              "items": {
+                "additionalProperties": true,
+                "properties": {
+                  "content": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "integer"
+                  },
+                  "kind": {
+                    "type": "string"
+                  },
+                  "position_index": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  },
+                  "row_number": {
+                    "type": "integer"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "id": {
+              "type": "integer"
+            },
+            "income": {
+              "enum": [
+                "1",
+                "0"
+              ],
+              "type": "string"
+            },
+            "issue_date": {
+              "type": "string"
+            },
+            "issuers": {
+              "items": {
+                "additionalProperties": true,
+                "properties": {
+                  "email": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "kind": {
+              "enum": [
+                "vat",
+                "proforma",
+                "bill",
+                "receipt",
+                "advance",
+                "final",
+                "correction",
+                "invoice_other",
+                "vat_margin",
+                "kp",
+                "kw",
+                "estimate",
+                "vat_mp",
+                "vat_rr",
+                "correction_note",
+                "accounting_note"
+              ],
+              "type": "string"
+            },
+            "number": {
+              "type": "string"
+            },
+            "payment_to": {
+              "type": "string"
+            },
+            "payment_type": {
+              "enum": [
+                "transfer",
+                "card",
+                "cash",
+                "barter",
+                "cheque",
+                "bill_of_exchange",
+                "cash_on_delivery",
+                "compensation",
+                "letter_of_credit",
+                "payu",
+                "paypal",
+                "off"
+              ],
+              "type": "string"
+            },
+            "positions": {
+              "items": {
+                "additionalProperties": true,
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "gtu_code": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "price_gross": {
+                    "type": "number"
+                  },
+                  "price_net": {
+                    "type": "number"
+                  },
+                  "quantity": {
+                    "type": "number"
+                  },
+                  "tax": {
+                    "type": "string"
+                  },
+                  "total_price_gross": {
+                    "type": "number"
+                  },
+                  "total_price_net": {
+                    "type": "number"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "price_gross": {
+              "type": "number"
+            },
+            "price_net": {
+              "type": "number"
+            },
+            "recipients": {
+              "items": {
+                "additionalProperties": true,
+                "properties": {
+                  "email": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "phone": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "sale_date": {
+              "type": "string"
+            },
+            "seller_name": {
+              "type": "string"
+            },
+            "seller_tax_no": {
+              "type": "string"
+            },
+            "settlement_positions": {
+              "items": {
+                "additionalProperties": true,
+                "properties": {
+                  "amount": {
+                    "type": "number"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "kind": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "status": {
+              "enum": [
+                "issued",
+                "sent",
+                "paid",
+                "partial",
+                "rejected"
+              ],
+              "type": "string"
+            }
+          },
+          "type": "object"
         },
         "errors": {
           "items": {
@@ -844,7 +742,7 @@
       "type": "object"
     },
     "output": {
-      "shape": "array",
+      "shape": "object",
       "open_ended": true,
       "catalog_basis": {
         "source": "readme",
@@ -1569,7 +1467,7 @@
   "errors": [],
   "warnings": null,
   "meta": {
-    "command": "schema invoice list",
+    "command": "schema invoice get",
     "duration_ms": 0
   }
 }

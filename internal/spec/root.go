@@ -77,8 +77,8 @@ func NewRootCommand(deps Dependencies) *cobra.Command {
 	root.PersistentFlags().BoolVar(&globals.JSON, "json", false, "alias for --output json")
 	root.PersistentFlags().StringVar(&globals.Output, "output", "human", "output format: human|json")
 	root.PersistentFlags().BoolVarP(&globals.Quiet, "quiet", "q", false, "emit bare values when exactly one field or column remains")
-	root.PersistentFlags().StringSliceVar(&globals.Fields, "fields", nil, "project JSON envelope data fields")
-	root.PersistentFlags().StringSliceVar(&globals.Columns, "columns", nil, "select human table columns")
+	root.PersistentFlags().StringSliceVar(&globals.Fields, "fields", nil, "project JSON envelope data fields using dot/bracket paths like number or positions[].name")
+	root.PersistentFlags().StringSliceVar(&globals.Columns, "columns", nil, "select human table columns using dot/bracket paths like number or positions[].name")
 	root.PersistentFlags().BoolVar(&globals.Raw, "raw", false, "emit the upstream JSON response body directly when supported")
 	root.PersistentFlags().BoolVar(&globals.DryRun, "dry-run", false, "accepted on read-only commands and reserved for future mutating previews")
 	root.PersistentFlags().IntVar(&globals.TimeoutMS, "timeout-ms", 30000, "HTTP timeout in milliseconds")
@@ -108,7 +108,7 @@ func newAuthCommand(deps Dependencies, globals *globalOptions) *cobra.Command {
 		Short: loginSpec.Short,
 		Long:  BuildLongDescription(loginSpec),
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			opts, appErr := prepareOutputOptions(cmd, loginSpec, globals)
+			opts, warnings, appErr := prepareOutputOptions(cmd, loginSpec, globals)
 			if appErr != nil {
 				return writeCommandError(cmd, opts, output.Meta{Command: "auth login"}, appErr)
 			}
@@ -131,9 +131,11 @@ func newAuthCommand(deps Dependencies, globals *globalOptions) *cobra.Command {
 			if err != nil {
 				return writeCommandError(cmd, opts, meta, err)
 			}
+			writeWarnings(cmd.ErrOrStderr(), opts, warnings)
 			return output.RenderSuccess(cmd.OutOrStdout(), opts, output.Result{
-				Data: result,
-				Meta: meta,
+				Data:     result,
+				Warnings: warnings,
+				Meta:     meta,
 				HumanRenderer: output.LinesRenderer{
 					Lines: func(data any) ([]string, error) {
 						res := data.(*auth.LoginResult)
@@ -158,7 +160,7 @@ func newAuthCommand(deps Dependencies, globals *globalOptions) *cobra.Command {
 		Short: statusSpec.Short,
 		Long:  BuildLongDescription(statusSpec),
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			opts, appErr := prepareOutputOptions(cmd, statusSpec, globals)
+			opts, warnings, appErr := prepareOutputOptions(cmd, statusSpec, globals)
 			if appErr != nil {
 				return writeCommandError(cmd, opts, output.Meta{Command: "auth status"}, appErr)
 			}
@@ -176,8 +178,10 @@ func newAuthCommand(deps Dependencies, globals *globalOptions) *cobra.Command {
 			if err != nil {
 				return writeCommandError(cmd, opts, meta, err)
 			}
+			writeWarnings(cmd.ErrOrStderr(), opts, warnings)
 			return output.RenderSuccess(cmd.OutOrStdout(), opts, output.Result{
 				Data:          result,
+				Warnings:      warnings,
 				Meta:          meta,
 				HumanRenderer: output.JSONRenderer{},
 			})
@@ -191,7 +195,7 @@ func newAuthCommand(deps Dependencies, globals *globalOptions) *cobra.Command {
 		Short: logoutSpec.Short,
 		Long:  BuildLongDescription(logoutSpec),
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			opts, appErr := prepareOutputOptions(cmd, logoutSpec, globals)
+			opts, warnings, appErr := prepareOutputOptions(cmd, logoutSpec, globals)
 			if appErr != nil {
 				return writeCommandError(cmd, opts, output.Meta{Command: "auth logout"}, appErr)
 			}
@@ -212,9 +216,11 @@ func newAuthCommand(deps Dependencies, globals *globalOptions) *cobra.Command {
 			if err != nil {
 				return writeCommandError(cmd, opts, meta, err)
 			}
+			writeWarnings(cmd.ErrOrStderr(), opts, warnings)
 			return output.RenderSuccess(cmd.OutOrStdout(), opts, output.Result{
-				Data: result,
-				Meta: meta,
+				Data:     result,
+				Warnings: warnings,
+				Meta:     meta,
 				HumanRenderer: output.LinesRenderer{
 					Lines: func(data any) ([]string, error) {
 						res := data.(*auth.LogoutResult)
@@ -243,7 +249,7 @@ func newInvoiceCommand(deps Dependencies, globals *globalOptions) *cobra.Command
 		Short: listSpec.Short,
 		Long:  BuildLongDescription(listSpec),
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			opts, appErr := prepareOutputOptions(cmd, listSpec, globals)
+			opts, warnings, appErr := prepareOutputOptions(cmd, listSpec, globals)
 			if appErr != nil {
 				return writeCommandError(cmd, opts, output.Meta{Command: "invoice list"}, appErr)
 			}
@@ -267,12 +273,14 @@ func newInvoiceCommand(deps Dependencies, globals *globalOptions) *cobra.Command
 			if err != nil {
 				return writeCommandError(cmd, opts, meta, err)
 			}
+			writeWarnings(cmd.ErrOrStderr(), opts, warnings)
 			return output.RenderSuccess(cmd.OutOrStdout(), opts, output.Result{
 				Data:           result.Invoices,
 				RawBody:        result.RawBody,
+				Warnings:       warnings,
 				Meta:           meta,
 				HumanRenderer:  output.TableRenderer{},
-				DefaultColumns: []string{"id", "number", "issue_date", "buyer_name", "price_gross", "status"},
+				DefaultColumns: defaultColumns(listSpec, []string{"id", "number", "issue_date", "buyer_name", "price_gross", "status"}),
 			})
 		},
 	}
@@ -297,7 +305,7 @@ func newInvoiceCommand(deps Dependencies, globals *globalOptions) *cobra.Command
 		Short: getSpec.Short,
 		Long:  BuildLongDescription(getSpec),
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			opts, appErr := prepareOutputOptions(cmd, getSpec, globals)
+			opts, warnings, appErr := prepareOutputOptions(cmd, getSpec, globals)
 			if appErr != nil {
 				return writeCommandError(cmd, opts, output.Meta{Command: "invoice get"}, appErr)
 			}
@@ -320,9 +328,11 @@ func newInvoiceCommand(deps Dependencies, globals *globalOptions) *cobra.Command
 			if err != nil {
 				return writeCommandError(cmd, opts, meta, err)
 			}
+			writeWarnings(cmd.ErrOrStderr(), opts, warnings)
 			return output.RenderSuccess(cmd.OutOrStdout(), opts, output.Result{
 				Data:          result.Invoice,
 				RawBody:       result.RawBody,
+				Warnings:      warnings,
 				Meta:          meta,
 				HumanRenderer: output.JSONRenderer{},
 			})
@@ -338,7 +348,7 @@ func newInvoiceCommand(deps Dependencies, globals *globalOptions) *cobra.Command
 		Short: downloadSpec.Short,
 		Long:  BuildLongDescription(downloadSpec),
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			opts, appErr := prepareOutputOptions(cmd, downloadSpec, globals)
+			opts, warnings, appErr := prepareOutputOptions(cmd, downloadSpec, globals)
 			if appErr != nil {
 				return writeCommandError(cmd, opts, output.Meta{Command: "invoice download"}, appErr)
 			}
@@ -361,9 +371,11 @@ func newInvoiceCommand(deps Dependencies, globals *globalOptions) *cobra.Command
 			if err != nil {
 				return writeCommandError(cmd, opts, meta, err)
 			}
+			writeWarnings(cmd.ErrOrStderr(), opts, warnings)
 			return output.RenderSuccess(cmd.OutOrStdout(), opts, output.Result{
-				Data: result,
-				Meta: meta,
+				Data:     result,
+				Warnings: warnings,
+				Meta:     meta,
 				HumanRenderer: output.LinesRenderer{
 					Lines: func(data any) ([]string, error) {
 						res := data.(*invoice.DownloadResponse)
@@ -395,7 +407,7 @@ func newDoctorCommand(deps Dependencies, globals *globalOptions) *cobra.Command 
 		Short: doctorSpec.Short,
 		Long:  BuildLongDescription(doctorSpec),
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			opts, appErr := prepareOutputOptions(cmd, doctorSpec, globals)
+			opts, warnings, appErr := prepareOutputOptions(cmd, doctorSpec, globals)
 			if appErr != nil {
 				return writeCommandError(cmd, opts, output.Meta{Command: "doctor run"}, appErr)
 			}
@@ -417,9 +429,10 @@ func newDoctorCommand(deps Dependencies, globals *globalOptions) *cobra.Command 
 			if err != nil {
 				return writeCommandError(cmd, opts, meta, err)
 			}
+			writeWarnings(cmd.ErrOrStderr(), opts, warnings)
 			return output.RenderSuccess(cmd.OutOrStdout(), opts, output.Result{
 				Data:     result.Report,
-				Warnings: result.Warnings,
+				Warnings: append(append([]output.WarningDetail{}, warnings...), result.Warnings...),
 				Meta:     meta,
 				HumanRenderer: output.LinesRenderer{
 					Lines: func(data any) ([]string, error) {
@@ -447,7 +460,7 @@ func newSchemaCommand(_ Dependencies, globals *globalOptions) *cobra.Command {
 		Use:   "schema",
 		Short: "Describe commands and schemas",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			opts, appErr := prepareOutputOptions(cmd, describeSpec, globals)
+			opts, warnings, appErr := prepareOutputOptions(cmd, describeSpec, globals)
 			if appErr != nil {
 				return writeCommandError(cmd, opts, output.Meta{Command: "schema"}, appErr)
 			}
@@ -462,8 +475,10 @@ func newSchemaCommand(_ Dependencies, globals *globalOptions) *cobra.Command {
 			if err != nil {
 				return writeCommandError(cmd, opts, output.Meta{Command: "schema " + strings.Join(args, " ")}, err)
 			}
+			writeWarnings(cmd.ErrOrStderr(), opts, warnings)
 			return output.RenderSuccess(cmd.OutOrStdout(), opts, output.Result{
 				Data:          schema,
+				Warnings:      warnings,
 				Meta:          output.Meta{Command: "schema " + strings.Join(args, " "), DurationMS: 0},
 				HumanRenderer: output.JSONRenderer{},
 			})
@@ -476,7 +491,7 @@ func newSchemaCommand(_ Dependencies, globals *globalOptions) *cobra.Command {
 		Short: listSpec.Short,
 		Long:  BuildLongDescription(listSpec),
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			opts, appErr := prepareOutputOptions(cmd, listSpec, globals)
+			opts, warnings, appErr := prepareOutputOptions(cmd, listSpec, globals)
 			if appErr != nil {
 				return writeCommandError(cmd, opts, output.Meta{Command: "schema list"}, appErr)
 			}
@@ -490,8 +505,10 @@ func newSchemaCommand(_ Dependencies, globals *globalOptions) *cobra.Command {
 					"summary": item.Summary,
 				})
 			}
+			writeWarnings(cmd.ErrOrStderr(), opts, warnings)
 			return output.RenderSuccess(cmd.OutOrStdout(), opts, output.Result{
 				Data:           rows,
+				Warnings:       warnings,
 				Meta:           output.Meta{Command: "schema list", DurationMS: 0},
 				HumanRenderer:  output.TableRenderer{},
 				DefaultColumns: []string{"noun", "verb", "summary"},
@@ -502,7 +519,7 @@ func newSchemaCommand(_ Dependencies, globals *globalOptions) *cobra.Command {
 	return schemaCmd
 }
 
-func prepareOutputOptions(cmd *cobra.Command, spec CommandSpec, globals *globalOptions) (output.Options, *output.AppError) {
+func prepareOutputOptions(cmd *cobra.Command, spec CommandSpec, globals *globalOptions) (output.Options, []output.WarningDetail, *output.AppError) {
 	format := globals.Output
 	if globals.JSON {
 		format = "json"
@@ -512,7 +529,7 @@ func prepareOutputOptions(cmd *cobra.Command, spec CommandSpec, globals *globalO
 		format = "human"
 	}
 	if format != "human" && format != "json" {
-		return output.Options{}, output.Usage("invalid_output", fmt.Sprintf("unsupported output mode %q", format), "use --output human or --output json")
+		return output.Options{}, nil, output.Usage("invalid_output", fmt.Sprintf("unsupported output mode %q", format), "use --output human or --output json")
 	}
 	fields := trimValues(globals.Fields)
 	columns := trimValues(globals.Columns)
@@ -526,19 +543,23 @@ func prepareOutputOptions(cmd *cobra.Command, spec CommandSpec, globals *globalO
 
 	if globals.Raw {
 		if !spec.RawSupported {
-			return output.Options{}, output.Usage("raw_unsupported", fmt.Sprintf("--raw is not supported for %s %s", spec.Noun, spec.Verb), "use --json for the structured CLI envelope")
+			return output.Options{}, nil, output.Usage("raw_unsupported", fmt.Sprintf("--raw is not supported for %s %s", spec.Noun, spec.Verb), "use --json for the structured CLI envelope")
 		}
 		if cmd.Flags().Changed("json") || cmd.Flags().Changed("output") || cmd.Flags().Changed("fields") || cmd.Flags().Changed("columns") || cmd.Flags().Changed("quiet") {
-			return output.Options{}, output.Usage("raw_conflict", "--raw cannot be combined with --json, --output, --fields, --columns, or --quiet", "drop the other output flags when using --raw")
+			return output.Options{}, nil, output.Usage("raw_conflict", "--raw cannot be combined with --json, --output, --fields, --columns, or --quiet", "drop the other output flags when using --raw")
 		}
 	}
 	if opts.Format == "json" && opts.Quiet {
-		return output.Options{}, output.Usage("quiet_json_conflict", "--quiet cannot be combined with JSON output", "use --fields with --json or use --quiet with human output")
+		return output.Options{}, nil, output.Usage("quiet_json_conflict", "--quiet cannot be combined with JSON output", "use --fields with --json or use --quiet with human output")
 	}
 	if opts.Format == "json" && len(opts.Columns) > 0 {
-		return output.Options{}, output.Usage("columns_json_conflict", "--columns only applies to human table output", "use --fields for JSON projection")
+		return output.Options{}, nil, output.Usage("columns_json_conflict", "--columns only applies to human table output", "use --fields for JSON projection")
 	}
-	return opts, nil
+	warnings, appErr := validateOutputSelection(spec, fields, columns)
+	if appErr != nil {
+		return output.Options{}, nil, appErr
+	}
+	return opts, warnings, nil
 }
 
 func timeoutFromGlobals(globals *globalOptions) time.Duration {
@@ -567,6 +588,22 @@ func trimValues(values []string) []string {
 		}
 	}
 	return out
+}
+
+func writeWarnings(stderr io.Writer, opts output.Options, warnings []output.WarningDetail) {
+	if opts.Format == "json" || len(warnings) == 0 {
+		return
+	}
+	for _, warning := range warnings {
+		fmt.Fprintf(stderr, "warning: %s (%s)\n", warning.Message, warning.Code)
+	}
+}
+
+func defaultColumns(spec CommandSpec, fallback []string) []string {
+	if spec.Output != nil && len(spec.Output.DefaultColumns) > 0 {
+		return append([]string{}, spec.Output.DefaultColumns...)
+	}
+	return fallback
 }
 
 func resultProfile(result any) string {

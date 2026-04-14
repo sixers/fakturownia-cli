@@ -114,12 +114,30 @@ Envelope shape:
 }
 ```
 
+## Output Introspection
+
+`schema` describes both the command contract and the README-backed output catalog for invoice resources.
+
+- `fakturownia schema invoice list --json` exposes `output.known_fields`
+- `known_fields` is curated from the upstream [Fakturownia README](https://github.com/fakturownia/API/blob/master/README.md)
+- nested paths use `dot_bracket` syntax such as `positions[].name`
+- the catalog is intentionally not exhaustive; syntactically valid paths outside the catalog are still allowed and produce warnings instead of hard failures
+
+Examples:
+
+```bash
+fakturownia schema invoice list --json
+fakturownia invoice list --include-positions --fields number,positions[].name --json
+fakturownia invoice list --columns number,positions[].name
+```
+
 ## Examples
 
 ```bash
 fakturownia invoice list --json
 fakturownia invoice list --period this_month --columns id,number,price_gross
 fakturownia invoice get --id 123 --fields id,number,status --json
+fakturownia invoice get --id 123 --fields number,positions[].name --json
 fakturownia invoice download --id 123 --dir ./invoices --json
 fakturownia schema invoice list --json
 fakturownia doctor run --json
@@ -146,3 +164,56 @@ just build
 ```
 
 Golden tests cover help and schema output for the public CLI contract. Run `just schema-help` when you want to refresh just that contract-focused test target.
+
+## Release
+
+Releases are created by pushing a semver tag. The GitHub Actions `release` workflow then runs GoReleaser and publishes the archives, checksums, and SBOMs automatically.
+
+Prerequisites:
+
+- push the release commit to `master`
+- have `gh` authenticated for the `sixers/fakturownia-cli` repo
+- use a clean worktree before tagging
+
+Dry run locally:
+
+```bash
+brew install goreleaser
+goreleaser release --snapshot --clean
+```
+
+Create a real release:
+
+```bash
+cd /Users/mateusz/Projects/Personal/fakturownia-cli
+
+just test
+just lint
+just build
+
+git status --short
+git push origin master
+
+version="v0.1.0"
+git tag "$version"
+git push origin "$version"
+```
+
+Watch the release workflow:
+
+```bash
+gh run list --repo sixers/fakturownia-cli --workflow release --limit 5
+run_id="$(gh run list --repo sixers/fakturownia-cli --workflow release --limit 1 --json databaseId --jq '.[0].databaseId')"
+gh run watch "$run_id" --repo sixers/fakturownia-cli
+gh release view "$version" --repo sixers/fakturownia-cli
+```
+
+If you need to replace a failed tag before publishing a corrected release:
+
+```bash
+version="v0.1.0"
+git tag -d "$version"
+git push origin ":refs/tags/$version"
+git tag "$version"
+git push origin "$version"
+```

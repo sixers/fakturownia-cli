@@ -108,3 +108,37 @@ func TestTableRendererPreservesJSONNumberIDs(t *testing.T) {
 		t.Fatalf("did not expect scientific notation in output, got %q", out)
 	}
 }
+
+func TestTableRendererNestedColumns(t *testing.T) {
+	t.Parallel()
+
+	var stdout bytes.Buffer
+	err := RenderSuccess(&stdout, Options{
+		Format:  "human",
+		Columns: []string{"number", "positions[].name"},
+	}, Result{
+		Data: []map[string]any{
+			{
+				"number": "FV/1",
+				"positions": []any{
+					map[string]any{"name": "Produkt A"},
+					map[string]any{"name": "Produkt B"},
+				},
+			},
+		},
+		Meta:           Meta{Command: "invoice list"},
+		HumanRenderer:  TableRenderer{},
+		DefaultColumns: []string{"number"},
+	})
+	if err != nil {
+		t.Fatalf("RenderSuccess() error = %v", err)
+	}
+
+	out := stdout.String()
+	if !strings.Contains(out, "positions[].name") {
+		t.Fatalf("expected nested column header, got %q", out)
+	}
+	if !strings.Contains(out, "Produkt A, Produkt B") {
+		t.Fatalf("expected joined nested column values, got %q", out)
+	}
+}

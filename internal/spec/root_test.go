@@ -44,7 +44,18 @@ type fakeInvoiceService struct {
 func (f *fakeInvoiceService) List(_ context.Context, req invoice.ListRequest) (*invoice.ListResponse, error) {
 	return &invoice.ListResponse{
 		Invoices: []map[string]any{
-			{"id": 1, "number": "FV/1", "buyer_name": "Acme", "price_gross": 100, "status": "issued", "issue_date": "2026-04-01"},
+			{
+				"id":          1,
+				"number":      "FV/1",
+				"buyer_name":  "Acme",
+				"price_gross": 100,
+				"status":      "issued",
+				"issue_date":  "2026-04-01",
+				"positions": []any{
+					map[string]any{"name": "Produkt A", "tax": "23"},
+					map[string]any{"name": "Produkt B", "tax": "8"},
+				},
+			},
 		},
 		RawBody:    []byte(`[{"id":1}]`),
 		Profile:    req.Profile,
@@ -56,8 +67,16 @@ func (f *fakeInvoiceService) List(_ context.Context, req invoice.ListRequest) (*
 func (f *fakeInvoiceService) Get(_ context.Context, req invoice.GetRequest) (*invoice.GetResponse, error) {
 	f.getReq = req
 	return &invoice.GetResponse{
-		Invoice:   map[string]any{"id": 1, "number": "FV/1", "status": "issued"},
-		RawBody:   []byte(`{"id":1,"number":"FV/1","status":"issued"}`),
+		Invoice: map[string]any{
+			"id":     1,
+			"number": "FV/1",
+			"status": "issued",
+			"positions": []any{
+				map[string]any{"name": "Produkt A", "tax": "23"},
+				map[string]any{"name": "Produkt B", "tax": "8"},
+			},
+		},
+		RawBody:   []byte(`{"id":1,"number":"FV/1","status":"issued","positions":[{"name":"Produkt A","tax":"23"},{"name":"Produkt B","tax":"8"}]}`),
 		Profile:   req.Profile,
 		RequestID: "req-2",
 	}, nil
@@ -129,6 +148,33 @@ func TestCommandIntegration(t *testing.T) {
 		t.Fatalf("unexpected invoice get projection output: %s", stdout)
 	}
 
+	stdout, _, err = run("invoice", "get", "--id", "1", "--fields", "number,positions[].name", "--json")
+	if err != nil {
+		t.Fatalf("invoice get nested projection error = %v", err)
+	}
+	if !jsonContains(stdout, `"positions": [`) || !jsonContains(stdout, `"name": "Produkt A"`) {
+		t.Fatalf("unexpected nested projection output: %s", stdout)
+	}
+
+	stdout, stderr, err := run("invoice", "list", "--columns", "number,positions[].name")
+	if err != nil {
+		t.Fatalf("invoice list nested columns error = %v", err)
+	}
+	if stderr != "" {
+		t.Fatalf("unexpected stderr for nested columns: %s", stderr)
+	}
+	if !strings.Contains(stdout, "Produkt A, Produkt B") {
+		t.Fatalf("expected joined nested columns in output: %s", stdout)
+	}
+
+	stdout, _, err = run("invoice", "get", "--id", "1", "--fields", "number,custom_field", "--json")
+	if err != nil {
+		t.Fatalf("invoice get undocumented field warning error = %v", err)
+	}
+	if !jsonContains(stdout, `"code": "undocumented_field_path"`) {
+		t.Fatalf("expected undocumented field warning in output: %s", stdout)
+	}
+
 	stdout, _, err = run("invoice", "download", "--id", "1", "--json")
 	if err != nil {
 		t.Fatalf("invoice download error = %v", err)
@@ -160,6 +206,7 @@ func TestGolden(t *testing.T) {
 		{name: "invoice-list-help", args: []string{"invoice", "list", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "invoice-list-help.txt")},
 		{name: "schema-list-json", args: []string{"schema", "list", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-list.json")},
 		{name: "schema-invoice-list-json", args: []string{"schema", "invoice", "list", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-invoice-list.json")},
+		{name: "schema-invoice-get-json", args: []string{"schema", "invoice", "get", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-invoice-get.json")},
 	}
 
 	for _, tc := range cases {
@@ -243,6 +290,27 @@ func TestSchemaListUsesRows(t *testing.T) {
 	}
 	if _, ok := envelope.Data[0]["noun"]; !ok {
 		t.Fatalf("expected noun field in schema list row")
+	}
+}
+
+func TestSchemaInvoiceListExposesKnownFields(t *testing.T) {
+	t.Parallel()
+
+	var stdout bytes.Buffer
+	cmd := NewRootCommand(Dependencies{
+		Auth:    &fakeAuthService{},
+		Invoice: &fakeInvoiceService{},
+		Doctor:  &fakeDoctorService{},
+		Stdout:  &stdout,
+		Stderr:  &bytes.Buffer{},
+	})
+	cmd.SetArgs([]string{"schema", "invoice", "list", "--json"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("Execute() error = %v", err)
+	}
+
+	if !jsonContains(stdout.String(), `"path": "positions[].name"`) {
+		t.Fatalf("expected schema invoice list to advertise nested known fields: %s", stdout.String())
 	}
 }
 
