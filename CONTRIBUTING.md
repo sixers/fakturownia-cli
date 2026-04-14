@@ -4,7 +4,8 @@
 
 ```bash
 brew install go
-go test ./...
+brew install just
+just test
 ```
 
 ## Principles
@@ -19,9 +20,8 @@ go test ./...
 Run:
 
 ```bash
-go test ./...
-go vet ./...
-staticcheck ./...
+just test
+just lint
 ```
 
 If your change affects help or schema output, update the related golden files.

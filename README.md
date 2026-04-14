@@ -33,6 +33,7 @@ Download the correct archive for macOS or Linux from [GitHub Releases](https://g
 
 ```bash
 brew install go
+brew install just
 git clone https://github.com/sixers/fakturownia-cli.git
 cd fakturownia-cli
 go build ./cmd/fakturownia
@@ -107,9 +108,9 @@ fakturownia doctor run --json
 ## Development
 
 ```bash
-go test ./...
-go vet ./...
-staticcheck ./...
+just test
+just lint
+just build
 ```
 
-Golden tests cover help and schema output for the public CLI contract.
+Golden tests cover help and schema output for the public CLI contract. Run `just schema-help` when you want to refresh just that contract-focused test target.
