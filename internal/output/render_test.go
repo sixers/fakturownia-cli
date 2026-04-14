@@ -2,6 +2,7 @@ package output
 
 import (
 	"bytes"
+	"encoding/json"
 	"strings"
 	"testing"
 )
@@ -74,5 +75,36 @@ func TestRenderSuccessQuiet(t *testing.T) {
 
 	if got := stdout.String(); got != "FV/1\nFV/2\n" {
 		t.Fatalf("unexpected quiet output: %q", got)
+	}
+}
+
+func TestTableRendererPreservesJSONNumberIDs(t *testing.T) {
+	t.Parallel()
+
+	var stdout bytes.Buffer
+	err := RenderSuccess(&stdout, Options{
+		Format: "human",
+	}, Result{
+		Data: []map[string]any{
+			{
+				"id":         json.Number("486826456"),
+				"number":     "FV/1",
+				"issue_date": "2026-04-13",
+			},
+		},
+		Meta:           Meta{Command: "invoice list"},
+		HumanRenderer:  TableRenderer{},
+		DefaultColumns: []string{"id", "number", "issue_date"},
+	})
+	if err != nil {
+		t.Fatalf("RenderSuccess() error = %v", err)
+	}
+
+	out := stdout.String()
+	if !strings.Contains(out, "486826456") {
+		t.Fatalf("expected plain integer ID in output, got %q", out)
+	}
+	if strings.Contains(out, "e+") {
+		t.Fatalf("did not expect scientific notation in output, got %q", out)
 	}
 }

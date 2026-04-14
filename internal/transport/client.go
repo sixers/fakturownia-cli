@@ -1,6 +1,7 @@
 package transport
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/hex"
@@ -57,7 +58,9 @@ func (c *Client) GetJSON(ctx context.Context, path string, query url.Values, des
 		return nil, err
 	}
 	if dest != nil {
-		if err := json.Unmarshal(resp.RawBody, dest); err != nil {
+		dec := json.NewDecoder(bytes.NewReader(resp.RawBody))
+		dec.UseNumber()
+		if err := dec.Decode(dest); err != nil {
 			return nil, output.Internal(err, "decode upstream JSON response")
 		}
 	}

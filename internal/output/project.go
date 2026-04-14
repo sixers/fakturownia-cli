@@ -52,7 +52,9 @@ func toGeneric(data any) (any, error) {
 		return nil, err
 	}
 	var out any
-	if err := json.Unmarshal(raw, &out); err != nil {
+	dec := json.NewDecoder(bytes.NewReader(raw))
+	dec.UseNumber()
+	if err := dec.Decode(&out); err != nil {
 		return nil, err
 	}
 	return out, nil

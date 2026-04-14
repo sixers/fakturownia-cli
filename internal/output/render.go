@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
+	"strconv"
 	"strings"
 	"text/tabwriter"
 )
@@ -303,6 +305,14 @@ func stringify(value any) string {
 		return typed
 	case json.Number:
 		return typed.String()
+	case float64:
+		if math.IsNaN(typed) || math.IsInf(typed, 0) {
+			return fmt.Sprint(typed)
+		}
+		if typed == math.Trunc(typed) {
+			return strconv.FormatInt(int64(typed), 10)
+		}
+		return strconv.FormatFloat(typed, 'f', -1, 64)
 	default:
 		return fmt.Sprint(typed)
 	}
