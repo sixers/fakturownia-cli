@@ -25,6 +25,47 @@ The architecture is intentionally structured so more API resources can be added 
 
 ## Install
 
+### Install with the script
+
+The public install path is:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/sixers/fakturownia-cli/master/install.sh | bash
+```
+
+The installer:
+
+- detects `darwin` or `linux`
+- detects `amd64` or `arm64`
+- downloads the matching release archive
+- verifies it against `checksums.txt`
+- installs `fakturownia` into `~/.local/bin` by default
+- prints a PATH hint if `~/.local/bin` is not already on your PATH
+- uses `GITHUB_TOKEN` or `GH_TOKEN` when set
+- falls back to `gh release download` when `gh` is installed and authenticated
+
+Pin a specific version:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/sixers/fakturownia-cli/master/install.sh | VERSION=v0.1.0 bash
+```
+
+Install into a custom bin directory:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/sixers/fakturownia-cli/master/install.sh | BIN_DIR=/usr/local/bin bash
+```
+
+Run it from a local clone instead of piping from curl:
+
+```bash
+./install.sh
+VERSION=v0.1.0 ./install.sh
+BIN_DIR="$HOME/.local/bin" ./install.sh
+```
+
+While the repo is still private, the local-clone path is the practical option. If `gh` is installed and authenticated, the script can still download private release assets. Once the repo is public, the `curl ... | bash` flow works as-is.
+
 ### Build from source
 
 This is the simplest copy-paste path during early development:
@@ -42,7 +83,7 @@ case "$(basename "$SHELL")" in
 esac
 grep -qxF 'export PATH="$HOME/.local/bin:$PATH"' "$rc_file" || echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$rc_file"
 export PATH="$HOME/.local/bin:$PATH"
-fakturownia version
+fakturownia --version
 ```
 
 ### Install from a release
@@ -62,7 +103,7 @@ case "$(basename "$SHELL")" in
 esac
 grep -qxF 'export PATH="$HOME/.local/bin:$PATH"' "$rc_file" || echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$rc_file"
 export PATH="$HOME/.local/bin:$PATH"
-fakturownia version
+fakturownia --version
 ```
 
 Replace:
@@ -70,6 +111,8 @@ Replace:
 - `VERSION` with a release tag such as `v0.1.0`
 - `OS` with `darwin` or `linux`
 - `ARCH` with `amd64` or `arm64`
+
+The manual install path is mostly useful for debugging or air-gapped installs. The script above is the recommended path for normal users.
 
 ## Authentication
 
