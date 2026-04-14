@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"path/filepath"
 	"testing"
 	"time"
@@ -8,9 +9,13 @@ import (
 
 type stubStore struct {
 	values map[string]string
+	err    error
 }
 
 func (s stubStore) Get(name string) (string, error) {
+	if s.err != nil {
+		return "", s.err
+	}
 	return s.values[name], nil
 }
 
@@ -81,5 +86,28 @@ func TestUpsertProfile(t *testing.T) {
 	UpsertProfile(cfg, "work", "https://work.fakturownia.pl", now)
 	if cfg.Profiles["work"].URL != "https://work.fakturownia.pl" {
 		t.Fatalf("profile URL was not saved")
+	}
+}
+
+func TestResolvePropagatesStoreErrors(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "config.json")
+	cfg := &File{
+		SchemaVersion:  "fakturownia-cli/v1alpha1",
+		DefaultProfile: "default",
+		Profiles: map[string]Profile{
+			"default": {URL: "https://default.fakturownia.pl"},
+		},
+	}
+	if err := Save(path, cfg); err != nil {
+		t.Fatalf("Save() error = %v", err)
+	}
+
+	expected := errors.New("read token from keychain")
+	_, err := Resolve(path, Env{}, "", stubStore{err: expected})
+	if !errors.Is(err, expected) {
+		t.Fatalf("Resolve() error = %v, want wrapped %v", err, expected)
 	}
 }

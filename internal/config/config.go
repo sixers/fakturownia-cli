@@ -21,6 +21,7 @@ const (
 )
 
 var (
+	ErrSecretNotFound = errors.New("secret not found")
 	profileNamePattern = regexp.MustCompile(`^[A-Za-z0-9._-]+$`)
 	prefixPattern      = regexp.MustCompile(`^[A-Za-z0-9-]+$`)
 )
@@ -190,6 +191,8 @@ func Resolve(path string, env Env, profileFlag string, store TokenStore) (*Resol
 		if tokenErr == nil {
 			resolved.Token = token
 			resolved.TokenSource = "keychain"
+		} else if !errors.Is(tokenErr, ErrSecretNotFound) {
+			return nil, tokenErr
 		}
 	}
 

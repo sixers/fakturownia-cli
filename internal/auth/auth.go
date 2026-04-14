@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os/exec"
+	"runtime"
 	"strings"
 	"time"
 
@@ -13,7 +15,7 @@ import (
 	"github.com/sixers/fakturownia-cli/internal/output"
 )
 
-var ErrSecretNotFound = errors.New("secret not found")
+var ErrSecretNotFound = config.ErrSecretNotFound
 
 type Store interface {
 	config.ProbeableTokenStore
@@ -23,6 +25,11 @@ type Store interface {
 
 type KeyringStore struct {
 	ring keyring.Keyring
+}
+
+type SecurityStore struct {
+	service      string
+	securityPath string
 }
 
 type MemoryStore struct {
@@ -80,7 +87,18 @@ type LogoutResult struct {
 	Removed    bool   `json:"removed"`
 }
 
-func NewKeyringStore() (*KeyringStore, error) {
+func NewKeyringStore() (Store, error) {
+	if runtime.GOOS == "darwin" {
+		securityPath, err := exec.LookPath("security")
+		if err != nil {
+			return nil, output.Internal(err, "locate security command")
+		}
+		return &SecurityStore{
+			service:      config.ServiceName,
+			securityPath: securityPath,
+		}, nil
+	}
+
 	ring, err := keyring.Open(keyring.Config{
 		ServiceName: config.ServiceName,
 	})
@@ -109,6 +127,44 @@ func (s *KeyringStore) Set(name, value string) error {
 		return output.Internal(err, "write token to keychain")
 	}
 	return nil
+}
+
+func (s *SecurityStore) Get(name string) (string, error) {
+	stdout, stderr, err := s.run("find-generic-password", "-a", name, "-s", s.service, "-w")
+	if err != nil {
+		if securityItemNotFound(err, stderr) {
+			return "", ErrSecretNotFound
+		}
+		return "", output.Internal(wrapSecurityError(err, stderr), "read token from keychain")
+	}
+	return strings.TrimRight(stdout, "\r\n"), nil
+}
+
+func (s *SecurityStore) Set(name, value string) error {
+	_, stderr, err := s.run("add-generic-password", "-U", "-a", name, "-s", s.service, "-l", s.service, "-T", s.securityPath, "-w", value)
+	if err != nil {
+		return output.Internal(wrapSecurityError(err, stderr), "write token to keychain")
+	}
+	return nil
+}
+
+func (s *SecurityStore) Delete(name string) error {
+	_, stderr, err := s.run("delete-generic-password", "-a", name, "-s", s.service)
+	if err != nil && !securityItemNotFound(err, stderr) {
+		return output.Internal(wrapSecurityError(err, stderr), "delete token from keychain")
+	}
+	return nil
+}
+
+func (s *SecurityStore) Probe() error {
+	probeKey := fmt.Sprintf("doctor-probe-%d", time.Now().UnixNano())
+	if err := s.Set(probeKey, "ok"); err != nil {
+		return err
+	}
+	if _, err := s.Get(probeKey); err != nil {
+		return err
+	}
+	return s.Delete(probeKey)
 }
 
 func (s *KeyringStore) Delete(name string) error {
@@ -153,6 +209,31 @@ func (s *MemoryStore) Delete(name string) error {
 
 func (s *MemoryStore) Probe() error {
 	return nil
+}
+
+func (s *SecurityStore) run(args ...string) (string, string, error) {
+	cmd := exec.Command(s.securityPath, args...)
+	var stdout, stderr strings.Builder
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	err := cmd.Run()
+	return stdout.String(), stderr.String(), err
+}
+
+func securityItemNotFound(err error, stderr string) bool {
+	var exitErr *exec.ExitError
+	if errors.As(err, &exitErr) && exitErr.ExitCode() == 44 {
+		return true
+	}
+	return strings.Contains(stderr, "could not be found")
+}
+
+func wrapSecurityError(err error, stderr string) error {
+	message := strings.TrimSpace(stderr)
+	if message == "" {
+		return err
+	}
+	return fmt.Errorf("%s: %w", message, err)
 }
 
 func NewService(store Store) *Service {
