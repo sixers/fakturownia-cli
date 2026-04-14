@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/sixers/fakturownia-cli/internal/auth"
@@ -200,13 +201,19 @@ func assertGolden(t *testing.T, path, got string) {
 	if err != nil {
 		t.Fatalf("ReadFile() error = %v", err)
 	}
-	if string(want) != got {
-		t.Fatalf("golden mismatch for %s\nwant:\n%s\ngot:\n%s", path, string(want), got)
+	normalizedWant := normalizeGoldenText(string(want))
+	normalizedGot := normalizeGoldenText(got)
+	if normalizedWant != normalizedGot {
+		t.Fatalf("golden mismatch for %s\nwant:\n%s\ngot:\n%s", path, normalizedWant, normalizedGot)
 	}
 }
 
 func jsonContains(body, needle string) bool {
 	return bytes.Contains([]byte(body), []byte(needle))
+}
+
+func normalizeGoldenText(value string) string {
+	return strings.ReplaceAll(value, "\r\n", "\n")
 }
 
 func TestSchemaListUsesRows(t *testing.T) {
