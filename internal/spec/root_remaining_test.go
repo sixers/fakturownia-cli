@@ -9,7 +9,6 @@ import (
 	"github.com/sixers/fakturownia-cli/internal/account"
 	"github.com/sixers/fakturownia-cli/internal/auth"
 	"github.com/sixers/fakturownia-cli/internal/department"
-	"github.com/sixers/fakturownia-cli/internal/output"
 	"github.com/sixers/fakturownia-cli/internal/transport"
 	"github.com/sixers/fakturownia-cli/internal/user"
 	"github.com/sixers/fakturownia-cli/internal/webhook"
@@ -301,13 +300,5 @@ func TestAccountDeleteRequiresYes(t *testing.T) {
 	text := stdout + stderr
 	if !strings.Contains(text, "--yes is required for account delete") {
 		t.Fatalf("expected confirmation message, got: %s", text)
-	}
-}
-
-func assertAppErrorCode(t *testing.T, err error, code string) {
-	t.Helper()
-	appErr := output.AsAppError(err)
-	if appErr.Detail().Code != code {
-		t.Fatalf("expected error code %q, got %#v", code, appErr.Detail())
 	}
 }
