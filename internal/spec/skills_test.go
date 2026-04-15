@@ -45,6 +45,7 @@ func TestGeneratedSkillFilesMatchGolden(t *testing.T) {
 		filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "categories", "SKILL.md")),
 		filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "clients", "SKILL.md")),
 		filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "payments", "SKILL.md")),
+		filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "bank-accounts", "SKILL.md")),
 		filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "products", "SKILL.md")),
 		filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "price-lists", "SKILL.md")),
 		filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "invoices", "SKILL.md")),
@@ -124,6 +125,8 @@ func TestInvoicesSkillIncludesOutputDiscovery(t *testing.T) {
 		"fakturownia schema invoice get --json",
 		"output.known_fields",
 		"positions[].name",
+		"send-gov",
+		"gov_status",
 	}
 	for _, needle := range want {
 		if !strings.Contains(invoices, needle) {
@@ -241,6 +244,29 @@ func TestPaymentsSkillIncludesRequestDiscovery(t *testing.T) {
 	for _, needle := range want {
 		if !strings.Contains(payments, needle) {
 			t.Fatalf("expected payments skill to include %q: %s", needle, payments)
+		}
+	}
+}
+
+func TestBankAccountsSkillIncludesRequestDiscovery(t *testing.T) {
+	t.Parallel()
+
+	files, err := RenderSkillFiles()
+	if err != nil {
+		t.Fatalf("RenderSkillFiles() error = %v", err)
+	}
+	byPath := generatedFileMap(files)
+
+	bankAccounts := byPath[filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "bank-accounts", "SKILL.md"))]
+	want := []string{
+		"fakturownia schema bank-account list --json",
+		"fakturownia schema bank-account create --json",
+		"bank_account_version_departments[]",
+		"buyer_mass_payment_code",
+	}
+	for _, needle := range want {
+		if !strings.Contains(bankAccounts, needle) {
+			t.Fatalf("expected bank-accounts skill to include %q: %s", needle, bankAccounts)
 		}
 	}
 }

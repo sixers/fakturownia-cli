@@ -51,6 +51,7 @@ Examples
   fakturownia invoice get --id 123 --include descriptions --fields descriptions[].content --json
   fakturownia invoice get --id 123 --correction-positions full --json
   fakturownia invoice get --id 123 --fields id,number,status --json
+  fakturownia invoice get --id 123 --fields id,number,bank_accounts[].bank_account_number --json
   fakturownia invoice get --id 123 --fields number,positions[].name --json
   fakturownia invoice get --id 123 --raw
 

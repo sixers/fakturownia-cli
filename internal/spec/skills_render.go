@@ -279,6 +279,10 @@ func renderAreaSkill(bundle SkillBundleSpec, area SkillAreaSpec) (string, error)
 		writePaymentsDiscoverySection(&b)
 	}
 
+	if area.Key == "bank-accounts" {
+		writeBankAccountsDiscoverySection(&b)
+	}
+
 	if area.Key == "products" {
 		writeProductsDiscoverySection(&b)
 	}
@@ -299,8 +303,8 @@ func renderAreaSkill(bundle SkillBundleSpec, area SkillAreaSpec) (string, error)
 		b.WriteString("## Schema Output\n\n")
 		b.WriteString("- `schema list` enumerates supported commands.\n")
 		b.WriteString("- `schema <noun> <verb>` returns flags, env vars, examples, exit codes, output modes, and output schema details.\n")
-		b.WriteString("- For account, auth exchange, category, client, department, invoice, issuer, payment, product, price-list, recurring, warehouse, warehouse-action, warehouse-document, and webhook commands, inspect `output.known_fields`, `path_syntax`, and the generated `data_schema` before building `--fields` selectors.\n")
-		b.WriteString("- For account, category, client, department, invoice, issuer, payment, product, price-list, recurring, user, warehouse, warehouse-document, and webhook write commands, inspect `request_body_schema` before constructing `--input` payloads.\n\n")
+		b.WriteString("- For account, auth exchange, bank-account, category, client, department, invoice, issuer, payment, product, price-list, recurring, warehouse, warehouse-action, warehouse-document, and webhook commands, inspect `output.known_fields`, `path_syntax`, and the generated `data_schema` before building `--fields` selectors.\n")
+		b.WriteString("- For account, bank-account, category, client, department, invoice, issuer, payment, product, price-list, recurring, user, warehouse, warehouse-document, and webhook write commands, inspect `request_body_schema` before constructing `--input` payloads.\n\n")
 	}
 
 	if area.Key == "doctor" {
@@ -372,11 +376,15 @@ func renderRecipeSkill(bundle SkillBundleSpec, recipe RecipeSpec) (string, error
 }
 
 func writeInvoicesDiscoverySection(b *strings.Builder) {
-	b.WriteString("## Output Discovery\n\n")
+	b.WriteString("## Output and Request Discovery\n\n")
 	b.WriteString("- Use `fakturownia schema invoice list --json` and `fakturownia schema invoice get --json` before building selectors.\n")
-	b.WriteString("- Read `output.known_fields` to discover README-backed invoice field names.\n")
+	b.WriteString("- Read `output.known_fields` to discover invoice field names curated from the main README plus `KSeF.md`.\n")
 	b.WriteString("- Nested selectors use `dot_bracket` paths such as `positions[].name`.\n")
 	b.WriteString("- Use `fakturownia schema invoice create --json` and `fakturownia schema invoice update --json` before building invoice payloads.\n")
+	b.WriteString("- Invoice schemas also cite the bank-account addendum for fields such as `bank_account_id`, `buyer_mass_payment_code`, and embedded `bank_accounts[]` entries.\n")
+	b.WriteString("- The API uses `gov` field names for KSeF integration. In practice, `gov_status`, `gov_id`, and attachment kinds such as `gov` / `gov_upo` are the KSeF fields to inspect.\n")
+	b.WriteString("- Use `fakturownia invoice send-gov --id ... --json` to queue an existing invoice for KSeF and `fakturownia invoice download-attachment --id ... --kind gov|gov_upo --json` to fetch KSeF XML documents.\n")
+	b.WriteString("- `--gov-save-and-send` is a top-level companion flag for `invoice create` and `invoice update`, outside the inner invoice object.\n")
 	b.WriteString("- `output.known_fields` is curated, not exhaustive, so valid undocumented paths may still work.\n\n")
 }
 
@@ -451,6 +459,16 @@ func writePaymentsDiscoverySection(b *strings.Builder) {
 	b.WriteString("- Use `fakturownia schema payment create --json` and `fakturownia schema payment update --json` to inspect `request_body_schema` and accepted `--input` modes.\n")
 	b.WriteString("- `--input` accepts inline JSON, `@file`, or `-` for stdin, and the CLI wraps the inner object into the upstream `banking_payment` envelope.\n")
 	b.WriteString("- Use `--include invoices` on `payment list` when you need the README-backed include mode, and inspect request fields such as `invoice_id` and `invoice_ids[]` before creating or updating payments.\n\n")
+}
+
+func writeBankAccountsDiscoverySection(b *strings.Builder) {
+	b.WriteString("## Output and Request Discovery\n\n")
+	b.WriteString("- Use `fakturownia schema bank-account list --json` and `fakturownia schema bank-account get --json` before building selectors.\n")
+	b.WriteString("- Read `output.known_fields` to discover addendum-backed bank-account fields such as `bank_name`, `bank_account`, `bank_account_currency`, `default`, and nested `bank_account_version_departments[]` settings.\n")
+	b.WriteString("- Use `fakturownia schema bank-account create --json` and `fakturownia schema bank-account update --json` to inspect `request_body_schema` and accepted `--input` modes.\n")
+	b.WriteString("- `--input` accepts inline JSON, `@file`, or `-` for stdin, and the CLI wraps the inner object into the upstream `bank_account` envelope.\n")
+	b.WriteString("- The addendum uses `bank` in write examples while returned objects expose `bank_name`; both appear in schema discovery so agents can map the two shapes cleanly.\n")
+	b.WriteString("- Invoice schemas now also cite the bank-account addendum for `bank_account_id`, `buyer_mass_payment_code`, and embedded `bank_accounts[]` fields.\n\n")
 }
 
 func writeProductsDiscoverySection(b *strings.Builder) {

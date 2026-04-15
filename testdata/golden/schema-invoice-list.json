@@ -263,6 +263,33 @@
       "items": {
         "additionalProperties": true,
         "properties": {
+          "bank_accounts": {
+            "items": {
+              "additionalProperties": true,
+              "properties": {
+                "bank_account_number": {
+                  "type": "string"
+                },
+                "bank_currency": {
+                  "type": "string"
+                },
+                "bank_name": {
+                  "type": "string"
+                },
+                "bank_swift": {
+                  "type": "string"
+                },
+                "id": {
+                  "type": "integer"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "type": "array"
+          },
           "buyer_email": {
             "type": "string"
           },
@@ -270,6 +297,16 @@
             "type": "string"
           },
           "buyer_tax_no": {
+            "type": "string"
+          },
+          "buyer_tax_no_kind": {
+            "enum": [
+              "",
+              "nip_ue",
+              "other",
+              "empty",
+              "nip_with_id"
+            ],
             "type": "string"
           },
           "cancel_reason": {
@@ -328,6 +365,47 @@
           "from_invoice_id": {
             "type": "integer"
           },
+          "gov_corrected_invoice_number": {
+            "type": "string"
+          },
+          "gov_error_messages": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "gov_id": {
+            "type": "string"
+          },
+          "gov_link": {
+            "type": "string"
+          },
+          "gov_sell_date": {
+            "type": "string"
+          },
+          "gov_send_date": {
+            "type": "string"
+          },
+          "gov_status": {
+            "enum": [
+              "ok",
+              "processing",
+              "send_error",
+              "server_error",
+              "not_applicable",
+              "not_connected",
+              "demo_ok",
+              "demo_processing",
+              "demo_send_error",
+              "demo_server_error",
+              "demo_not_applicable",
+              "demo_not_connected"
+            ],
+            "type": "string"
+          },
+          "gov_verification_link": {
+            "type": "string"
+          },
           "id": {
             "type": "integer"
           },
@@ -348,6 +426,12 @@
             "items": {
               "additionalProperties": true,
               "properties": {
+                "company": {
+                  "type": "boolean"
+                },
+                "country": {
+                  "type": "string"
+                },
                 "email": {
                   "type": "string"
                 },
@@ -355,6 +439,33 @@
                   "type": "integer"
                 },
                 "name": {
+                  "type": "string"
+                },
+                "role": {
+                  "enum": [
+                    "Wystawca faktury",
+                    "Faktor",
+                    "Podmiot pierwotny",
+                    "JST – wystawca",
+                    "Członek GV – wystawca",
+                    "Rola inna"
+                  ],
+                  "type": "string"
+                },
+                "role_description": {
+                  "type": "string"
+                },
+                "tax_no": {
+                  "type": "string"
+                },
+                "tax_no_kind": {
+                  "enum": [
+                    "",
+                    "nip_ue",
+                    "other",
+                    "empty",
+                    "nip_with_id"
+                  ],
                   "type": "string"
                 }
               },
@@ -512,6 +623,9 @@
                 "note": {
                   "type": "string"
                 },
+                "participation": {
+                  "type": "number"
+                },
                 "phone": {
                   "type": "string"
                 },
@@ -519,9 +633,34 @@
                   "type": "string"
                 },
                 "role": {
+                  "enum": [
+                    "Odbiorca",
+                    "Dodatkowy nabywca",
+                    "Dokonujący płatności",
+                    "JST – odbiorca",
+                    "Członek GV – odbiorca",
+                    "Pracownik",
+                    "Rola inna"
+                  ],
+                  "type": "string"
+                },
+                "role_description": {
                   "type": "string"
                 },
                 "street": {
+                  "type": "string"
+                },
+                "tax_no": {
+                  "type": "string"
+                },
+                "tax_no_kind": {
+                  "enum": [
+                    "",
+                    "nip_ue",
+                    "other",
+                    "empty",
+                    "nip_with_id"
+                  ],
                   "type": "string"
                 }
               },
@@ -536,6 +675,16 @@
             "type": "string"
           },
           "seller_tax_no": {
+            "type": "string"
+          },
+          "seller_tax_no_kind": {
+            "enum": [
+              "",
+              "nip_ue",
+              "other",
+              "empty",
+              "nip_with_id"
+            ],
             "type": "string"
           },
           "settlement_positions": {
@@ -583,6 +732,33 @@
           "items": {
             "additionalProperties": true,
             "properties": {
+              "bank_accounts": {
+                "items": {
+                  "additionalProperties": true,
+                  "properties": {
+                    "bank_account_number": {
+                      "type": "string"
+                    },
+                    "bank_currency": {
+                      "type": "string"
+                    },
+                    "bank_name": {
+                      "type": "string"
+                    },
+                    "bank_swift": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "integer"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              },
               "buyer_email": {
                 "type": "string"
               },
@@ -590,6 +766,16 @@
                 "type": "string"
               },
               "buyer_tax_no": {
+                "type": "string"
+              },
+              "buyer_tax_no_kind": {
+                "enum": [
+                  "",
+                  "nip_ue",
+                  "other",
+                  "empty",
+                  "nip_with_id"
+                ],
                 "type": "string"
               },
               "cancel_reason": {
@@ -648,6 +834,47 @@
               "from_invoice_id": {
                 "type": "integer"
               },
+              "gov_corrected_invoice_number": {
+                "type": "string"
+              },
+              "gov_error_messages": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "gov_id": {
+                "type": "string"
+              },
+              "gov_link": {
+                "type": "string"
+              },
+              "gov_sell_date": {
+                "type": "string"
+              },
+              "gov_send_date": {
+                "type": "string"
+              },
+              "gov_status": {
+                "enum": [
+                  "ok",
+                  "processing",
+                  "send_error",
+                  "server_error",
+                  "not_applicable",
+                  "not_connected",
+                  "demo_ok",
+                  "demo_processing",
+                  "demo_send_error",
+                  "demo_server_error",
+                  "demo_not_applicable",
+                  "demo_not_connected"
+                ],
+                "type": "string"
+              },
+              "gov_verification_link": {
+                "type": "string"
+              },
               "id": {
                 "type": "integer"
               },
@@ -668,6 +895,12 @@
                 "items": {
                   "additionalProperties": true,
                   "properties": {
+                    "company": {
+                      "type": "boolean"
+                    },
+                    "country": {
+                      "type": "string"
+                    },
                     "email": {
                       "type": "string"
                     },
@@ -675,6 +908,33 @@
                       "type": "integer"
                     },
                     "name": {
+                      "type": "string"
+                    },
+                    "role": {
+                      "enum": [
+                        "Wystawca faktury",
+                        "Faktor",
+                        "Podmiot pierwotny",
+                        "JST – wystawca",
+                        "Członek GV – wystawca",
+                        "Rola inna"
+                      ],
+                      "type": "string"
+                    },
+                    "role_description": {
+                      "type": "string"
+                    },
+                    "tax_no": {
+                      "type": "string"
+                    },
+                    "tax_no_kind": {
+                      "enum": [
+                        "",
+                        "nip_ue",
+                        "other",
+                        "empty",
+                        "nip_with_id"
+                      ],
                       "type": "string"
                     }
                   },
@@ -832,6 +1092,9 @@
                     "note": {
                       "type": "string"
                     },
+                    "participation": {
+                      "type": "number"
+                    },
                     "phone": {
                       "type": "string"
                     },
@@ -839,9 +1102,34 @@
                       "type": "string"
                     },
                     "role": {
+                      "enum": [
+                        "Odbiorca",
+                        "Dodatkowy nabywca",
+                        "Dokonujący płatności",
+                        "JST – odbiorca",
+                        "Członek GV – odbiorca",
+                        "Pracownik",
+                        "Rola inna"
+                      ],
+                      "type": "string"
+                    },
+                    "role_description": {
                       "type": "string"
                     },
                     "street": {
+                      "type": "string"
+                    },
+                    "tax_no": {
+                      "type": "string"
+                    },
+                    "tax_no_kind": {
+                      "enum": [
+                        "",
+                        "nip_ue",
+                        "other",
+                        "empty",
+                        "nip_with_id"
+                      ],
                       "type": "string"
                     }
                   },
@@ -856,6 +1144,16 @@
                 "type": "string"
               },
               "seller_tax_no": {
+                "type": "string"
+              },
+              "seller_tax_no_kind": {
+                "enum": [
+                  "",
+                  "nip_ue",
+                  "other",
+                  "empty",
+                  "nip_with_id"
+                ],
                 "type": "string"
               },
               "settlement_positions": {
@@ -1040,6 +1338,16 @@
         "source": "readme",
         "url": "https://github.com/fakturownia/API/blob/master/README.md"
       },
+      "additional_catalog_bases": [
+        {
+          "source": "ksef",
+          "url": "https://github.com/fakturownia/API/blob/master/KSeF.md"
+        },
+        {
+          "source": "bank_accounts",
+          "url": "https://github.com/fakturownia/API/blob/master/API_RACHUNKI_BANKOWE.md"
+        }
+      ],
       "path_syntax": "dot_bracket",
       "known_fields": [
         {
@@ -1134,6 +1442,124 @@
             "partial",
             "rejected"
           ]
+        },
+        {
+          "path": "gov_status",
+          "type": "string",
+          "description": "KSeF send status",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice list",
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "source_section": "Sprawdzanie statusu wysyłki",
+          "enum_values": [
+            "ok",
+            "processing",
+            "send_error",
+            "server_error",
+            "not_applicable",
+            "not_connected",
+            "demo_ok",
+            "demo_processing",
+            "demo_send_error",
+            "demo_server_error",
+            "demo_not_applicable",
+            "demo_not_connected"
+          ]
+        },
+        {
+          "path": "gov_id",
+          "type": "string",
+          "description": "KSeF invoice number",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice list",
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "source_section": "Sprawdzanie statusu wysyłki"
+        },
+        {
+          "path": "gov_send_date",
+          "type": "string",
+          "description": "KSeF send timestamp",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice list",
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "source_section": "Sprawdzanie statusu wysyłki"
+        },
+        {
+          "path": "gov_sell_date",
+          "type": "string",
+          "description": "Sale date registered in KSeF",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice list",
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "source_section": "Sprawdzanie statusu wysyłki"
+        },
+        {
+          "path": "gov_error_messages[]",
+          "type": "array<string>",
+          "description": "KSeF validation or send errors",
+          "projectable": true,
+          "selectable": false,
+          "commands": [
+            "invoice list",
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "source_section": "Sprawdzanie statusu wysyłki"
+        },
+        {
+          "path": "gov_verification_link",
+          "type": "string",
+          "description": "KSeF verification link used for QR codes",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice list",
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "source_section": "Sprawdzanie statusu wysyłki"
+        },
+        {
+          "path": "gov_link",
+          "type": "string",
+          "description": "Direct KSeF portal link for the invoice",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice list",
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "source_section": "Sprawdzanie statusu wysyłki"
+        },
+        {
+          "path": "gov_corrected_invoice_number",
+          "type": "string",
+          "description": "KSeF number of the corrected invoice",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice list",
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "source_section": "Korekty faktur"
         },
         {
           "path": "issue_date",
@@ -1300,6 +1726,117 @@
           "source_section": "Faktury - specyfikacja, rodzaje pól, kody GTU"
         },
         {
+          "path": "buyer_tax_no_kind",
+          "type": "string",
+          "description": "Buyer tax identifier kind",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice list",
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "source_section": "Rodzaj identyfikatora podatkowego (tax_no_kind)",
+          "enum_values": [
+            "",
+            "nip_ue",
+            "other",
+            "empty",
+            "nip_with_id"
+          ]
+        },
+        {
+          "path": "bank_accounts[]",
+          "type": "array<object>",
+          "description": "Bank accounts exposed on the invoice",
+          "projectable": true,
+          "selectable": false,
+          "commands": [
+            "invoice list",
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "source_section": "Pobieranie rachunków bankowych z faktury"
+        },
+        {
+          "path": "bank_accounts[].id",
+          "type": "integer",
+          "description": "Invoice bank account ID",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice list",
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "source_section": "Pobieranie rachunków bankowych z faktury"
+        },
+        {
+          "path": "bank_accounts[].name",
+          "type": "string",
+          "description": "Invoice bank account name",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice list",
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "source_section": "Pobieranie rachunków bankowych z faktury"
+        },
+        {
+          "path": "bank_accounts[].bank_name",
+          "type": "string",
+          "description": "Invoice bank name",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice list",
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "source_section": "Pobieranie rachunków bankowych z faktury"
+        },
+        {
+          "path": "bank_accounts[].bank_account_number",
+          "type": "string",
+          "description": "Invoice bank account number",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice list",
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "source_section": "Pobieranie rachunków bankowych z faktury"
+        },
+        {
+          "path": "bank_accounts[].bank_currency",
+          "type": "string",
+          "description": "Invoice bank account currency",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice list",
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "source_section": "Pobieranie rachunków bankowych z faktury"
+        },
+        {
+          "path": "bank_accounts[].bank_swift",
+          "type": "string",
+          "description": "Invoice bank SWIFT or BIC code",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice list",
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "source_section": "Pobieranie rachunków bankowych z faktury"
+        },
+        {
           "path": "seller_name",
           "type": "string",
           "description": "Seller display name",
@@ -1324,6 +1861,26 @@
           ],
           "presence": "common",
           "source_section": "Faktury - specyfikacja, rodzaje pól, kody GTU"
+        },
+        {
+          "path": "seller_tax_no_kind",
+          "type": "string",
+          "description": "Seller tax identifier kind",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice list",
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "source_section": "Rodzaj identyfikatora podatkowego (tax_no_kind)",
+          "enum_values": [
+            "",
+            "nip_ue",
+            "other",
+            "empty",
+            "nip_with_id"
+          ]
         },
         {
           "path": "invoice_id",
@@ -1922,6 +2479,45 @@
           "source_section": "Odbiorcy/Wystawcy na fakturze"
         },
         {
+          "path": "recipients[].tax_no",
+          "type": "string",
+          "description": "Recipient tax number",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice list",
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes recipients"
+          ],
+          "source_section": "Odbiorca faktury (Recipient)"
+        },
+        {
+          "path": "recipients[].tax_no_kind",
+          "type": "string",
+          "description": "Recipient tax identifier kind",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice list",
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes recipients"
+          ],
+          "source_section": "Rodzaj identyfikatora podatkowego (tax_no_kind)",
+          "enum_values": [
+            "",
+            "nip_ue",
+            "other",
+            "empty",
+            "nip_with_id"
+          ]
+        },
+        {
           "path": "recipients[].company",
           "type": "boolean",
           "description": "Recipient company flag",
@@ -2063,7 +2659,48 @@
           "requires": [
             "invoice includes recipients"
           ],
-          "source_section": "Odbiorcy/Wystawcy na fakturze"
+          "source_section": "Odbiorca faktury (Recipient)",
+          "enum_values": [
+            "Odbiorca",
+            "Dodatkowy nabywca",
+            "Dokonujący płatności",
+            "JST – odbiorca",
+            "Członek GV – odbiorca",
+            "Pracownik",
+            "Rola inna"
+          ]
+        },
+        {
+          "path": "recipients[].role_description",
+          "type": "string",
+          "description": "Recipient custom role description",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice list",
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes recipients"
+          ],
+          "source_section": "Odbiorca faktury (Recipient)"
+        },
+        {
+          "path": "recipients[].participation",
+          "type": "number",
+          "description": "Recipient percentage participation",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice list",
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes recipients"
+          ],
+          "source_section": "Odbiorca faktury (Recipient)"
         },
         {
           "path": "issuers[]",
@@ -2128,6 +2765,117 @@
             "invoice includes issuers"
           ],
           "source_section": "Odbiorcy/Wystawcy na fakturze"
+        },
+        {
+          "path": "issuers[].tax_no",
+          "type": "string",
+          "description": "Issuer tax number",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice list",
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes issuers"
+          ],
+          "source_section": "Wystawca faktury (Issuer)"
+        },
+        {
+          "path": "issuers[].tax_no_kind",
+          "type": "string",
+          "description": "Issuer tax identifier kind",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice list",
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes issuers"
+          ],
+          "source_section": "Rodzaj identyfikatora podatkowego (tax_no_kind)",
+          "enum_values": [
+            "",
+            "nip_ue",
+            "other",
+            "empty",
+            "nip_with_id"
+          ]
+        },
+        {
+          "path": "issuers[].company",
+          "type": "boolean",
+          "description": "Issuer company flag",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice list",
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes issuers"
+          ],
+          "source_section": "Wystawca faktury (Issuer)"
+        },
+        {
+          "path": "issuers[].country",
+          "type": "string",
+          "description": "Issuer country",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice list",
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes issuers"
+          ],
+          "source_section": "Wystawca faktury (Issuer)"
+        },
+        {
+          "path": "issuers[].role",
+          "type": "string",
+          "description": "Issuer role",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice list",
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes issuers"
+          ],
+          "source_section": "Wystawca faktury (Issuer)",
+          "enum_values": [
+            "Wystawca faktury",
+            "Faktor",
+            "Podmiot pierwotny",
+            "JST – wystawca",
+            "Członek GV – wystawca",
+            "Rola inna"
+          ]
+        },
+        {
+          "path": "issuers[].role_description",
+          "type": "string",
+          "description": "Issuer custom role description",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice list",
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes issuers"
+          ],
+          "source_section": "Wystawca faktury (Issuer)"
         },
         {
           "path": "settlement_positions[]",

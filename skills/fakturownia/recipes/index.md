@@ -14,6 +14,12 @@ Generated workflow recipes for common invoice and recurring tasks.
 | [fakturownia-invoice-copy](invoice-copy/SKILL.md) | Create a new invoice by copying another invoice, order, or proforma with `copy_invoice_from`. |
 | [fakturownia-invoice-correction](invoice-correction/SKILL.md) | Create and inspect correction invoices, including before/after correction fields. |
 | [fakturownia-invoice-oss](invoice-oss/SKILL.md) | Create an OSS invoice and ask the API to validate the OSS conditions before marking it. |
+| [fakturownia-invoice-ksef-create-send](invoice-ksef-create-send/SKILL.md) | Create an invoice with the API-native `gov` companion flag that queues the document for KSeF submission right away. |
+| [fakturownia-invoice-ksef-send-status](invoice-ksef-send-status/SKILL.md) | Queue an already-created invoice for KSeF submission and read the `gov_*` status fields that the API returns. |
+| [fakturownia-invoice-ksef-download-documents](invoice-ksef-download-documents/SKILL.md) | Download KSeF XML documents through the generic invoice attachment endpoint using API-native `gov` kinds. |
+| [fakturownia-invoice-ksef-tax-id-kinds](invoice-ksef-tax-id-kinds/SKILL.md) | Prepare buyer and seller tax identifier fields for KSeF-aware invoice payloads, including foreign buyers. |
+| [fakturownia-invoice-ksef-recipients-issuers](invoice-ksef-recipients-issuers/SKILL.md) | Build recipient and issuer payloads with KSeF-specific roles, tax identifier kinds, and participation fields. |
+| [fakturownia-invoice-ksef-correction-to-zero](invoice-ksef-correction-to-zero/SKILL.md) | Model KSeF correction workflows, including `gov_corrected_invoice_number` and the practical correction-to-zero pattern. |
 | [fakturownia-invoice-send-email](invoice-send-email/SKILL.md) | Send an invoice email, optionally overriding recipients and attaching the PDF. |
 | [fakturownia-invoice-cancel](invoice-cancel/SKILL.md) | Cancel an invoice and optionally store a cancellation reason. |
 | [fakturownia-invoice-recipients-issuers](invoice-recipients-issuers/SKILL.md) | Create or update invoice recipients and issuers through the generic invoice payload. |

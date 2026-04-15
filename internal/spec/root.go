@@ -13,6 +13,7 @@ import (
 
 	"github.com/sixers/fakturownia-cli/internal/account"
 	"github.com/sixers/fakturownia-cli/internal/auth"
+	"github.com/sixers/fakturownia-cli/internal/bankaccount"
 	"github.com/sixers/fakturownia-cli/internal/category"
 	"github.com/sixers/fakturownia-cli/internal/client"
 	"github.com/sixers/fakturownia-cli/internal/config"
@@ -85,10 +86,12 @@ type InvoiceService interface {
 	Update(context.Context, invoice.UpdateRequest) (*invoice.UpdateResponse, error)
 	Delete(context.Context, invoice.DeleteRequest) (*invoice.DeleteResponse, error)
 	SendEmail(context.Context, invoice.SendEmailRequest) (*invoice.SendEmailResponse, error)
+	SendGov(context.Context, invoice.SendGovRequest) (*invoice.SendGovResponse, error)
 	ChangeStatus(context.Context, invoice.ChangeStatusRequest) (*invoice.ChangeStatusResponse, error)
 	Cancel(context.Context, invoice.CancelRequest) (*invoice.CancelResponse, error)
 	PublicLink(context.Context, invoice.PublicLinkRequest) (*invoice.PublicLinkResponse, error)
 	AddAttachment(context.Context, invoice.AddAttachmentRequest) (*invoice.AddAttachmentResponse, error)
+	DownloadAttachment(context.Context, invoice.DownloadAttachmentRequest) (*invoice.DownloadAttachmentResponse, error)
 	DownloadAttachments(context.Context, invoice.DownloadAttachmentsRequest) (*invoice.DownloadAttachmentsResponse, error)
 	FiscalPrint(context.Context, invoice.FiscalPrintRequest) (*invoice.FiscalPrintResponse, error)
 }
@@ -107,6 +110,14 @@ type PaymentService interface {
 	Create(context.Context, payment.CreateRequest) (*payment.CreateResponse, error)
 	Update(context.Context, payment.UpdateRequest) (*payment.UpdateResponse, error)
 	Delete(context.Context, payment.DeleteRequest) (*payment.DeleteResponse, error)
+}
+
+type BankAccountService interface {
+	List(context.Context, bankaccount.ListRequest) (*bankaccount.ListResponse, error)
+	Get(context.Context, bankaccount.GetRequest) (*bankaccount.GetResponse, error)
+	Create(context.Context, bankaccount.CreateRequest) (*bankaccount.CreateResponse, error)
+	Update(context.Context, bankaccount.UpdateRequest) (*bankaccount.UpdateResponse, error)
+	Delete(context.Context, bankaccount.DeleteRequest) (*bankaccount.DeleteResponse, error)
 }
 
 type ProductService interface {
@@ -175,6 +186,7 @@ type Dependencies struct {
 	Invoice         InvoiceService
 	Issuer          IssuerService
 	Payment         PaymentService
+	BankAccount     BankAccountService
 	Product         ProductService
 	PriceList       PriceListService
 	Recurring       RecurringService
@@ -244,6 +256,7 @@ func NewRootCommand(deps Dependencies) *cobra.Command {
 	root.AddCommand(newClientCommand(deps, &globals))
 	root.AddCommand(newInvoiceCommand(deps, &globals))
 	root.AddCommand(newPaymentCommand(deps, &globals))
+	root.AddCommand(newBankAccountCommand(deps, &globals))
 	root.AddCommand(newProductCommand(deps, &globals))
 	root.AddCommand(newPriceListCommand(deps, &globals))
 	root.AddCommand(newRecurringCommand(deps, &globals))
@@ -2303,6 +2316,7 @@ func newInvoiceCommand(deps Dependencies, globals *globalOptions) *cobra.Command
 	createCmd.Flags().BoolVar(&createReq.IdentifyOSS, "identify-oss", false, "validate OSS eligibility before marking the invoice as OSS")
 	createCmd.Flags().BoolVar(&createReq.FillDefaultDescriptions, "fill-default-descriptions", false, "include default account descriptions on the created invoice")
 	createCmd.Flags().StringVar(&createReq.CorrectionPositions, "correction-positions", "", "pass a correction positions companion option such as full")
+	createCmd.Flags().BoolVar(&createReq.GovSaveAndSend, "gov-save-and-send", false, "save the invoice and immediately queue it for KSeF submission")
 	_ = createCmd.MarkFlagRequired("input")
 
 	updateSpec, _ := FindCommand("invoice", "update")
@@ -2358,6 +2372,7 @@ func newInvoiceCommand(deps Dependencies, globals *globalOptions) *cobra.Command
 	updateCmd.Flags().BoolVar(&updateReq.IdentifyOSS, "identify-oss", false, "validate OSS eligibility before marking the invoice as OSS")
 	updateCmd.Flags().BoolVar(&updateReq.FillDefaultDescriptions, "fill-default-descriptions", false, "include default account descriptions on the updated invoice")
 	updateCmd.Flags().StringVar(&updateReq.CorrectionPositions, "correction-positions", "", "pass a correction positions companion option such as full")
+	updateCmd.Flags().BoolVar(&updateReq.GovSaveAndSend, "gov-save-and-send", false, "save the invoice and immediately queue it for KSeF submission")
 	_ = updateCmd.MarkFlagRequired("id")
 	_ = updateCmd.MarkFlagRequired("input")
 
@@ -2459,6 +2474,50 @@ func newInvoiceCommand(deps Dependencies, globals *globalOptions) *cobra.Command
 	sendCmd.Flags().BoolVar(&sendReq.UpdateBuyerEmail, "update-buyer-email", false, "update the invoice buyer or recipient email when email-to is provided")
 	sendCmd.Flags().StringVar(&sendReq.PrintOption, "print-option", "", "PDF print option")
 	_ = sendCmd.MarkFlagRequired("id")
+
+	sendGovSpec, _ := FindCommand("invoice", "send-gov")
+	var sendGovReq invoice.SendGovRequest
+	sendGovCmd := &cobra.Command{
+		Use:   sendGovSpec.Use,
+		Short: sendGovSpec.Short,
+		Long:  BuildLongDescription(sendGovSpec),
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			opts, warnings, appErr := prepareOutputOptions(cmd, sendGovSpec, globals)
+			if appErr != nil {
+				return writeCommandError(cmd, opts, output.Meta{Command: "invoice send-gov"}, appErr)
+			}
+			sendGovReq.ConfigPath = globals.Config
+			sendGovReq.Profile = globals.Profile
+			sendGovReq.Env = config.LookupEnv()
+			sendGovReq.Timeout = timeoutFromGlobals(globals)
+			sendGovReq.MaxRetries = globals.MaxRetries
+			sendGovReq.DryRun = globals.DryRun
+
+			start := time.Now()
+			result, err := deps.Invoice.SendGov(cmd.Context(), sendGovReq)
+			meta := output.Meta{
+				Command:    "invoice send-gov",
+				Profile:    resultProfile(result),
+				DurationMS: time.Since(start).Milliseconds(),
+			}
+			if result != nil {
+				meta.RequestID = result.RequestID
+			}
+			if err != nil {
+				return writeCommandError(cmd, opts, meta, err)
+			}
+			writeWarnings(cmd.ErrOrStderr(), opts, warnings)
+			return output.RenderSuccess(cmd.OutOrStdout(), opts, output.Result{
+				Data:          invoiceSendGovData(result),
+				RawBody:       result.RawBody,
+				Warnings:      warnings,
+				Meta:          meta,
+				HumanRenderer: output.JSONRenderer{},
+			})
+		},
+	}
+	sendGovCmd.Flags().StringVar(&sendGovReq.ID, "id", "", "invoice ID")
+	_ = sendGovCmd.MarkFlagRequired("id")
 
 	statusSpec, _ := FindCommand("invoice", "change-status")
 	var statusReq invoice.ChangeStatusRequest
@@ -2652,6 +2711,57 @@ func newInvoiceCommand(deps Dependencies, globals *globalOptions) *cobra.Command
 	_ = addAttachmentCmd.MarkFlagRequired("id")
 	_ = addAttachmentCmd.MarkFlagRequired("file")
 
+	downloadAttachmentSpec, _ := FindCommand("invoice", "download-attachment")
+	var downloadAttachmentReq invoice.DownloadAttachmentRequest
+	downloadAttachmentCmd := &cobra.Command{
+		Use:   downloadAttachmentSpec.Use,
+		Short: downloadAttachmentSpec.Short,
+		Long:  BuildLongDescription(downloadAttachmentSpec),
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			opts, warnings, appErr := prepareOutputOptions(cmd, downloadAttachmentSpec, globals)
+			if appErr != nil {
+				return writeCommandError(cmd, opts, output.Meta{Command: "invoice download-attachment"}, appErr)
+			}
+			downloadAttachmentReq.ConfigPath = globals.Config
+			downloadAttachmentReq.Profile = globals.Profile
+			downloadAttachmentReq.Env = config.LookupEnv()
+			downloadAttachmentReq.Timeout = timeoutFromGlobals(globals)
+			downloadAttachmentReq.MaxRetries = globals.MaxRetries
+
+			start := time.Now()
+			result, err := deps.Invoice.DownloadAttachment(cmd.Context(), downloadAttachmentReq)
+			meta := output.Meta{
+				Command:    "invoice download-attachment",
+				Profile:    resultProfile(result),
+				DurationMS: time.Since(start).Milliseconds(),
+			}
+			if result != nil {
+				meta.RequestID = result.RequestID
+			}
+			if err != nil {
+				return writeCommandError(cmd, opts, meta, err)
+			}
+			writeWarnings(cmd.ErrOrStderr(), opts, warnings)
+			return output.RenderSuccess(cmd.OutOrStdout(), opts, output.Result{
+				Data:     result,
+				Warnings: warnings,
+				Meta:     meta,
+				HumanRenderer: output.LinesRenderer{
+					Lines: func(data any) ([]string, error) {
+						res := data.(*invoice.DownloadAttachmentResponse)
+						return []string{res.Path}, nil
+					},
+				},
+			})
+		},
+	}
+	downloadAttachmentCmd.Flags().StringVar(&downloadAttachmentReq.ID, "id", "", "invoice ID")
+	downloadAttachmentCmd.Flags().StringVar(&downloadAttachmentReq.Kind, "kind", "", "attachment kind such as gov or gov_upo")
+	downloadAttachmentCmd.Flags().StringVar(&downloadAttachmentReq.Path, "path", "", "explicit output file path")
+	downloadAttachmentCmd.Flags().StringVar(&downloadAttachmentReq.Dir, "dir", "", "output directory")
+	_ = downloadAttachmentCmd.MarkFlagRequired("id")
+	_ = downloadAttachmentCmd.MarkFlagRequired("kind")
+
 	downloadAttachmentsSpec, _ := FindCommand("invoice", "download-attachments")
 	var downloadAttachmentsReq invoice.DownloadAttachmentsRequest
 	downloadAttachmentsCmd := &cobra.Command{
@@ -2752,10 +2862,12 @@ func newInvoiceCommand(deps Dependencies, globals *globalOptions) *cobra.Command
 		updateCmd,
 		deleteCmd,
 		sendCmd,
+		sendGovCmd,
 		statusCmd,
 		cancelCmd,
 		publicLinkCmd,
 		addAttachmentCmd,
+		downloadAttachmentCmd,
 		downloadAttachmentsCmd,
 		fiscalPrintCmd,
 	)
@@ -3382,6 +3494,268 @@ func newPaymentCommand(deps Dependencies, globals *globalOptions) *cobra.Command
 
 	paymentCmd.AddCommand(listCmd, getCmd, createCmd, updateCmd, deleteCmd)
 	return paymentCmd
+}
+
+func newBankAccountCommand(deps Dependencies, globals *globalOptions) *cobra.Command {
+	bankAccountCmd := &cobra.Command{
+		Use:   "bank-account",
+		Short: "Read and manage bank accounts",
+	}
+
+	listSpec, _ := FindCommand("bank-account", "list")
+	listReq := bankaccount.ListRequest{Page: 1, PerPage: 25}
+	listCmd := &cobra.Command{
+		Use:   listSpec.Use,
+		Short: listSpec.Short,
+		Long:  BuildLongDescription(listSpec),
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			opts, warnings, appErr := prepareOutputOptions(cmd, listSpec, globals)
+			if appErr != nil {
+				return writeCommandError(cmd, opts, output.Meta{Command: "bank-account list"}, appErr)
+			}
+			listReq.ConfigPath = globals.Config
+			listReq.Profile = globals.Profile
+			listReq.Env = config.LookupEnv()
+			listReq.Timeout = timeoutFromGlobals(globals)
+			listReq.MaxRetries = globals.MaxRetries
+
+			start := time.Now()
+			result, err := deps.BankAccount.List(cmd.Context(), listReq)
+			meta := output.Meta{
+				Command:    "bank-account list",
+				Profile:    resultProfile(result),
+				DurationMS: time.Since(start).Milliseconds(),
+			}
+			if result != nil {
+				meta.RequestID = result.RequestID
+				meta.Pagination = &result.Pagination
+			}
+			if err != nil {
+				return writeCommandError(cmd, opts, meta, err)
+			}
+			writeWarnings(cmd.ErrOrStderr(), opts, warnings)
+			return output.RenderSuccess(cmd.OutOrStdout(), opts, output.Result{
+				Data:           result.BankAccounts,
+				RawBody:        result.RawBody,
+				Warnings:       warnings,
+				Meta:           meta,
+				HumanRenderer:  output.TableRenderer{},
+				DefaultColumns: defaultColumns(listSpec, []string{"id", "bank_name", "bank_account", "bank_account_currency", "default"}),
+			})
+		},
+	}
+	listCmd.Flags().IntVar(&listReq.Page, "page", 1, "requested result page")
+	listCmd.Flags().IntVar(&listReq.PerPage, "per-page", 25, "requested result count per page")
+
+	getSpec, _ := FindCommand("bank-account", "get")
+	var getReq bankaccount.GetRequest
+	getCmd := &cobra.Command{
+		Use:   getSpec.Use,
+		Short: getSpec.Short,
+		Long:  BuildLongDescription(getSpec),
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			opts, warnings, appErr := prepareOutputOptions(cmd, getSpec, globals)
+			if appErr != nil {
+				return writeCommandError(cmd, opts, output.Meta{Command: "bank-account get"}, appErr)
+			}
+			getReq.ConfigPath = globals.Config
+			getReq.Profile = globals.Profile
+			getReq.Env = config.LookupEnv()
+			getReq.Timeout = timeoutFromGlobals(globals)
+			getReq.MaxRetries = globals.MaxRetries
+
+			start := time.Now()
+			result, err := deps.BankAccount.Get(cmd.Context(), getReq)
+			meta := output.Meta{
+				Command:    "bank-account get",
+				Profile:    resultProfile(result),
+				DurationMS: time.Since(start).Milliseconds(),
+			}
+			if result != nil {
+				meta.RequestID = result.RequestID
+			}
+			if err != nil {
+				return writeCommandError(cmd, opts, meta, err)
+			}
+			writeWarnings(cmd.ErrOrStderr(), opts, warnings)
+			return output.RenderSuccess(cmd.OutOrStdout(), opts, output.Result{
+				Data:          result.BankAccount,
+				RawBody:       result.RawBody,
+				Warnings:      warnings,
+				Meta:          meta,
+				HumanRenderer: output.JSONRenderer{},
+			})
+		},
+	}
+	getCmd.Flags().StringVar(&getReq.ID, "id", "", "bank account ID")
+	_ = getCmd.MarkFlagRequired("id")
+
+	createSpec, _ := FindCommand("bank-account", "create")
+	var createInput string
+	createCmd := &cobra.Command{
+		Use:   createSpec.Use,
+		Short: createSpec.Short,
+		Long:  BuildLongDescription(createSpec),
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			opts, warnings, appErr := prepareOutputOptions(cmd, createSpec, globals)
+			if appErr != nil {
+				return writeCommandError(cmd, opts, output.Meta{Command: "bank-account create"}, appErr)
+			}
+			input, err := jsoninput.ParseObject(createInput, cmd.InOrStdin(), "bank account")
+			if err != nil {
+				return writeCommandError(cmd, opts, output.Meta{Command: "bank-account create"}, err)
+			}
+
+			start := time.Now()
+			result, err := deps.BankAccount.Create(cmd.Context(), bankaccount.CreateRequest{
+				ConfigPath: globals.Config,
+				Profile:    globals.Profile,
+				Env:        config.LookupEnv(),
+				Timeout:    timeoutFromGlobals(globals),
+				MaxRetries: globals.MaxRetries,
+				Input:      input,
+				DryRun:     globals.DryRun,
+			})
+			meta := output.Meta{
+				Command:    "bank-account create",
+				Profile:    resultProfile(result),
+				DurationMS: time.Since(start).Milliseconds(),
+			}
+			if result != nil {
+				meta.RequestID = result.RequestID
+			}
+			if err != nil {
+				return writeCommandError(cmd, opts, meta, err)
+			}
+			writeWarnings(cmd.ErrOrStderr(), opts, warnings)
+			return output.RenderSuccess(cmd.OutOrStdout(), opts, output.Result{
+				Data:          bankAccountCreateData(result),
+				RawBody:       result.RawBody,
+				Warnings:      warnings,
+				Meta:          meta,
+				HumanRenderer: output.JSONRenderer{},
+			})
+		},
+	}
+	createCmd.Flags().StringVar(&createInput, "input", "", "bank account JSON input as inline JSON, @file, or - for stdin")
+	_ = createCmd.MarkFlagRequired("input")
+
+	updateSpec, _ := FindCommand("bank-account", "update")
+	var updateReq bankaccount.UpdateRequest
+	var updateInput string
+	updateCmd := &cobra.Command{
+		Use:   updateSpec.Use,
+		Short: updateSpec.Short,
+		Long:  BuildLongDescription(updateSpec),
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			opts, warnings, appErr := prepareOutputOptions(cmd, updateSpec, globals)
+			if appErr != nil {
+				return writeCommandError(cmd, opts, output.Meta{Command: "bank-account update"}, appErr)
+			}
+			input, err := jsoninput.ParseObject(updateInput, cmd.InOrStdin(), "bank account")
+			if err != nil {
+				return writeCommandError(cmd, opts, output.Meta{Command: "bank-account update"}, err)
+			}
+
+			updateReq.ConfigPath = globals.Config
+			updateReq.Profile = globals.Profile
+			updateReq.Env = config.LookupEnv()
+			updateReq.Timeout = timeoutFromGlobals(globals)
+			updateReq.MaxRetries = globals.MaxRetries
+			updateReq.Input = input
+			updateReq.DryRun = globals.DryRun
+
+			start := time.Now()
+			result, err := deps.BankAccount.Update(cmd.Context(), updateReq)
+			meta := output.Meta{
+				Command:    "bank-account update",
+				Profile:    resultProfile(result),
+				DurationMS: time.Since(start).Milliseconds(),
+			}
+			if result != nil {
+				meta.RequestID = result.RequestID
+			}
+			if err != nil {
+				return writeCommandError(cmd, opts, meta, err)
+			}
+			writeWarnings(cmd.ErrOrStderr(), opts, warnings)
+			return output.RenderSuccess(cmd.OutOrStdout(), opts, output.Result{
+				Data:          bankAccountUpdateData(result),
+				RawBody:       result.RawBody,
+				Warnings:      warnings,
+				Meta:          meta,
+				HumanRenderer: output.JSONRenderer{},
+			})
+		},
+	}
+	updateCmd.Flags().StringVar(&updateReq.ID, "id", "", "bank account ID")
+	updateCmd.Flags().StringVar(&updateInput, "input", "", "bank account JSON input as inline JSON, @file, or - for stdin")
+	_ = updateCmd.MarkFlagRequired("id")
+	_ = updateCmd.MarkFlagRequired("input")
+
+	deleteSpec, _ := FindCommand("bank-account", "delete")
+	var deleteReq bankaccount.DeleteRequest
+	var deleteYes bool
+	deleteCmd := &cobra.Command{
+		Use:   deleteSpec.Use,
+		Short: deleteSpec.Short,
+		Long:  BuildLongDescription(deleteSpec),
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			opts, warnings, appErr := prepareOutputOptions(cmd, deleteSpec, globals)
+			if appErr != nil {
+				return writeCommandError(cmd, opts, output.Meta{Command: "bank-account delete"}, appErr)
+			}
+			if !deleteYes {
+				return writeCommandError(cmd, opts, output.Meta{Command: "bank-account delete"}, output.Usage("confirmation_required", "--yes is required for bank account delete", "rerun with --yes to delete the bank account"))
+			}
+
+			deleteReq.ConfigPath = globals.Config
+			deleteReq.Profile = globals.Profile
+			deleteReq.Env = config.LookupEnv()
+			deleteReq.Timeout = timeoutFromGlobals(globals)
+			deleteReq.MaxRetries = globals.MaxRetries
+			deleteReq.DryRun = globals.DryRun
+
+			start := time.Now()
+			result, err := deps.BankAccount.Delete(cmd.Context(), deleteReq)
+			meta := output.Meta{
+				Command:    "bank-account delete",
+				Profile:    resultProfile(result),
+				DurationMS: time.Since(start).Milliseconds(),
+			}
+			if result != nil {
+				meta.RequestID = result.RequestID
+			}
+			if err != nil {
+				return writeCommandError(cmd, opts, meta, err)
+			}
+			writeWarnings(cmd.ErrOrStderr(), opts, warnings)
+
+			humanRenderer := output.HumanRenderer(output.LinesRenderer{
+				Lines: func(data any) ([]string, error) {
+					res := data.(*bankaccount.DeleteResponse)
+					return []string{fmt.Sprintf("deleted bank account %s", res.ID)}, nil
+				},
+			})
+			data := bankAccountDeleteData(result)
+			if result.DryRun != nil {
+				humanRenderer = output.JSONRenderer{}
+			}
+			return output.RenderSuccess(cmd.OutOrStdout(), opts, output.Result{
+				Data:          data,
+				RawBody:       result.RawBody,
+				Warnings:      warnings,
+				Meta:          meta,
+				HumanRenderer: humanRenderer,
+			})
+		},
+	}
+	deleteCmd.Flags().StringVar(&deleteReq.ID, "id", "", "bank account ID")
+	deleteCmd.Flags().BoolVar(&deleteYes, "yes", false, "confirm bank account deletion")
+	_ = deleteCmd.MarkFlagRequired("id")
+
+	bankAccountCmd.AddCommand(listCmd, getCmd, createCmd, updateCmd, deleteCmd)
+	return bankAccountCmd
 }
 
 func newPriceListCommand(deps Dependencies, globals *globalOptions) *cobra.Command {
@@ -4771,6 +5145,36 @@ func paymentDeleteData(result *payment.DeleteResponse) any {
 	return result
 }
 
+func bankAccountCreateData(result *bankaccount.CreateResponse) any {
+	if result == nil {
+		return nil
+	}
+	if result.DryRun != nil {
+		return result.DryRun
+	}
+	return result.BankAccount
+}
+
+func bankAccountUpdateData(result *bankaccount.UpdateResponse) any {
+	if result == nil {
+		return nil
+	}
+	if result.DryRun != nil {
+		return result.DryRun
+	}
+	return result.BankAccount
+}
+
+func bankAccountDeleteData(result *bankaccount.DeleteResponse) any {
+	if result == nil {
+		return nil
+	}
+	if result.DryRun != nil {
+		return result.DryRun
+	}
+	return result
+}
+
 func priceListCreateData(result *pricelist.CreateResponse) any {
 	if result == nil {
 		return nil
@@ -4875,6 +5279,16 @@ func invoiceSendEmailData(result *invoice.SendEmailResponse) any {
 		return result.Response
 	}
 	return result
+}
+
+func invoiceSendGovData(result *invoice.SendGovResponse) any {
+	if result == nil {
+		return nil
+	}
+	if result.DryRun != nil {
+		return result.DryRun
+	}
+	return result.Invoice
 }
 
 func invoiceChangeStatusData(result *invoice.ChangeStatusResponse) any {

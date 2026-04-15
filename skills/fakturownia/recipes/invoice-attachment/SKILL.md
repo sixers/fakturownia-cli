@@ -9,6 +9,7 @@ metadata:
     - "fakturownia-invoices"
   command_refs:
     - "invoice add-attachment"
+    - "invoice download-attachment"
     - "invoice download-attachments"
     - "invoice update"
 ---
@@ -19,7 +20,7 @@ metadata:
 
 > Read [fakturownia-invoices](../../subskills/invoices/SKILL.md) first.
 
-Use this when an invoice needs a new attachment or when you need to fetch all attachments as a ZIP.
+Use this when an invoice needs a new attachment or when you need to fetch either one attachment by kind or all attachments as a ZIP.
 
 ## Attach a Local File
 
@@ -37,6 +38,12 @@ cat ./scan.pdf | fakturownia invoice add-attachment --id 111 --file - --name sca
 
 ```bash
 fakturownia invoice update --id 111 --input '{"show_attachments":true}' --json
+```
+
+## Download A Single Attachment By Kind
+
+```bash
+fakturownia invoice download-attachment --id 111 --kind gov --dir ./attachments --json
 ```
 
 ## Download All Attachments

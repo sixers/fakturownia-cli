@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"mime"
 	"net/http"
 	"net/url"
 	"os"
@@ -123,6 +124,7 @@ type CreateRequest struct {
 	IdentifyOSS             bool
 	FillDefaultDescriptions bool
 	CorrectionPositions     string
+	GovSaveAndSend          bool
 	DryRun                  bool
 }
 
@@ -152,6 +154,7 @@ type UpdateRequest struct {
 	IdentifyOSS             bool
 	FillDefaultDescriptions bool
 	CorrectionPositions     string
+	GovSaveAndSend          bool
 	DryRun                  bool
 }
 
@@ -223,6 +226,31 @@ type SendEmailResponse struct {
 }
 
 func (r *SendEmailResponse) GetProfile() string {
+	if r == nil {
+		return ""
+	}
+	return r.Profile
+}
+
+type SendGovRequest struct {
+	ConfigPath string
+	Profile    string
+	Env        config.Env
+	Timeout    time.Duration
+	MaxRetries int
+	ID         string
+	DryRun     bool
+}
+
+type SendGovResponse struct {
+	Invoice   map[string]any
+	RawBody   []byte
+	Profile   string
+	RequestID string
+	DryRun    *transport.RequestPlan
+}
+
+func (r *SendGovResponse) GetProfile() string {
 	if r == nil {
 		return ""
 	}
@@ -372,6 +400,35 @@ type DownloadAttachmentsResponse struct {
 }
 
 func (r *DownloadAttachmentsResponse) GetProfile() string {
+	if r == nil {
+		return ""
+	}
+	return r.Profile
+}
+
+type DownloadAttachmentRequest struct {
+	ConfigPath string
+	Profile    string
+	Env        config.Env
+	Timeout    time.Duration
+	MaxRetries int
+	ID         string
+	Kind       string
+	Path       string
+	Dir        string
+}
+
+type DownloadAttachmentResponse struct {
+	ID        string `json:"id"`
+	Kind      string `json:"kind"`
+	Path      string `json:"path"`
+	Bytes     int    `json:"bytes"`
+	FileName  string `json:"file_name,omitempty"`
+	Profile   string `json:"profile"`
+	RequestID string `json:"request_id,omitempty"`
+}
+
+func (r *DownloadAttachmentResponse) GetProfile() string {
 	if r == nil {
 		return ""
 	}
@@ -596,7 +653,7 @@ func (s *Service) Create(ctx context.Context, req CreateRequest) (*CreateRespons
 	}
 
 	query := companionQuery(req.CorrectionPositions)
-	payload := wrapPayload(req.Input, req.IdentifyOSS, req.FillDefaultDescriptions)
+	payload := wrapPayload(req.Input, req.IdentifyOSS, req.FillDefaultDescriptions, req.GovSaveAndSend)
 	if req.DryRun {
 		plan := transport.PlanJSONRequest(http.MethodPost, "/invoices.json", query, payload)
 		return &CreateResponse{Profile: resolved.Name, DryRun: &plan}, nil
@@ -630,7 +687,7 @@ func (s *Service) Update(ctx context.Context, req UpdateRequest) (*UpdateRespons
 
 	path := fmt.Sprintf("/invoices/%s.json", url.PathEscape(req.ID))
 	query := companionQuery(req.CorrectionPositions)
-	payload := wrapPayload(req.Input, req.IdentifyOSS, req.FillDefaultDescriptions)
+	payload := wrapPayload(req.Input, req.IdentifyOSS, req.FillDefaultDescriptions, req.GovSaveAndSend)
 	if req.DryRun {
 		plan := transport.PlanJSONRequest(http.MethodPut, path, query, payload)
 		return &UpdateResponse{Profile: resolved.Name, DryRun: &plan}, nil
@@ -715,6 +772,9 @@ func (s *Service) SendEmail(ctx context.Context, req SendEmailRequest) (*SendEma
 	if err != nil {
 		return nil, err
 	}
+	if appErr := invoiceEmailRemoteError(resp.RawBody); appErr != nil {
+		return nil, appErr.WithRawBody(resp.RawBody)
+	}
 	return &SendEmailResponse{
 		ID:        req.ID,
 		Sent:      true,
@@ -722,6 +782,37 @@ func (s *Service) SendEmail(ctx context.Context, req SendEmailRequest) (*SendEma
 		Profile:   resolved.Name,
 		RequestID: resp.RequestID,
 		RawBody:   resp.RawBody,
+	}, nil
+}
+
+func (s *Service) SendGov(ctx context.Context, req SendGovRequest) (*SendGovResponse, error) {
+	if strings.TrimSpace(req.ID) == "" {
+		return nil, output.Usage("missing_id", "invoice ID is required", "pass --id <invoice-id>")
+	}
+
+	resolved, client, err := s.resolveClient(req.ConfigPath, req.Profile, req.Env, req.Timeout, req.MaxRetries)
+	if err != nil {
+		return nil, err
+	}
+
+	query := url.Values{}
+	query.Set("send_to_ksef", "yes")
+	path := fmt.Sprintf("/invoices/%s.json", url.PathEscape(req.ID))
+	if req.DryRun {
+		plan := transport.PlanJSONRequest(http.MethodGet, path, query, nil)
+		return &SendGovResponse{Profile: resolved.Name, DryRun: &plan}, nil
+	}
+
+	var invoice map[string]any
+	resp, err := client.GetJSON(ctx, path, query, &invoice)
+	if err != nil {
+		return nil, err
+	}
+	return &SendGovResponse{
+		Invoice:   invoice,
+		RawBody:   resp.RawBody,
+		Profile:   resolved.Name,
+		RequestID: resp.RequestID,
 	}, nil
 }
 
@@ -948,6 +1039,51 @@ func (s *Service) DownloadAttachments(ctx context.Context, req DownloadAttachmen
 	}, nil
 }
 
+func (s *Service) DownloadAttachment(ctx context.Context, req DownloadAttachmentRequest) (*DownloadAttachmentResponse, error) {
+	if strings.TrimSpace(req.ID) == "" {
+		return nil, output.Usage("missing_id", "invoice ID is required", "pass --id <invoice-id>")
+	}
+	kind := strings.TrimSpace(req.Kind)
+	if kind == "" {
+		return nil, output.Usage("missing_kind", "attachment kind is required", "pass --kind gov, --kind gov_upo, or another supported invoice attachment kind")
+	}
+	if req.Path != "" && req.Dir != "" {
+		return nil, output.Usage("path_conflict", "--path and --dir cannot be used together", "pass either --path or --dir")
+	}
+
+	resolved, client, err := s.resolveClient(req.ConfigPath, req.Profile, req.Env, req.Timeout, req.MaxRetries)
+	if err != nil {
+		return nil, err
+	}
+
+	query := url.Values{}
+	query.Set("kind", kind)
+	resp, err := client.GetContent(ctx, fmt.Sprintf("/invoices/%s/attachment", url.PathEscape(req.ID)), query, "*/*")
+	if err != nil {
+		return nil, err
+	}
+
+	filename := attachmentFilename(resp.Header)
+	fallback := fmt.Sprintf("invoice-%s-%s", req.ID, sanitizeAttachmentKind(kind))
+	targetPath, err := artifactPathWithSuggestedName(req.Path, req.Dir, fallback, filename)
+	if err != nil {
+		return nil, err
+	}
+	if err := writeAtomicFile(targetPath, resp.RawBody); err != nil {
+		return nil, err
+	}
+
+	return &DownloadAttachmentResponse{
+		ID:        req.ID,
+		Kind:      kind,
+		Path:      targetPath,
+		Bytes:     len(resp.RawBody),
+		FileName:  filepath.Base(targetPath),
+		Profile:   resolved.Name,
+		RequestID: resp.RequestID,
+	}, nil
+}
+
 func (s *Service) FiscalPrint(ctx context.Context, req FiscalPrintRequest) (*FiscalPrintResponse, error) {
 	ids := trimNonEmpty(req.InvoiceIDs)
 	if len(ids) == 0 {
@@ -1006,7 +1142,7 @@ func validateInput(input map[string]any) error {
 	return nil
 }
 
-func wrapPayload(input map[string]any, identifyOSS, fillDefaultDescriptions bool) map[string]any {
+func wrapPayload(input map[string]any, identifyOSS, fillDefaultDescriptions, govSaveAndSend bool) map[string]any {
 	payload := map[string]any{
 		"invoice": cloneValue(input).(map[string]any),
 	}
@@ -1015,6 +1151,9 @@ func wrapPayload(input map[string]any, identifyOSS, fillDefaultDescriptions bool
 	}
 	if fillDefaultDescriptions {
 		payload["fill_default_descriptions"] = true
+	}
+	if govSaveAndSend {
+		payload["gov_save_and_send"] = true
 	}
 	return payload
 }
@@ -1064,6 +1203,19 @@ func optionalJSONObject(raw []byte) map[string]any {
 		return nil
 	}
 	return object
+}
+
+func invoiceEmailRemoteError(raw []byte) *output.AppError {
+	body := optionalJSONObject(raw)
+	if body == nil {
+		return nil
+	}
+	status := strings.TrimSpace(fmt.Sprint(body["status"]))
+	message := strings.TrimSpace(fmt.Sprint(body["message"]))
+	if status == "error" && strings.Contains(message, "brak numeru KSeF") {
+		return output.Remote("ksef_number_required", message, "send the invoice to KSeF first and wait for `gov_id` before retrying the email", false)
+	}
+	return nil
 }
 
 func firstString(values map[string]any, keys ...string) string {
@@ -1116,6 +1268,20 @@ func artifactPath(invoiceID, explicitPath, dir, prefix, suffix string) (string, 
 	return filepath.Join(dir, prefix+invoiceID+suffix), nil
 }
 
+func artifactPathWithSuggestedName(explicitPath, dir, fallbackName, suggestedName string) (string, error) {
+	if explicitPath != "" {
+		return explicitPath, nil
+	}
+	if dir == "" {
+		dir = "."
+	}
+	name := filepath.Base(strings.TrimSpace(suggestedName))
+	if name == "" || name == "." || name == string(filepath.Separator) {
+		name = fallbackName
+	}
+	return filepath.Join(dir, name), nil
+}
+
 func writeAtomicFile(targetPath string, content []byte) error {
 	if err := os.MkdirAll(filepath.Dir(targetPath), 0o755); err != nil {
 		return output.Internal(err, "create download directory")
@@ -1140,6 +1306,45 @@ func writeAtomicFile(targetPath string, content []byte) error {
 
 func joinTrimmed(values []string) string {
 	return strings.Join(trimNonEmpty(values), ",")
+}
+
+func attachmentFilename(header http.Header) string {
+	contentDisposition := strings.TrimSpace(header.Get("Content-Disposition"))
+	if contentDisposition == "" {
+		return ""
+	}
+	_, params, err := mime.ParseMediaType(contentDisposition)
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(params["filename"])
+}
+
+func sanitizeAttachmentKind(kind string) string {
+	trimmed := strings.TrimSpace(kind)
+	if trimmed == "" {
+		return "attachment"
+	}
+	var b strings.Builder
+	for _, r := range trimmed {
+		switch {
+		case r >= 'a' && r <= 'z':
+			b.WriteRune(r)
+		case r >= 'A' && r <= 'Z':
+			b.WriteRune(r + ('a' - 'A'))
+		case r >= '0' && r <= '9':
+			b.WriteRune(r)
+		case r == '-' || r == '_' || r == '.':
+			b.WriteRune(r)
+		default:
+			b.WriteRune('-')
+		}
+	}
+	out := strings.Trim(b.String(), "-")
+	if out == "" {
+		return "attachment"
+	}
+	return out
 }
 
 func trimNonEmpty(values []string) []string {

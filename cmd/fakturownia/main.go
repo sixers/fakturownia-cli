@@ -5,6 +5,7 @@ import (
 
 	"github.com/sixers/fakturownia-cli/internal/account"
 	"github.com/sixers/fakturownia-cli/internal/auth"
+	"github.com/sixers/fakturownia-cli/internal/bankaccount"
 	"github.com/sixers/fakturownia-cli/internal/category"
 	"github.com/sixers/fakturownia-cli/internal/client"
 	"github.com/sixers/fakturownia-cli/internal/department"
@@ -39,6 +40,7 @@ func main() {
 		Invoice:         invoice.NewService(store),
 		Issuer:          issuer.NewService(store),
 		Payment:         payment.NewService(store),
+		BankAccount:     bankaccount.NewService(store),
 		PriceList:       pricelist.NewService(store),
 		Product:         product.NewService(store),
 		Recurring:       recurring.NewService(store),

@@ -27,6 +27,11 @@ fakturownia invoice send-email --id 100 --email-to billing@example.com --email-p
 fakturownia invoice send-email --id 100 --email-to billing@example.com --update-buyer-email --print-option original --dry-run --json
 ```
 
+## KSeF Note
+
+- If the upstream API returns the documented “brak numeru KSeF” response, the CLI surfaces it as an error instead of reporting a successful email send.
+- In API naming, `gov_id` is the KSeF number that must exist before email delivery can succeed for those flows.
+
 ## Related Skills
 
 - [fakturownia-shared](../../subskills/shared/SKILL.md)

@@ -226,6 +226,12 @@
     },
     {
       "noun": "invoice",
+      "summary": "Queue an existing invoice for KSeF submission",
+      "use": "send-gov --id ID",
+      "verb": "send-gov"
+    },
+    {
+      "noun": "invoice",
       "summary": "Change an invoice status",
       "use": "change-status --id ID --status STATUS",
       "verb": "change-status"
@@ -253,6 +259,12 @@
       "summary": "Download all invoice attachments as a ZIP archive",
       "use": "download-attachments --id ID",
       "verb": "download-attachments"
+    },
+    {
+      "noun": "invoice",
+      "summary": "Download a single invoice attachment by kind",
+      "use": "download-attachment --id ID --kind KIND",
+      "verb": "download-attachment"
     },
     {
       "noun": "invoice",
@@ -335,6 +347,36 @@
     {
       "noun": "payment",
       "summary": "Delete a payment",
+      "use": "delete --id ID --yes",
+      "verb": "delete"
+    },
+    {
+      "noun": "bank-account",
+      "summary": "List bank accounts",
+      "use": "list",
+      "verb": "list"
+    },
+    {
+      "noun": "bank-account",
+      "summary": "Fetch a single bank account by ID",
+      "use": "get --id ID",
+      "verb": "get"
+    },
+    {
+      "noun": "bank-account",
+      "summary": "Create a bank account",
+      "use": "create --input -|@file|JSON",
+      "verb": "create"
+    },
+    {
+      "noun": "bank-account",
+      "summary": "Update a bank account",
+      "use": "update --id ID --input -|@file|JSON",
+      "verb": "update"
+    },
+    {
+      "noun": "bank-account",
+      "summary": "Delete a bank account",
       "use": "delete --id ID --yes",
       "verb": "delete"
     },

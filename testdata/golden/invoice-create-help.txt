@@ -10,6 +10,7 @@ Optional Flags
   --identify-oss (bool): Validate OSS eligibility before marking the invoice as OSS default=false
   --fill-default-descriptions (bool): Include default account descriptions on the created invoice default=false
   --correction-positions (string): Pass a correction positions companion option such as full
+  --gov-save-and-send (bool): Save the invoice and immediately queue it for KSeF submission default=false
 
 Global Flags
   --profile (string): Select a named profile
@@ -47,7 +48,9 @@ Exit Codes
 
 Examples
   fakturownia invoice create --input '{"kind":"vat","client_id":1,"positions":[{"product_id":1,"quantity":2}]}' --json
+  fakturownia invoice create --input '{"kind":"vat","buyer_name":"Klient ABC","bank_account_id":100,"buyer_mass_payment_code":"ABC-123","positions":[{"name":"Usługa","quantity":1,"total_price_gross":1230,"tax":23}]}' --json
   fakturownia invoice create --input '{"copy_invoice_from":42,"kind":"vat"}' --json
+  fakturownia invoice create --gov-save-and-send --input '{"kind":"vat","buyer_company":true,"seller_tax_no":"5252445767","seller_street":"ul. Przykładowa 10","seller_post_code":"00-001","seller_city":"Warszawa","buyer_name":"Klient ABC Sp. z o.o.","buyer_tax_no":"9876543210","positions":[{"name":"Usługa","quantity":1,"total_price_gross":1230,"tax":23}]}' --json
   fakturownia invoice create --input '{"kind":"vat","seller_country":"PL","buyer_country":"FR","use_oss":true,"positions":[{"name":"Produkt","tax":20,"total_price_gross":50,"quantity":1}]}' --identify-oss --json
   fakturownia invoice create --input '{"kind":"vat","positions":[{"name":"towar","quantity":1,"total_price_gross":123}]}' --fill-default-descriptions --dry-run --json
 
@@ -57,6 +60,7 @@ Usage:
 Flags:
       --correction-positions string   pass a correction positions companion option such as full
       --fill-default-descriptions     include default account descriptions on the created invoice
+      --gov-save-and-send             save the invoice and immediately queue it for KSeF submission
   -h, --help                          help for create
       --identify-oss                  validate OSS eligibility before marking the invoice as OSS
       --input string                  invoice JSON input as inline JSON, @file, or - for stdin

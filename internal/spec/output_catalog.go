@@ -7,6 +7,8 @@ import (
 )
 
 const fakturowniaReadmeURL = "https://github.com/fakturownia/API/blob/master/README.md"
+const fakturowniaKSeFURL = "https://github.com/fakturownia/API/blob/master/KSeF.md"
+const fakturowniaBankAccountsURL = "https://github.com/fakturownia/API/blob/master/API_RACHUNKI_BANKOWE.md"
 
 type CatalogBasis struct {
 	Source string `json:"source"`
@@ -28,13 +30,14 @@ type OutputFieldSpec struct {
 }
 
 type OutputSpec struct {
-	Shape          string            `json:"shape"`
-	OpenEnded      bool              `json:"open_ended"`
-	CatalogBasis   *CatalogBasis     `json:"catalog_basis,omitempty"`
-	PathSyntax     string            `json:"path_syntax,omitempty"`
-	KnownFields    []OutputFieldSpec `json:"known_fields,omitempty"`
-	DefaultColumns []string          `json:"default_columns,omitempty"`
-	Notes          []string          `json:"notes,omitempty"`
+	Shape                  string            `json:"shape"`
+	OpenEnded              bool              `json:"open_ended"`
+	CatalogBasis           *CatalogBasis     `json:"catalog_basis,omitempty"`
+	AdditionalCatalogBases []*CatalogBasis   `json:"additional_catalog_bases,omitempty"`
+	PathSyntax             string            `json:"path_syntax,omitempty"`
+	KnownFields            []OutputFieldSpec `json:"known_fields,omitempty"`
+	DefaultColumns         []string          `json:"default_columns,omitempty"`
+	Notes                  []string          `json:"notes,omitempty"`
 }
 
 func invoiceListOutputSpec() *OutputSpec {
@@ -59,6 +62,16 @@ func invoiceBaseOutputSpec(shape string, commands []string) *OutputSpec {
 			Source: "readme",
 			URL:    fakturowniaReadmeURL,
 		},
+		AdditionalCatalogBases: []*CatalogBasis{
+			{
+				Source: "ksef",
+				URL:    fakturowniaKSeFURL,
+			},
+			{
+				Source: "bank_accounts",
+				URL:    fakturowniaBankAccountsURL,
+			},
+		},
 		DefaultColumns: []string{"id", "number", "issue_date", "buyer_name", "price_gross", "status"},
 		Notes: []string{
 			"known_fields is curated from the upstream README and is not exhaustive",
@@ -70,6 +83,14 @@ func invoiceBaseOutputSpec(shape string, commands []string) *OutputSpec {
 			{Path: "token", Type: "string", Description: "Public invoice token used to derive view and PDF links", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Link do podglądu faktury i pobieranie do PDF"},
 			{Path: "kind", Type: "string", Description: "Invoice kind", Projectable: true, Selectable: true, Commands: commands, Presence: "common", SourceSection: "Faktury - specyfikacja, rodzaje pól, kody GTU", EnumValues: []string{"vat", "proforma", "bill", "receipt", "advance", "final", "correction", "invoice_other", "vat_margin", "kp", "kw", "estimate", "vat_mp", "vat_rr", "correction_note", "accounting_note"}},
 			{Path: "status", Type: "string", Description: "Invoice status", Projectable: true, Selectable: true, DefaultColumn: true, Commands: commands, Presence: "common", SourceSection: "Faktury - specyfikacja, rodzaje pól, kody GTU", EnumValues: []string{"issued", "sent", "paid", "partial", "rejected"}},
+			{Path: "gov_status", Type: "string", Description: "KSeF send status", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Sprawdzanie statusu wysyłki", EnumValues: []string{"ok", "processing", "send_error", "server_error", "not_applicable", "not_connected", "demo_ok", "demo_processing", "demo_send_error", "demo_server_error", "demo_not_applicable", "demo_not_connected"}},
+			{Path: "gov_id", Type: "string", Description: "KSeF invoice number", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Sprawdzanie statusu wysyłki"},
+			{Path: "gov_send_date", Type: "string", Description: "KSeF send timestamp", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Sprawdzanie statusu wysyłki"},
+			{Path: "gov_sell_date", Type: "string", Description: "Sale date registered in KSeF", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Sprawdzanie statusu wysyłki"},
+			{Path: "gov_error_messages[]", Type: "array<string>", Description: "KSeF validation or send errors", Projectable: true, Selectable: false, Commands: commands, Presence: "conditional", SourceSection: "Sprawdzanie statusu wysyłki"},
+			{Path: "gov_verification_link", Type: "string", Description: "KSeF verification link used for QR codes", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Sprawdzanie statusu wysyłki"},
+			{Path: "gov_link", Type: "string", Description: "Direct KSeF portal link for the invoice", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Sprawdzanie statusu wysyłki"},
+			{Path: "gov_corrected_invoice_number", Type: "string", Description: "KSeF number of the corrected invoice", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Korekty faktur"},
 			{Path: "issue_date", Type: "string", Description: "Invoice issue date", Projectable: true, Selectable: true, DefaultColumn: true, Commands: commands, Presence: "common", SourceSection: "Pobranie listy faktur z aktualnego miesiąca"},
 			{Path: "sale_date", Type: "string", Description: "Invoice sale date", Projectable: true, Selectable: true, Commands: commands, Presence: "common", SourceSection: "Pobranie faktury po ID"},
 			{Path: "payment_to", Type: "string", Description: "Payment due date", Projectable: true, Selectable: true, Commands: commands, Presence: "common", SourceSection: "Faktury - specyfikacja, rodzaje pól, kody GTU"},
@@ -81,8 +102,17 @@ func invoiceBaseOutputSpec(shape string, commands []string) *OutputSpec {
 			{Path: "buyer_name", Type: "string", Description: "Buyer display name", Projectable: true, Selectable: true, DefaultColumn: true, Commands: commands, Presence: "common", SourceSection: "Faktury - specyfikacja, rodzaje pól, kody GTU"},
 			{Path: "buyer_tax_no", Type: "string", Description: "Buyer tax number", Projectable: true, Selectable: true, Commands: commands, Presence: "common", SourceSection: "Faktury - specyfikacja, rodzaje pól, kody GTU"},
 			{Path: "buyer_email", Type: "string", Description: "Buyer email address", Projectable: true, Selectable: true, Commands: commands, Presence: "common", SourceSection: "Faktury - specyfikacja, rodzaje pól, kody GTU"},
+			{Path: "buyer_tax_no_kind", Type: "string", Description: "Buyer tax identifier kind", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Rodzaj identyfikatora podatkowego (tax_no_kind)", EnumValues: []string{"", "nip_ue", "other", "empty", "nip_with_id"}},
+			{Path: "bank_accounts[]", Type: "array<object>", Description: "Bank accounts exposed on the invoice", Projectable: true, Selectable: false, Commands: commands, Presence: "conditional", SourceSection: "Pobieranie rachunków bankowych z faktury"},
+			{Path: "bank_accounts[].id", Type: "integer", Description: "Invoice bank account ID", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Pobieranie rachunków bankowych z faktury"},
+			{Path: "bank_accounts[].name", Type: "string", Description: "Invoice bank account name", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Pobieranie rachunków bankowych z faktury"},
+			{Path: "bank_accounts[].bank_name", Type: "string", Description: "Invoice bank name", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Pobieranie rachunków bankowych z faktury"},
+			{Path: "bank_accounts[].bank_account_number", Type: "string", Description: "Invoice bank account number", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Pobieranie rachunków bankowych z faktury"},
+			{Path: "bank_accounts[].bank_currency", Type: "string", Description: "Invoice bank account currency", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Pobieranie rachunków bankowych z faktury"},
+			{Path: "bank_accounts[].bank_swift", Type: "string", Description: "Invoice bank SWIFT or BIC code", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Pobieranie rachunków bankowych z faktury"},
 			{Path: "seller_name", Type: "string", Description: "Seller display name", Projectable: true, Selectable: true, Commands: commands, Presence: "common", SourceSection: "Faktury - specyfikacja, rodzaje pól, kody GTU"},
 			{Path: "seller_tax_no", Type: "string", Description: "Seller tax number", Projectable: true, Selectable: true, Commands: commands, Presence: "common", SourceSection: "Faktury - specyfikacja, rodzaje pól, kody GTU"},
+			{Path: "seller_tax_no_kind", Type: "string", Description: "Seller tax identifier kind", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Rodzaj identyfikatora podatkowego (tax_no_kind)", EnumValues: []string{"", "nip_ue", "other", "empty", "nip_with_id"}},
 			{Path: "invoice_id", Type: "integer", Description: "Linked source invoice ID", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Dodanie nowej faktury korygującej"},
 			{Path: "from_invoice_id", Type: "integer", Description: "Source invoice or receipt ID", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Dodawanie faktury do istniejącego paragonu"},
 			{Path: "correction_reason", Type: "string", Description: "Correction or cancellation reason", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Dodanie nowej faktury korygującej"},
@@ -121,6 +151,8 @@ func invoiceBaseOutputSpec(shape string, commands []string) *OutputSpec {
 			{Path: "recipients[].name", Type: "string", Description: "Recipient name", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", Requires: []string{"invoice includes recipients"}, SourceSection: "Odbiorcy/Wystawcy na fakturze"},
 			{Path: "recipients[].first_name", Type: "string", Description: "Recipient first name", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", Requires: []string{"invoice includes recipients"}, SourceSection: "Odbiorcy/Wystawcy na fakturze"},
 			{Path: "recipients[].last_name", Type: "string", Description: "Recipient last name", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", Requires: []string{"invoice includes recipients"}, SourceSection: "Odbiorcy/Wystawcy na fakturze"},
+			{Path: "recipients[].tax_no", Type: "string", Description: "Recipient tax number", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", Requires: []string{"invoice includes recipients"}, SourceSection: "Odbiorca faktury (Recipient)"},
+			{Path: "recipients[].tax_no_kind", Type: "string", Description: "Recipient tax identifier kind", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", Requires: []string{"invoice includes recipients"}, SourceSection: "Rodzaj identyfikatora podatkowego (tax_no_kind)", EnumValues: []string{"", "nip_ue", "other", "empty", "nip_with_id"}},
 			{Path: "recipients[].company", Type: "boolean", Description: "Recipient company flag", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", Requires: []string{"invoice includes recipients"}, SourceSection: "Odbiorcy/Wystawcy na fakturze"},
 			{Path: "recipients[].country", Type: "string", Description: "Recipient country", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", Requires: []string{"invoice includes recipients"}, SourceSection: "Odbiorcy/Wystawcy na fakturze"},
 			{Path: "recipients[].city", Type: "string", Description: "Recipient city", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", Requires: []string{"invoice includes recipients"}, SourceSection: "Odbiorcy/Wystawcy na fakturze"},
@@ -129,11 +161,19 @@ func invoiceBaseOutputSpec(shape string, commands []string) *OutputSpec {
 			{Path: "recipients[].phone", Type: "string", Description: "Recipient phone number", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", Requires: []string{"invoice includes recipients"}, SourceSection: "Odbiorcy/Wystawcy na fakturze"},
 			{Path: "recipients[].email", Type: "string", Description: "Recipient email address", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", Requires: []string{"invoice includes recipients"}, SourceSection: "Odbiorcy/Wystawcy na fakturze"},
 			{Path: "recipients[].note", Type: "string", Description: "Recipient note", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", Requires: []string{"invoice includes recipients"}, SourceSection: "Odbiorcy/Wystawcy na fakturze"},
-			{Path: "recipients[].role", Type: "string", Description: "Recipient role", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", Requires: []string{"invoice includes recipients"}, SourceSection: "Odbiorcy/Wystawcy na fakturze"},
+			{Path: "recipients[].role", Type: "string", Description: "Recipient role", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", Requires: []string{"invoice includes recipients"}, SourceSection: "Odbiorca faktury (Recipient)", EnumValues: []string{"Odbiorca", "Dodatkowy nabywca", "Dokonujący płatności", "JST – odbiorca", "Członek GV – odbiorca", "Pracownik", "Rola inna"}},
+			{Path: "recipients[].role_description", Type: "string", Description: "Recipient custom role description", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", Requires: []string{"invoice includes recipients"}, SourceSection: "Odbiorca faktury (Recipient)"},
+			{Path: "recipients[].participation", Type: "number", Description: "Recipient percentage participation", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", Requires: []string{"invoice includes recipients"}, SourceSection: "Odbiorca faktury (Recipient)"},
 			{Path: "issuers[]", Type: "array<object>", Description: "Invoice issuers array", Projectable: true, Selectable: false, Commands: commands, Presence: "conditional", Requires: []string{"invoice includes issuers"}, SourceSection: "Odbiorcy/Wystawcy na fakturze"},
 			{Path: "issuers[].id", Type: "integer", Description: "Issuer ID", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", Requires: []string{"invoice includes issuers"}, SourceSection: "Odbiorcy/Wystawcy na fakturze"},
 			{Path: "issuers[].name", Type: "string", Description: "Issuer name", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", Requires: []string{"invoice includes issuers"}, SourceSection: "Odbiorcy/Wystawcy na fakturze"},
 			{Path: "issuers[].email", Type: "string", Description: "Issuer email address", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", Requires: []string{"invoice includes issuers"}, SourceSection: "Odbiorcy/Wystawcy na fakturze"},
+			{Path: "issuers[].tax_no", Type: "string", Description: "Issuer tax number", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", Requires: []string{"invoice includes issuers"}, SourceSection: "Wystawca faktury (Issuer)"},
+			{Path: "issuers[].tax_no_kind", Type: "string", Description: "Issuer tax identifier kind", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", Requires: []string{"invoice includes issuers"}, SourceSection: "Rodzaj identyfikatora podatkowego (tax_no_kind)", EnumValues: []string{"", "nip_ue", "other", "empty", "nip_with_id"}},
+			{Path: "issuers[].company", Type: "boolean", Description: "Issuer company flag", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", Requires: []string{"invoice includes issuers"}, SourceSection: "Wystawca faktury (Issuer)"},
+			{Path: "issuers[].country", Type: "string", Description: "Issuer country", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", Requires: []string{"invoice includes issuers"}, SourceSection: "Wystawca faktury (Issuer)"},
+			{Path: "issuers[].role", Type: "string", Description: "Issuer role", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", Requires: []string{"invoice includes issuers"}, SourceSection: "Wystawca faktury (Issuer)", EnumValues: []string{"Wystawca faktury", "Faktor", "Podmiot pierwotny", "JST – wystawca", "Członek GV – wystawca", "Rola inna"}},
+			{Path: "issuers[].role_description", Type: "string", Description: "Issuer custom role description", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", Requires: []string{"invoice includes issuers"}, SourceSection: "Wystawca faktury (Issuer)"},
 			{Path: "settlement_positions[]", Type: "array<object>", Description: "Invoice settlement positions", Projectable: true, Selectable: false, Commands: commands, Presence: "conditional", Requires: []string{"invoice includes settlement_positions"}, SourceSection: "Rozliczenia na fakturze (settlement_positions)"},
 			{Path: "settlement_positions[].id", Type: "integer", Description: "Settlement position ID", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", Requires: []string{"invoice includes settlement_positions"}, SourceSection: "Rozliczenia na fakturze (settlement_positions)"},
 			{Path: "settlement_positions[].kind", Type: "string", Description: "Settlement position kind", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", Requires: []string{"invoice includes settlement_positions"}, SourceSection: "Rozliczenia na fakturze (settlement_positions)"},
@@ -323,6 +363,11 @@ func schemaForField(field OutputFieldSpec) map[string]any {
 		schema = map[string]any{
 			"type":  "array",
 			"items": newOpenObjectSchema(),
+		}
+	case "array<string>":
+		schema = map[string]any{
+			"type":  "array",
+			"items": map[string]any{"type": "string"},
 		}
 	case "integer|null":
 		schema = map[string]any{"type": []any{"integer", "null"}}

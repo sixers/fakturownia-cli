@@ -1,0 +1,560 @@
+{
+  "schema_version": "fakturownia-cli/v1alpha1",
+  "status": "success",
+  "data": {
+    "schema_version": "fakturownia-cli/v1alpha1",
+    "command": "bank-account get",
+    "use": "get --id ID",
+    "summary": "Fetch a single bank account by ID",
+    "flags": [
+      {
+        "name": "profile",
+        "type": "string",
+        "description": "Select a named profile",
+        "required": false
+      },
+      {
+        "name": "json",
+        "type": "bool",
+        "description": "Alias for --output json",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "output",
+        "type": "string",
+        "description": "Output format",
+        "required": false,
+        "default": "human",
+        "enum": [
+          "human",
+          "json"
+        ]
+      },
+      {
+        "name": "quiet",
+        "type": "bool",
+        "description": "Emit bare values when exactly one field or column remains",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "fields",
+        "type": "string[]",
+        "description": "Project JSON envelope data fields using dot/bracket paths like number or positions[].name",
+        "required": false,
+        "repeatable": true
+      },
+      {
+        "name": "columns",
+        "type": "string[]",
+        "description": "Select human table columns using dot/bracket paths like number or positions[].name",
+        "required": false,
+        "repeatable": true
+      },
+      {
+        "name": "raw",
+        "type": "bool",
+        "description": "Emit the upstream JSON response body directly when supported",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "dry-run",
+        "type": "bool",
+        "description": "Accepted on read-only commands and reserved for future mutating request previews",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "timeout-ms",
+        "type": "int",
+        "description": "HTTP timeout in milliseconds",
+        "required": false,
+        "default": "30000"
+      },
+      {
+        "name": "max-retries",
+        "type": "int",
+        "description": "Maximum retry attempts for idempotent reads on network or 5xx failures",
+        "required": false,
+        "default": "2"
+      },
+      {
+        "name": "non-interactive",
+        "type": "bool",
+        "description": "Disable interactive behavior",
+        "required": false,
+        "default": "true"
+      },
+      {
+        "name": "config",
+        "type": "string",
+        "description": "Override the config file path",
+        "required": false
+      },
+      {
+        "name": "id",
+        "type": "string",
+        "description": "Bank account ID",
+        "required": true
+      }
+    ],
+    "env_vars": [
+      {
+        "name": "FAKTUROWNIA_PROFILE",
+        "description": "Select a profile unless --profile is provided"
+      },
+      {
+        "name": "FAKTUROWNIA_URL",
+        "description": "Override the base account URL from any profile"
+      },
+      {
+        "name": "FAKTUROWNIA_API_TOKEN",
+        "description": "Override the API token from any profile"
+      }
+    ],
+    "output_modes": [
+      "human",
+      "json"
+    ],
+    "exit_codes": [
+      {
+        "code": 0,
+        "description": "success"
+      },
+      {
+        "code": 2,
+        "description": "usage or validation error"
+      },
+      {
+        "code": 3,
+        "description": "not found"
+      },
+      {
+        "code": 4,
+        "description": "authentication or permission failure"
+      },
+      {
+        "code": 5,
+        "description": "conflict"
+      },
+      {
+        "code": 6,
+        "description": "network or timeout failure"
+      },
+      {
+        "code": 7,
+        "description": "reserved for throttling or retry budget exhaustion"
+      },
+      {
+        "code": 8,
+        "description": "remote API rejected the request"
+      },
+      {
+        "code": 9,
+        "description": "internal CLI failure"
+      }
+    ],
+    "raw_supported": true,
+    "examples": [
+      "fakturownia bank-account get --id 100",
+      "fakturownia bank-account get --id 100 --fields id,bank_name,bank_account --json",
+      "fakturownia bank-account get --id 100 --raw"
+    ],
+    "data_schema": {
+      "additionalProperties": true,
+      "properties": {
+        "bank": {
+          "type": "string"
+        },
+        "bank_account": {
+          "type": "string"
+        },
+        "bank_account_currency": {
+          "type": "string"
+        },
+        "bank_account_version_departments": {
+          "items": {
+            "additionalProperties": true,
+            "properties": {
+              "department_id": {
+                "type": "integer"
+              },
+              "main_on_department": {
+                "type": "boolean"
+              },
+              "show_on_invoice": {
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "bank_name": {
+          "type": "string"
+        },
+        "bank_swift": {
+          "type": "string"
+        },
+        "default": {
+          "type": "boolean"
+        },
+        "id": {
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "envelope_schema": {
+      "properties": {
+        "data": {
+          "additionalProperties": true,
+          "properties": {
+            "bank": {
+              "type": "string"
+            },
+            "bank_account": {
+              "type": "string"
+            },
+            "bank_account_currency": {
+              "type": "string"
+            },
+            "bank_account_version_departments": {
+              "items": {
+                "additionalProperties": true,
+                "properties": {
+                  "department_id": {
+                    "type": "integer"
+                  },
+                  "main_on_department": {
+                    "type": "boolean"
+                  },
+                  "show_on_invoice": {
+                    "type": "boolean"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "bank_name": {
+              "type": "string"
+            },
+            "bank_swift": {
+              "type": "string"
+            },
+            "default": {
+              "type": "boolean"
+            },
+            "id": {
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        },
+        "errors": {
+          "items": {
+            "$defs": {
+              "ErrorDetail": {
+                "properties": {
+                  "class": {
+                    "type": "string"
+                  },
+                  "code": {
+                    "type": "string"
+                  },
+                  "hint": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "retryable": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "class",
+                  "code",
+                  "message",
+                  "retryable"
+                ],
+                "type": "object"
+              }
+            },
+            "$id": "https://github.com/sixers/fakturownia-cli/internal/output/error-detail",
+            "$ref": "#/$defs/ErrorDetail",
+            "$schema": "https://json-schema.org/draft/2020-12/schema"
+          },
+          "type": "array"
+        },
+        "meta": {
+          "$defs": {
+            "Meta": {
+              "properties": {
+                "command": {
+                  "type": "string"
+                },
+                "duration_ms": {
+                  "type": "integer"
+                },
+                "pagination": {
+                  "$ref": "#/$defs/Pagination"
+                },
+                "profile": {
+                  "type": "string"
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "command",
+                "duration_ms"
+              ],
+              "type": "object"
+            },
+            "Pagination": {
+              "properties": {
+                "has_next": {
+                  "type": "boolean"
+                },
+                "page": {
+                  "type": "integer"
+                },
+                "per_page": {
+                  "type": "integer"
+                },
+                "returned": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "page",
+                "per_page",
+                "returned",
+                "has_next"
+              ],
+              "type": "object"
+            }
+          },
+          "$id": "https://github.com/sixers/fakturownia-cli/internal/output/meta",
+          "$ref": "#/$defs/Meta",
+          "$schema": "https://json-schema.org/draft/2020-12/schema"
+        },
+        "schema_version": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "success",
+            "error"
+          ],
+          "type": "string"
+        },
+        "warnings": {
+          "items": {
+            "$defs": {
+              "WarningDetail": {
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "message"
+                ],
+                "type": "object"
+              }
+            },
+            "$id": "https://github.com/sixers/fakturownia-cli/internal/output/warning-detail",
+            "$ref": "#/$defs/WarningDetail",
+            "$schema": "https://json-schema.org/draft/2020-12/schema"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "schema_version",
+        "status",
+        "data",
+        "errors",
+        "warnings",
+        "meta"
+      ],
+      "type": "object"
+    },
+    "output": {
+      "shape": "object",
+      "open_ended": true,
+      "catalog_basis": {
+        "source": "bank_accounts",
+        "url": "https://github.com/fakturownia/API/blob/master/API_RACHUNKI_BANKOWE.md"
+      },
+      "path_syntax": "dot_bracket",
+      "known_fields": [
+        {
+          "path": "id",
+          "type": "integer",
+          "description": "Bank account ID",
+          "projectable": true,
+          "selectable": true,
+          "default_column": true,
+          "commands": [
+            "bank-account get"
+          ],
+          "presence": "common",
+          "source_section": "Pobranie pojedycznego rachunku bankowego po ID"
+        },
+        {
+          "path": "bank",
+          "type": "string",
+          "description": "Bank display name used by write examples",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "bank-account get"
+          ],
+          "presence": "conditional",
+          "source_section": "Tworzenie rachunku bankowego"
+        },
+        {
+          "path": "bank_name",
+          "type": "string",
+          "description": "Bank name returned by the API",
+          "projectable": true,
+          "selectable": true,
+          "default_column": true,
+          "commands": [
+            "bank-account get"
+          ],
+          "presence": "common",
+          "source_section": "Pobranie listy rachunków bankowych"
+        },
+        {
+          "path": "bank_swift",
+          "type": "string",
+          "description": "Bank SWIFT or BIC code",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "bank-account get"
+          ],
+          "presence": "conditional",
+          "source_section": "Pobranie listy rachunków bankowych"
+        },
+        {
+          "path": "bank_account",
+          "type": "string",
+          "description": "Bank account number",
+          "projectable": true,
+          "selectable": true,
+          "default_column": true,
+          "commands": [
+            "bank-account get"
+          ],
+          "presence": "common",
+          "source_section": "Pobranie listy rachunków bankowych"
+        },
+        {
+          "path": "bank_account_currency",
+          "type": "string",
+          "description": "Bank account currency",
+          "projectable": true,
+          "selectable": true,
+          "default_column": true,
+          "commands": [
+            "bank-account get"
+          ],
+          "presence": "common",
+          "source_section": "Pobranie listy rachunków bankowych"
+        },
+        {
+          "path": "default",
+          "type": "boolean",
+          "description": "Whether this bank account is the default one",
+          "projectable": true,
+          "selectable": true,
+          "default_column": true,
+          "commands": [
+            "bank-account get"
+          ],
+          "presence": "conditional",
+          "source_section": "Pobranie listy rachunków bankowych"
+        },
+        {
+          "path": "bank_account_version_departments[]",
+          "type": "array<object>",
+          "description": "Per-department bank-account visibility settings",
+          "projectable": true,
+          "selectable": false,
+          "commands": [
+            "bank-account get"
+          ],
+          "presence": "conditional",
+          "source_section": "Pobranie pojedycznego rachunku bankowego po ID"
+        },
+        {
+          "path": "bank_account_version_departments[].department_id",
+          "type": "integer",
+          "description": "Department ID that uses this bank account",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "bank-account get"
+          ],
+          "presence": "conditional",
+          "source_section": "Pobranie pojedycznego rachunku bankowego po ID"
+        },
+        {
+          "path": "bank_account_version_departments[].main_on_department",
+          "type": "boolean",
+          "description": "Whether the bank account is the main one on that department",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "bank-account get"
+          ],
+          "presence": "conditional",
+          "source_section": "Pobranie pojedycznego rachunku bankowego po ID"
+        },
+        {
+          "path": "bank_account_version_departments[].show_on_invoice",
+          "type": "boolean",
+          "description": "Whether the bank account is shown on department invoices",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "bank-account get"
+          ],
+          "presence": "conditional",
+          "source_section": "Pobranie pojedycznego rachunku bankowego po ID"
+        }
+      ],
+      "default_columns": [
+        "id",
+        "bank_name",
+        "bank_account",
+        "bank_account_currency",
+        "default"
+      ],
+      "notes": [
+        "known_fields is curated from API_RACHUNKI_BANKOWE.md and is not exhaustive",
+        "unknown upstream fields may still appear in data and can still be selected when the path syntax is valid",
+        "the upstream addendum uses `bank` in write examples while returned objects expose `bank_name`; both are surfaced in schema discovery where appropriate"
+      ]
+    }
+  },
+  "errors": [],
+  "warnings": null,
+  "meta": {
+    "command": "schema bank-account get",
+    "duration_ms": 0
+  }
+}

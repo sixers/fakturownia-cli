@@ -176,13 +176,26 @@
     "data_schema": {
       "additionalProperties": true,
       "properties": {
+        "bank_account_id": {
+          "type": "integer"
+        },
         "id": {
           "type": "integer"
+        },
+        "mass_payment_pattern": {
+          "type": "string"
         },
         "name": {
           "type": "string"
         },
         "shortcut": {
+          "type": "string"
+        },
+        "show_bank_account_on_invoice": {
+          "enum": [
+            "1",
+            "0"
+          ],
           "type": "string"
         },
         "tax_no": {
@@ -196,13 +209,26 @@
         "data": {
           "additionalProperties": true,
           "properties": {
+            "bank_account_id": {
+              "type": "integer"
+            },
             "id": {
               "type": "integer"
+            },
+            "mass_payment_pattern": {
+              "type": "string"
             },
             "name": {
               "type": "string"
             },
             "shortcut": {
+              "type": "string"
+            },
+            "show_bank_account_on_invoice": {
+              "enum": [
+                "1",
+                "0"
+              ],
               "type": "string"
             },
             "tax_no": {
@@ -354,6 +380,12 @@
         "source": "readme",
         "url": "https://github.com/fakturownia/API/blob/master/README.md"
       },
+      "additional_catalog_bases": [
+        {
+          "source": "bank_accounts",
+          "url": "https://github.com/fakturownia/API/blob/master/API_RACHUNKI_BANKOWE.md"
+        }
+      ],
       "path_syntax": "dot_bracket",
       "known_fields": [
         {
@@ -407,6 +439,46 @@
           ],
           "presence": "conditional",
           "source_section": "Dodanie nowego działu"
+        },
+        {
+          "path": "bank_account_id",
+          "type": "integer",
+          "description": "Default department bank account ID",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "department set-logo"
+          ],
+          "presence": "conditional",
+          "source_section": "Tworzenie nowej faktury z własnym kodem do płatności masowych"
+        },
+        {
+          "path": "show_bank_account_on_invoice",
+          "type": "string",
+          "description": "Show the department bank account on invoices",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "department set-logo"
+          ],
+          "presence": "conditional",
+          "source_section": "Tworzenie nowej faktury z własnym kodem do płatności masowych",
+          "enum_values": [
+            "1",
+            "0"
+          ]
+        },
+        {
+          "path": "mass_payment_pattern",
+          "type": "string",
+          "description": "Department mass-payment pattern",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "department set-logo"
+          ],
+          "presence": "conditional",
+          "source_section": "Tworzenie nowej faktury z własnym kodem do płatności masowych"
         }
       ],
       "default_columns": [
@@ -416,7 +488,7 @@
         "tax_no"
       ],
       "notes": [
-        "known_fields is curated from the upstream README and is not exhaustive",
+        "known_fields is curated from the upstream README plus API_RACHUNKI_BANKOWE.md and is not exhaustive",
         "unknown upstream fields may still appear in data and can still be selected when the path syntax is valid"
       ]
     }

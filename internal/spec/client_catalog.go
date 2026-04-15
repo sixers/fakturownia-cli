@@ -23,11 +23,17 @@ func clientRequestBodySpec() *RequestBodySpec {
 			Source: "readme",
 			URL:    fakturowniaReadmeURL,
 		},
-		PathSyntax: "dot_bracket",
+		AdditionalCatalogBases: []*CatalogBasis{
+			{
+				Source: "bank_accounts",
+				URL:    fakturowniaBankAccountsURL,
+			},
+		},
+		PathSyntax:  "dot_bracket",
 		KnownFields: clientRequestFields(),
 		Notes: []string{
 			"the CLI accepts the inner client object, then wraps it in the upstream {\"client\": ...} envelope",
-			"known_fields is curated from the upstream README and is not exhaustive",
+			"known_fields is curated from the upstream README plus API_RACHUNKI_BANKOWE.md and is not exhaustive",
 		},
 	}
 }
@@ -41,9 +47,15 @@ func clientBaseOutputSpec(shape string, commands []string) *OutputSpec {
 			Source: "readme",
 			URL:    fakturowniaReadmeURL,
 		},
+		AdditionalCatalogBases: []*CatalogBasis{
+			{
+				Source: "bank_accounts",
+				URL:    fakturowniaBankAccountsURL,
+			},
+		},
 		DefaultColumns: []string{"id", "name", "tax_no", "email", "city", "country"},
 		Notes: []string{
-			"known_fields is curated from the upstream README and is not exhaustive",
+			"known_fields is curated from the upstream README plus API_RACHUNKI_BANKOWE.md and is not exhaustive",
 			"unknown upstream fields may still appear in data and can still be selected when the path syntax is valid",
 		},
 		KnownFields: clientKnownOutputFields(commands),
@@ -87,6 +99,7 @@ func clientKnownOutputFields(commands []string) []OutputFieldSpec {
 		{Path: "disable_auto_reminders", Type: "string", Description: "Disable automatic reminders flag", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Pola klienta", EnumValues: []string{"1", "0"}},
 		{Path: "person", Type: "string", Description: "Contact person", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Pola klienta"},
 		{Path: "buyer_id", Type: "integer", Description: "Linked buyer ID", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Pola klienta"},
+		{Path: "use_mass_payment", Type: "string", Description: "Enable mass-payment code generation for this client", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Tworzenie nowej faktury z własnym kodem do płatności masowych", EnumValues: []string{"1", "0"}},
 		{Path: "mass_payment_code", Type: "string", Description: "Mass payment code", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Pola klienta"},
 		{Path: "external_id", Type: "string", Description: "External client ID", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Pobranie wybranego klienta po zewnętrznym ID"},
 		{Path: "tp_client_connection", Type: "string", Description: "Related-entity TP flag", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Pola klienta", EnumValues: []string{"1", "0"}},

@@ -13,14 +13,15 @@ type RequestFieldSpec struct {
 }
 
 type RequestBodySpec struct {
-	InputFlag    string             `json:"input_flag"`
-	InputModes   []string           `json:"input_modes"`
-	WrapperKey   string             `json:"wrapper_key,omitempty"`
-	OpenEnded    bool               `json:"open_ended"`
-	CatalogBasis *CatalogBasis      `json:"catalog_basis,omitempty"`
-	PathSyntax   string             `json:"path_syntax,omitempty"`
-	KnownFields  []RequestFieldSpec `json:"known_fields,omitempty"`
-	Notes        []string           `json:"notes,omitempty"`
+	InputFlag             string             `json:"input_flag"`
+	InputModes            []string           `json:"input_modes"`
+	WrapperKey            string             `json:"wrapper_key,omitempty"`
+	OpenEnded             bool               `json:"open_ended"`
+	CatalogBasis          *CatalogBasis      `json:"catalog_basis,omitempty"`
+	AdditionalCatalogBases []*CatalogBasis   `json:"additional_catalog_bases,omitempty"`
+	PathSyntax            string             `json:"path_syntax,omitempty"`
+	KnownFields           []RequestFieldSpec `json:"known_fields,omitempty"`
+	Notes                 []string           `json:"notes,omitempty"`
 }
 
 func cloneRequestBodySpec(spec *RequestBodySpec) *RequestBodySpec {
@@ -28,14 +29,15 @@ func cloneRequestBodySpec(spec *RequestBodySpec) *RequestBodySpec {
 		return nil
 	}
 	return &RequestBodySpec{
-		InputFlag:    spec.InputFlag,
-		InputModes:   append([]string{}, spec.InputModes...),
-		WrapperKey:   spec.WrapperKey,
-		OpenEnded:    spec.OpenEnded,
-		CatalogBasis: cloneCatalogBasis(spec.CatalogBasis),
-		PathSyntax:   spec.PathSyntax,
-		KnownFields:  cloneRequestFieldSpecs(spec.KnownFields),
-		Notes:        append([]string{}, spec.Notes...),
+		InputFlag:             spec.InputFlag,
+		InputModes:            append([]string{}, spec.InputModes...),
+		WrapperKey:            spec.WrapperKey,
+		OpenEnded:             spec.OpenEnded,
+		CatalogBasis:          cloneCatalogBasis(spec.CatalogBasis),
+		AdditionalCatalogBases: cloneCatalogBases(spec.AdditionalCatalogBases),
+		PathSyntax:            spec.PathSyntax,
+		KnownFields:           cloneRequestFieldSpecs(spec.KnownFields),
+		Notes:                 append([]string{}, spec.Notes...),
 	}
 }
 
@@ -104,6 +106,17 @@ func cloneCatalogBasis(value *CatalogBasis) *CatalogBasis {
 		Source: value.Source,
 		URL:    value.URL,
 	}
+}
+
+func cloneCatalogBases(values []*CatalogBasis) []*CatalogBasis {
+	if len(values) == 0 {
+		return nil
+	}
+	cloned := make([]*CatalogBasis, 0, len(values))
+	for _, value := range values {
+		cloned = append(cloned, cloneCatalogBasis(value))
+	}
+	return cloned
 }
 
 func ensureRequired(schema map[string]any) []string {

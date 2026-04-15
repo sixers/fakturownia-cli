@@ -315,6 +315,13 @@
           ],
           "type": "string"
         },
+        "use_mass_payment": {
+          "enum": [
+            "1",
+            "0"
+          ],
+          "type": "string"
+        },
         "www": {
           "type": "string"
         }
@@ -334,6 +341,12 @@
         "source": "readme",
         "url": "https://github.com/fakturownia/API/blob/master/README.md"
       },
+      "additional_catalog_bases": [
+        {
+          "source": "bank_accounts",
+          "url": "https://github.com/fakturownia/API/blob/master/API_RACHUNKI_BANKOWE.md"
+        }
+      ],
       "path_syntax": "dot_bracket",
       "known_fields": [
         {
@@ -578,6 +591,16 @@
           "source_section": "Pola klienta"
         },
         {
+          "path": "use_mass_payment",
+          "type": "string",
+          "description": "Enable mass-payment code generation for this client",
+          "enum_values": [
+            "1",
+            "0"
+          ],
+          "source_section": "Tworzenie nowej faktury z własnym kodem do płatności masowych"
+        },
+        {
           "path": "mass_payment_code",
           "type": "string",
           "description": "Mass payment code",
@@ -602,7 +625,7 @@
       ],
       "notes": [
         "the CLI accepts the inner client object, then wraps it in the upstream {\"client\": ...} envelope",
-        "known_fields is curated from the upstream README and is not exhaustive"
+        "known_fields is curated from the upstream README plus API_RACHUNKI_BANKOWE.md and is not exhaustive"
       ]
     },
     "request_body_schema": {
@@ -751,6 +774,13 @@
           "type": "string"
         },
         "use_delivery_address": {
+          "enum": [
+            "1",
+            "0"
+          ],
+          "type": "string"
+        },
+        "use_mass_payment": {
           "enum": [
             "1",
             "0"
@@ -917,6 +947,13 @@
               ],
               "type": "string"
             },
+            "use_mass_payment": {
+              "enum": [
+                "1",
+                "0"
+              ],
+              "type": "string"
+            },
             "www": {
               "type": "string"
             }
@@ -1066,6 +1103,12 @@
         "source": "readme",
         "url": "https://github.com/fakturownia/API/blob/master/README.md"
       },
+      "additional_catalog_bases": [
+        {
+          "source": "bank_accounts",
+          "url": "https://github.com/fakturownia/API/blob/master/API_RACHUNKI_BANKOWE.md"
+        }
+      ],
       "path_syntax": "dot_bracket",
       "known_fields": [
         {
@@ -1526,6 +1569,22 @@
           "source_section": "Pola klienta"
         },
         {
+          "path": "use_mass_payment",
+          "type": "string",
+          "description": "Enable mass-payment code generation for this client",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "client create"
+          ],
+          "presence": "conditional",
+          "source_section": "Tworzenie nowej faktury z własnym kodem do płatności masowych",
+          "enum_values": [
+            "1",
+            "0"
+          ]
+        },
+        {
           "path": "mass_payment_code",
           "type": "string",
           "description": "Mass payment code",
@@ -1575,7 +1634,7 @@
         "country"
       ],
       "notes": [
-        "known_fields is curated from the upstream README and is not exhaustive",
+        "known_fields is curated from the upstream README plus API_RACHUNKI_BANKOWE.md and is not exhaustive",
         "unknown upstream fields may still appear in data and can still be selected when the path syntax is valid"
       ]
     }

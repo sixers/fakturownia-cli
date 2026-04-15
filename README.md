@@ -70,6 +70,14 @@ The current implementation covers these command groups:
 - `payment update`
 - `payment delete`
 
+### Bank Accounts
+
+- `bank-account list`
+- `bank-account get`
+- `bank-account create`
+- `bank-account update`
+- `bank-account delete`
+
 ### Products
 
 - `product list`
@@ -93,10 +101,12 @@ The current implementation covers these command groups:
 - `invoice update`
 - `invoice delete`
 - `invoice send-email`
+- `invoice send-gov`
 - `invoice change-status`
 - `invoice cancel`
 - `invoice public-link`
 - `invoice add-attachment`
+- `invoice download-attachment`
 - `invoice download-attachments`
 - `invoice fiscal-print`
 - `invoice download`
@@ -330,9 +340,9 @@ Envelope shape:
 
 `schema` describes both the command contract and the README-backed output and request catalogs for supported resources.
 
-- `fakturownia schema auth exchange --json`, `fakturownia schema account get --json`, `fakturownia schema department list --json`, `fakturownia schema department get --json`, `fakturownia schema issuer list --json`, `fakturownia schema issuer get --json`, `fakturownia schema webhook list --json`, `fakturownia schema webhook get --json`, `fakturownia schema invoice list --json`, `fakturownia schema invoice get --json`, `fakturownia schema category list --json`, `fakturownia schema category get --json`, `fakturownia schema client list --json`, `fakturownia schema payment list --json`, `fakturownia schema payment get --json`, `fakturownia schema product list --json`, `fakturownia schema price-list list --json`, `fakturownia schema price-list get --json`, `fakturownia schema recurring list --json`, `fakturownia schema warehouse list --json`, `fakturownia schema warehouse get --json`, `fakturownia schema warehouse-action list --json`, `fakturownia schema warehouse-document list --json`, and `fakturownia schema warehouse-document get --json` expose `output.known_fields`
-- `fakturownia schema account create --json`, `fakturownia schema department create --json`, `fakturownia schema department update --json`, `fakturownia schema issuer create --json`, `fakturownia schema issuer update --json`, `fakturownia schema user create --json`, `fakturownia schema webhook create --json`, `fakturownia schema webhook update --json`, `fakturownia schema invoice create --json`, `fakturownia schema invoice update --json`, `fakturownia schema category create --json`, `fakturownia schema category update --json`, `fakturownia schema client create --json`, `fakturownia schema client update --json`, `fakturownia schema payment create --json`, `fakturownia schema payment update --json`, `fakturownia schema product create --json`, `fakturownia schema product update --json`, `fakturownia schema price-list create --json`, `fakturownia schema price-list update --json`, `fakturownia schema recurring create --json`, `fakturownia schema recurring update --json`, `fakturownia schema warehouse create --json`, `fakturownia schema warehouse update --json`, and `fakturownia schema warehouse-document create --json`, and `fakturownia schema warehouse-document update --json` expose `request_body_schema`
-- `known_fields` and request body catalogs are curated from the upstream [Fakturownia README](https://github.com/fakturownia/API/blob/master/README.md)
+- `fakturownia schema auth exchange --json`, `fakturownia schema account get --json`, `fakturownia schema department list --json`, `fakturownia schema department get --json`, `fakturownia schema issuer list --json`, `fakturownia schema issuer get --json`, `fakturownia schema webhook list --json`, `fakturownia schema webhook get --json`, `fakturownia schema invoice list --json`, `fakturownia schema invoice get --json`, `fakturownia schema category list --json`, `fakturownia schema category get --json`, `fakturownia schema client list --json`, `fakturownia schema payment list --json`, `fakturownia schema payment get --json`, `fakturownia schema bank-account list --json`, `fakturownia schema bank-account get --json`, `fakturownia schema product list --json`, `fakturownia schema price-list list --json`, `fakturownia schema price-list get --json`, `fakturownia schema recurring list --json`, `fakturownia schema warehouse list --json`, `fakturownia schema warehouse get --json`, `fakturownia schema warehouse-action list --json`, `fakturownia schema warehouse-document list --json`, and `fakturownia schema warehouse-document get --json` expose `output.known_fields`
+- `fakturownia schema account create --json`, `fakturownia schema department create --json`, `fakturownia schema department update --json`, `fakturownia schema issuer create --json`, `fakturownia schema issuer update --json`, `fakturownia schema user create --json`, `fakturownia schema webhook create --json`, `fakturownia schema webhook update --json`, `fakturownia schema invoice create --json`, `fakturownia schema invoice update --json`, `fakturownia schema category create --json`, `fakturownia schema category update --json`, `fakturownia schema client create --json`, `fakturownia schema client update --json`, `fakturownia schema payment create --json`, `fakturownia schema payment update --json`, `fakturownia schema bank-account create --json`, `fakturownia schema bank-account update --json`, `fakturownia schema product create --json`, `fakturownia schema product update --json`, `fakturownia schema price-list create --json`, `fakturownia schema price-list update --json`, `fakturownia schema recurring create --json`, `fakturownia schema recurring update --json`, `fakturownia schema warehouse create --json`, `fakturownia schema warehouse update --json`, and `fakturownia schema warehouse-document create --json`, and `fakturownia schema warehouse-document update --json` expose `request_body_schema`
+- `known_fields` and request body catalogs are curated from the upstream [Fakturownia README](https://github.com/fakturownia/API/blob/master/README.md); invoice schemas also cite [KSeF.md](https://github.com/fakturownia/API/blob/master/KSeF.md) for the KSeF-specific `gov_*` fields and payload notes, and invoice plus bank-account schemas cite [API_RACHUNKI_BANKOWE.md](https://github.com/fakturownia/API/blob/master/API_RACHUNKI_BANKOWE.md) for bank-account-specific payloads and invoice bank-account fields
 - nested paths use `dot_bracket` syntax such as `positions[].name`
 - the catalog is intentionally not exhaustive; syntactically valid paths outside the catalog are still allowed and produce warnings instead of hard failures
 
@@ -347,10 +357,12 @@ fakturownia schema issuer create --json
 fakturownia schema user create --json
 fakturownia schema webhook create --json
 fakturownia schema invoice create --json
+fakturownia invoice get --id 123 --fields id,number,gov_status,gov_id --json
 fakturownia schema recurring create --json
 fakturownia schema category create --json
 fakturownia schema client create --json
 fakturownia schema payment create --json
+fakturownia schema bank-account create --json
 fakturownia schema product create --json
 fakturownia schema price-list create --json
 fakturownia schema warehouse create --json
@@ -359,6 +371,7 @@ fakturownia schema warehouse-document create --json
 fakturownia category list --fields name,description --json
 fakturownia client list --fields name,email --json
 fakturownia payment list --include invoices --fields name,price,paid --json
+fakturownia bank-account get --id 100 --fields id,bank_name,bank_account,bank_account_version_departments[].show_on_invoice --json
 fakturownia product list --fields name,code,stock_level --json
 fakturownia price-list get --id 8523 --fields id,name,price_list_positions[].price_gross --json
 fakturownia warehouse list --fields name,description --json
@@ -444,6 +457,15 @@ fakturownia payment get --id 555 --json
 fakturownia payment create --input '{"name":"Payment 001","price":100.05,"invoice_id":null,"paid":true,"kind":"api"}' --dry-run --json
 ```
 
+### Bank Accounts
+
+```bash
+fakturownia bank-account list --json
+fakturownia bank-account get --id 100 --json
+fakturownia bank-account create --input '{"bank":"Bank of China","bank_account":"11 1111 1111 1111 1111 1111 1111","bank_account_currency":"PLN","default":true}' --dry-run --json
+fakturownia bank-account update --id 100 --input '{"bank_account_version_departments":[{"department_id":5,"show_on_invoice":true,"main_on_department":true}]}' --json
+```
+
 ### Products
 
 ```bash
@@ -469,17 +491,31 @@ fakturownia price-list delete --id 8523 --yes --json
 fakturownia invoice list --json
 fakturownia invoice list --period this_month --columns id,number,price_gross
 fakturownia invoice get --id 123 --fields id,number,status --json
+fakturownia invoice get --id 123 --fields id,number,gov_status,gov_id,gov_error_messages[] --json
+fakturownia invoice get --id 123 --fields id,number,bank_accounts[].bank_name,bank_accounts[].bank_account_number --json
 fakturownia invoice get --id 123 --fields number,positions[].name --json
 fakturownia invoice get --id 123 --include descriptions --fields descriptions[].content --json
 fakturownia invoice get --id 123 --additional-field corrected_content_before --additional-field corrected_content_after --correction-positions full --json
 fakturownia invoice create --input '{"kind":"vat","client_id":1,"positions":[{"product_id":1,"quantity":2}]}' --json
-fakturownia invoice update --id 123 --input '{"buyer_name":"Nowa nazwa"}' --json
+fakturownia invoice create --gov-save-and-send --input '{"kind":"vat","buyer_company":true,"seller_tax_no":"5252445767","seller_street":"ul. Przykładowa 10","seller_post_code":"00-001","seller_city":"Warszawa","buyer_name":"Klient ABC Sp. z o.o.","buyer_tax_no":"9876543210","positions":[{"name":"Usługa","quantity":1,"total_price_gross":1230,"tax":23}]}' --json
+fakturownia invoice create --input '{"kind":"vat","buyer_name":"Klient ABC","bank_account_id":100,"buyer_mass_payment_code":"ABC-123","positions":[{"name":"Usługa","quantity":1,"total_price_gross":1230,"tax":23}]}' --json
+fakturownia invoice update --id 123 --gov-save-and-send --input '{"buyer_name":"Nowa nazwa"}' --json
 fakturownia invoice send-email --id 123 --email-to billing@example.com --email-pdf --json
+fakturownia invoice send-gov --id 123 --json
 fakturownia invoice public-link --id 123 --json
 fakturownia invoice add-attachment --id 123 --file ./scan.pdf --json
+fakturownia invoice download-attachment --id 123 --kind gov --dir ./attachments --json
+fakturownia invoice download-attachment --id 123 --kind gov_upo --dir ./attachments --json
 fakturownia invoice fiscal-print --invoice-id 123 --invoice-id 124 --json
 fakturownia invoice download --id 123 --dir ./invoices --json
 ```
+
+For KSeF flows, the API uses `gov` names:
+
+- `invoice send-gov` means “send the invoice to KSeF”
+- `invoice download-attachment --kind gov` downloads the KSeF XML
+- `invoice download-attachment --kind gov_upo` downloads the KSeF UPO XML
+- invoice schemas expose KSeF status through `gov_*` fields such as `gov_status` and `gov_id`
 
 ### Recurrings
 

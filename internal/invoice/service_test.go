@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	"github.com/sixers/fakturownia-cli/internal/config"
+	"github.com/sixers/fakturownia-cli/internal/output"
 )
 
 func useTLSTestServer(t *testing.T, handler http.HandlerFunc) *httptest.Server {
@@ -34,6 +35,7 @@ func TestCreateDryRunIncludesCompanionOptions(t *testing.T) {
 		IdentifyOSS:             true,
 		FillDefaultDescriptions: true,
 		CorrectionPositions:     "full",
+		GovSaveAndSend:          true,
 		DryRun:                  true,
 	})
 	if err != nil {
@@ -46,11 +48,125 @@ func TestCreateDryRunIncludesCompanionOptions(t *testing.T) {
 		t.Fatalf("unexpected dry-run path: %#v", result.DryRun)
 	}
 	body, _ := result.DryRun.Body.(map[string]any)
-	if body["identify_oss"] != "1" || body["fill_default_descriptions"] != true {
+	if body["identify_oss"] != "1" || body["fill_default_descriptions"] != true || body["gov_save_and_send"] != true {
 		t.Fatalf("expected companion options in dry-run body, got %#v", body)
 	}
 	if got := result.DryRun.Query["correction_positions"]; len(got) != 1 || got[0] != "full" {
 		t.Fatalf("expected correction_positions query parameter, got %#v", result.DryRun.Query)
+	}
+}
+
+func TestSendGovBuildsQuery(t *testing.T) {
+	t.Parallel()
+
+	server := useTLSTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/invoices/100.json" {
+			t.Fatalf("unexpected path %q", r.URL.Path)
+		}
+		query := r.URL.Query()
+		if query.Get("api_token") != "token" || query.Get("send_to_ksef") != "yes" {
+			t.Fatalf("unexpected query values: %#v", query)
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{"id": 100, "gov_status": "processing"})
+	})
+
+	service := newServiceWithHTTPClient(nil, server.Client())
+	result, err := service.SendGov(context.Background(), SendGovRequest{
+		ConfigPath: filepath.Join(t.TempDir(), "config.json"),
+		Env:        config.Env{URL: server.URL, APIToken: "token"},
+		ID:         "100",
+	})
+	if err != nil {
+		t.Fatalf("SendGov() error = %v", err)
+	}
+	if result.Invoice["gov_status"] != "processing" {
+		t.Fatalf("unexpected invoice payload: %#v", result.Invoice)
+	}
+}
+
+func TestDownloadAttachmentUsesHeaderFilename(t *testing.T) {
+	t.Parallel()
+
+	server := useTLSTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/invoices/111/attachment" {
+			t.Fatalf("unexpected path %q", r.URL.Path)
+		}
+		if got := r.URL.Query().Get("kind"); got != "gov" {
+			t.Fatalf("unexpected kind %q", got)
+		}
+		w.Header().Set("Content-Disposition", `attachment; filename="KSeF_FA_111.xml"`)
+		_, _ = w.Write([]byte("xml-bytes"))
+	})
+
+	service := newServiceWithHTTPClient(nil, server.Client())
+	dir := t.TempDir()
+	result, err := service.DownloadAttachment(context.Background(), DownloadAttachmentRequest{
+		ConfigPath: filepath.Join(dir, "config.json"),
+		Env:        config.Env{URL: server.URL, APIToken: "token"},
+		ID:         "111",
+		Kind:       "gov",
+		Dir:        dir,
+	})
+	if err != nil {
+		t.Fatalf("DownloadAttachment() error = %v", err)
+	}
+	if filepath.Base(result.Path) != "KSeF_FA_111.xml" {
+		t.Fatalf("expected header filename to be preserved, got %#v", result)
+	}
+}
+
+func TestDownloadAttachmentFallsBackWithoutHeaderFilename(t *testing.T) {
+	t.Parallel()
+
+	server := useTLSTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/invoices/111/attachment" {
+			t.Fatalf("unexpected path %q", r.URL.Path)
+		}
+		_, _ = w.Write([]byte("xml-bytes"))
+	})
+
+	service := newServiceWithHTTPClient(nil, server.Client())
+	dir := t.TempDir()
+	result, err := service.DownloadAttachment(context.Background(), DownloadAttachmentRequest{
+		ConfigPath: filepath.Join(dir, "config.json"),
+		Env:        config.Env{URL: server.URL, APIToken: "token"},
+		ID:         "111",
+		Kind:       "gov_upo",
+		Dir:        dir,
+	})
+	if err != nil {
+		t.Fatalf("DownloadAttachment() error = %v", err)
+	}
+	if filepath.Base(result.Path) != "invoice-111-gov_upo" {
+		t.Fatalf("expected neutral fallback filename, got %#v", result)
+	}
+}
+
+func TestSendEmailReturnsSemanticKSeFError(t *testing.T) {
+	t.Parallel()
+
+	server := useTLSTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"status":  "error",
+			"message": "Faktura nie może zostać wysłana - brak numeru KSeF",
+		})
+	})
+
+	service := newServiceWithHTTPClient(nil, server.Client())
+	_, err := service.SendEmail(context.Background(), SendEmailRequest{
+		ConfigPath: filepath.Join(t.TempDir(), "config.json"),
+		Env:        config.Env{URL: server.URL, APIToken: "token"},
+		ID:         "100",
+	})
+	if err == nil {
+		t.Fatal("expected semantic KSeF email error")
+	}
+	appErr, ok := err.(*output.AppError)
+	if !ok {
+		t.Fatalf("expected *output.AppError, got %T", err)
+	}
+	if appErr.Detail().Code != "ksef_number_required" {
+		t.Fatalf("unexpected error detail: %#v", appErr.Detail())
 	}
 }
 

@@ -8,7 +8,7 @@ Generated skill docs for the installable `fakturownia` bundle.
 
 | Skill | Description |
 | --- | --- |
-| [fakturownia](../skills/fakturownia/SKILL.md) | Fakturownia CLI bundle: shared guidance, auth, accounts, departments, issuers, users, categories, clients, payments, products, price lists, invoices, recurrings, warehouses, warehouse actions, warehouse documents, webhooks, self-update, schema discovery, diagnostics, and generated invoice recipes for the `fakturownia` command. Use when an agent needs to work with Fakturownia through this CLI. |
+| [fakturownia](../skills/fakturownia/SKILL.md) | Fakturownia CLI bundle: shared guidance, auth, accounts, departments, issuers, users, categories, clients, payments, bank accounts, products, price lists, invoices, recurrings, warehouses, warehouse actions, warehouse documents, webhooks, self-update, schema discovery, diagnostics, and generated invoice recipes for the `fakturownia` command. Use when an agent needs to work with Fakturownia through this CLI. |
 
 ## Core
 
@@ -35,9 +35,10 @@ Task-focused API area skills.
 | [fakturownia-categories](../skills/fakturownia/subskills/categories/SKILL.md) | Fakturownia CLI categories: list, fetch, create, update, and delete categories, and inspect README-backed category fields and request schemas. |
 | [fakturownia-clients](../skills/fakturownia/subskills/clients/SKILL.md) | Fakturownia CLI clients: list, fetch, create, update, and delete clients, and inspect README-backed client fields and request schemas. |
 | [fakturownia-payments](../skills/fakturownia/subskills/payments/SKILL.md) | Fakturownia CLI payments: list, fetch, create, update, and delete banking payments, including the README-backed `include=invoices` list mode and request-body discovery. |
+| [fakturownia-bank-accounts](../skills/fakturownia/subskills/bank-accounts/SKILL.md) | Fakturownia CLI bank accounts: list, fetch, create, update, and delete bank accounts, and inspect the bank-account addendum fields that also affect invoice payloads. |
 | [fakturownia-products](../skills/fakturownia/subskills/products/SKILL.md) | Fakturownia CLI products: list, fetch, create, and update products, including warehouse-aware reads and README-backed request schemas. |
 | [fakturownia-price-lists](../skills/fakturownia/subskills/price-lists/SKILL.md) | Fakturownia CLI price lists: list, fetch, create, update, and delete price lists, including upstream-shaped position payloads and schema-backed discovery. |
-| [fakturownia-invoices](../skills/fakturownia/subskills/invoices/SKILL.md) | Fakturownia CLI invoices: list, fetch, create, update, delete, email, cancel, print, attach files, derive public links, and discover invoice fields and payloads through schema output. |
+| [fakturownia-invoices](../skills/fakturownia/subskills/invoices/SKILL.md) | Fakturownia CLI invoices: list, fetch, create, update, delete, email, cancel, send to KSeF through the API-native `gov` flow, download invoice attachments, and discover invoice fields and payloads through schema output. |
 | [fakturownia-recurrings](../skills/fakturownia/subskills/recurrings/SKILL.md) | Fakturownia CLI recurrings: list, create, and update recurring invoice definitions with README-backed request and output discovery. |
 | [fakturownia-warehouses](../skills/fakturownia/subskills/warehouses/SKILL.md) | Fakturownia CLI warehouses: list, fetch, create, update, and delete warehouses, and inspect README-backed warehouse fields and request schemas. |
 | [fakturownia-warehouse-actions](../skills/fakturownia/subskills/warehouse-actions/SKILL.md) | Fakturownia CLI warehouse actions: list warehouse actions with explicit README-backed filters and inspect conservative action fields through schema output. |
@@ -53,6 +54,12 @@ Generated workflow recipes for common invoice and recurring tasks.
 | [fakturownia-invoice-copy](../skills/fakturownia/recipes/invoice-copy/SKILL.md) | Create a new invoice by copying another invoice, order, or proforma with `copy_invoice_from`. |
 | [fakturownia-invoice-correction](../skills/fakturownia/recipes/invoice-correction/SKILL.md) | Create and inspect correction invoices, including before/after correction fields. |
 | [fakturownia-invoice-oss](../skills/fakturownia/recipes/invoice-oss/SKILL.md) | Create an OSS invoice and ask the API to validate the OSS conditions before marking it. |
+| [fakturownia-invoice-ksef-create-send](../skills/fakturownia/recipes/invoice-ksef-create-send/SKILL.md) | Create an invoice with the API-native `gov` companion flag that queues the document for KSeF submission right away. |
+| [fakturownia-invoice-ksef-send-status](../skills/fakturownia/recipes/invoice-ksef-send-status/SKILL.md) | Queue an already-created invoice for KSeF submission and read the `gov_*` status fields that the API returns. |
+| [fakturownia-invoice-ksef-download-documents](../skills/fakturownia/recipes/invoice-ksef-download-documents/SKILL.md) | Download KSeF XML documents through the generic invoice attachment endpoint using API-native `gov` kinds. |
+| [fakturownia-invoice-ksef-tax-id-kinds](../skills/fakturownia/recipes/invoice-ksef-tax-id-kinds/SKILL.md) | Prepare buyer and seller tax identifier fields for KSeF-aware invoice payloads, including foreign buyers. |
+| [fakturownia-invoice-ksef-recipients-issuers](../skills/fakturownia/recipes/invoice-ksef-recipients-issuers/SKILL.md) | Build recipient and issuer payloads with KSeF-specific roles, tax identifier kinds, and participation fields. |
+| [fakturownia-invoice-ksef-correction-to-zero](../skills/fakturownia/recipes/invoice-ksef-correction-to-zero/SKILL.md) | Model KSeF correction workflows, including `gov_corrected_invoice_number` and the practical correction-to-zero pattern. |
 | [fakturownia-invoice-send-email](../skills/fakturownia/recipes/invoice-send-email/SKILL.md) | Send an invoice email, optionally overriding recipients and attaching the PDF. |
 | [fakturownia-invoice-cancel](../skills/fakturownia/recipes/invoice-cancel/SKILL.md) | Cancel an invoice and optionally store a cancellation reason. |
 | [fakturownia-invoice-recipients-issuers](../skills/fakturownia/recipes/invoice-recipients-issuers/SKILL.md) | Create or update invoice recipients and issuers through the generic invoice payload. |

@@ -56,8 +56,8 @@ metadata:
 
 - `schema list` enumerates supported commands.
 - `schema <noun> <verb>` returns flags, env vars, examples, exit codes, output modes, and output schema details.
-- For account, auth exchange, category, client, department, invoice, issuer, payment, product, price-list, recurring, warehouse, warehouse-action, warehouse-document, and webhook commands, inspect `output.known_fields`, `path_syntax`, and the generated `data_schema` before building `--fields` selectors.
-- For account, category, client, department, invoice, issuer, payment, product, price-list, recurring, user, warehouse, warehouse-document, and webhook write commands, inspect `request_body_schema` before constructing `--input` payloads.
+- For account, auth exchange, bank-account, category, client, department, invoice, issuer, payment, product, price-list, recurring, warehouse, warehouse-action, warehouse-document, and webhook commands, inspect `output.known_fields`, `path_syntax`, and the generated `data_schema` before building `--fields` selectors.
+- For account, bank-account, category, client, department, invoice, issuer, payment, product, price-list, recurring, user, warehouse, warehouse-document, and webhook write commands, inspect `request_body_schema` before constructing `--input` payloads.
 
 ## Examples
 

@@ -148,10 +148,12 @@ type fakeInvoiceService struct {
 	updateReq              invoice.UpdateRequest
 	deleteReq              invoice.DeleteRequest
 	sendEmailReq           invoice.SendEmailRequest
+	sendGovReq             invoice.SendGovRequest
 	changeStatusReq        invoice.ChangeStatusRequest
 	cancelReq              invoice.CancelRequest
 	publicLinkReq          invoice.PublicLinkRequest
 	addAttachmentReq       invoice.AddAttachmentRequest
+	downloadAttachmentReq  invoice.DownloadAttachmentRequest
 	downloadAttachmentsReq invoice.DownloadAttachmentsRequest
 	fiscalPrintReq         invoice.FiscalPrintRequest
 }
@@ -230,6 +232,9 @@ func (f *fakeInvoiceService) Create(_ context.Context, req invoice.CreateRequest
 		if req.FillDefaultDescriptions {
 			plan.Body.(map[string]any)["fill_default_descriptions"] = true
 		}
+		if req.GovSaveAndSend {
+			plan.Body.(map[string]any)["gov_save_and_send"] = true
+		}
 		return &invoice.CreateResponse{Profile: req.Profile, DryRun: &plan}, nil
 	}
 	return &invoice.CreateResponse{
@@ -249,8 +254,24 @@ func (f *fakeInvoiceService) Update(_ context.Context, req invoice.UpdateRequest
 	if req.FillDefaultDescriptions {
 		payload["fill_default_descriptions"] = true
 	}
+	if req.GovSaveAndSend {
+		payload["gov_save_and_send"] = true
+	}
 	if req.DryRun {
-		plan := transport.PlanJSONRequest("PUT", "/invoices/"+req.ID+".json", nil, payload)
+		var query map[string][]string
+		if req.CorrectionPositions != "" {
+			query = map[string][]string{"correction_positions": {req.CorrectionPositions}}
+		}
+		plan := transport.RequestPlan{Method: "PUT", Path: "/invoices/" + req.ID + ".json", Query: query, Body: map[string]any{"invoice": req.Input, "api_token": "[redacted]"}}
+		if req.IdentifyOSS {
+			plan.Body.(map[string]any)["identify_oss"] = "1"
+		}
+		if req.FillDefaultDescriptions {
+			plan.Body.(map[string]any)["fill_default_descriptions"] = true
+		}
+		if req.GovSaveAndSend {
+			plan.Body.(map[string]any)["gov_save_and_send"] = true
+		}
 		return &invoice.UpdateResponse{Profile: req.Profile, DryRun: &plan}, nil
 	}
 	return &invoice.UpdateResponse{
@@ -277,6 +298,20 @@ func (f *fakeInvoiceService) SendEmail(_ context.Context, req invoice.SendEmailR
 		return &invoice.SendEmailResponse{ID: req.ID, Profile: req.Profile, DryRun: &plan}, nil
 	}
 	return &invoice.SendEmailResponse{ID: req.ID, Sent: true, Profile: req.Profile, RequestID: "req-invoice-send"}, nil
+}
+
+func (f *fakeInvoiceService) SendGov(_ context.Context, req invoice.SendGovRequest) (*invoice.SendGovResponse, error) {
+	f.sendGovReq = req
+	if req.DryRun {
+		plan := transport.RequestPlan{Method: "GET", Path: "/invoices/" + req.ID + ".json", Query: map[string][]string{"send_to_ksef": {"yes"}}}
+		return &invoice.SendGovResponse{Profile: req.Profile, DryRun: &plan}, nil
+	}
+	return &invoice.SendGovResponse{
+		Invoice:   map[string]any{"id": req.ID, "gov_status": "processing", "gov_id": nil},
+		RawBody:   []byte(`{"id":31,"gov_status":"processing","gov_id":null}`),
+		Profile:   req.Profile,
+		RequestID: "req-invoice-send-gov",
+	}, nil
 }
 
 func (f *fakeInvoiceService) ChangeStatus(_ context.Context, req invoice.ChangeStatusRequest) (*invoice.ChangeStatusResponse, error) {
@@ -331,6 +366,11 @@ func (f *fakeInvoiceService) AddAttachment(_ context.Context, req invoice.AddAtt
 func (f *fakeInvoiceService) DownloadAttachments(_ context.Context, req invoice.DownloadAttachmentsRequest) (*invoice.DownloadAttachmentsResponse, error) {
 	f.downloadAttachmentsReq = req
 	return &invoice.DownloadAttachmentsResponse{ID: req.ID, Path: filepath.Join(".", "invoice-"+req.ID+"-attachments.zip"), Bytes: 42, Profile: req.Profile, RequestID: "req-invoice-zip"}, nil
+}
+
+func (f *fakeInvoiceService) DownloadAttachment(_ context.Context, req invoice.DownloadAttachmentRequest) (*invoice.DownloadAttachmentResponse, error) {
+	f.downloadAttachmentReq = req
+	return &invoice.DownloadAttachmentResponse{ID: req.ID, Kind: req.Kind, Path: filepath.Join(".", "invoice-"+req.ID+"-"+req.Kind+".xml"), FileName: "invoice-" + req.ID + "-" + req.Kind + ".xml", Bytes: 64, Profile: req.Profile, RequestID: "req-invoice-attachment"}, nil
 }
 
 func (f *fakeInvoiceService) FiscalPrint(_ context.Context, req invoice.FiscalPrintRequest) (*invoice.FiscalPrintResponse, error) {
@@ -1473,23 +1513,29 @@ func TestCommandIntegration(t *testing.T) {
 		t.Fatalf("unexpected invoice download output: %s", stdout)
 	}
 
-	stdout, _, err = run("invoice", "create", "--input", `{"kind":"vat","client_id":1,"positions":[{"product_id":1,"quantity":2}]}`, "--json")
+	stdout, _, err = run("invoice", "create", "--gov-save-and-send", "--input", `{"kind":"vat","client_id":1,"positions":[{"product_id":1,"quantity":2}]}`, "--json")
 	if err != nil {
 		t.Fatalf("invoice create error = %v", err)
 	}
 	if invoiceSvc.createReq.Input["kind"] != "vat" {
 		t.Fatalf("expected invoice create input to be parsed, got %#v", invoiceSvc.createReq.Input)
 	}
+	if !invoiceSvc.createReq.GovSaveAndSend {
+		t.Fatalf("expected invoice create gov-save-and-send to be forwarded, got %#v", invoiceSvc.createReq)
+	}
 	if !jsonContains(stdout, `"id": 31`) {
 		t.Fatalf("unexpected invoice create output: %s", stdout)
 	}
 
-	_, _, err = run("invoice", "update", "--id", "31", "--input", `{"buyer_name":"Nowa nazwa"}`, "--json")
+	_, _, err = run("invoice", "update", "--id", "31", "--gov-save-and-send", "--input", `{"buyer_name":"Nowa nazwa"}`, "--json")
 	if err != nil {
 		t.Fatalf("invoice update error = %v", err)
 	}
 	if invoiceSvc.updateReq.Input["buyer_name"] != "Nowa nazwa" {
 		t.Fatalf("expected invoice update input to be parsed, got %#v", invoiceSvc.updateReq.Input)
+	}
+	if !invoiceSvc.updateReq.GovSaveAndSend {
+		t.Fatalf("expected invoice update gov-save-and-send to be forwarded, got %#v", invoiceSvc.updateReq)
 	}
 
 	stdout, _, err = run("invoice", "change-status", "--id", "31", "--status", "paid", "--json")
@@ -1512,6 +1558,17 @@ func TestCommandIntegration(t *testing.T) {
 	}
 	if !jsonContains(stdout, `"sent": true`) {
 		t.Fatalf("unexpected invoice send-email output: %s", stdout)
+	}
+
+	stdout, _, err = run("invoice", "send-gov", "--id", "31", "--json")
+	if err != nil {
+		t.Fatalf("invoice send-gov error = %v", err)
+	}
+	if invoiceSvc.sendGovReq.ID != "31" {
+		t.Fatalf("expected invoice send-gov flags to be forwarded, got %#v", invoiceSvc.sendGovReq)
+	}
+	if !jsonContains(stdout, `"gov_status": "processing"`) {
+		t.Fatalf("unexpected invoice send-gov output: %s", stdout)
 	}
 
 	stdout, _, err = run("invoice", "public-link", "--id", "31", "--json")
@@ -1550,6 +1607,17 @@ func TestCommandIntegration(t *testing.T) {
 	}
 	if !jsonContains(stdout, `"path": "invoice-31-attachments.zip"`) {
 		t.Fatalf("unexpected invoice download-attachments output: %s", stdout)
+	}
+
+	stdout, _, err = run("invoice", "download-attachment", "--id", "31", "--kind", "gov", "--json")
+	if err != nil {
+		t.Fatalf("invoice download-attachment error = %v", err)
+	}
+	if invoiceSvc.downloadAttachmentReq.ID != "31" || invoiceSvc.downloadAttachmentReq.Kind != "gov" {
+		t.Fatalf("expected invoice download-attachment flags to be forwarded, got %#v", invoiceSvc.downloadAttachmentReq)
+	}
+	if !jsonContains(stdout, `"kind": "gov"`) || !jsonContains(stdout, `"path": "invoice-31-gov.xml"`) {
+		t.Fatalf("unexpected invoice download-attachment output: %s", stdout)
 	}
 
 	stdout, _, err = run("invoice", "fiscal-print", "--invoice-id", "31", "--invoice-id", "32", "--json")
@@ -1705,6 +1773,16 @@ func TestGolden(t *testing.T) {
 		{name: "schema-payment-create-json", args: []string{"schema", "payment", "create", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-payment-create.json")},
 		{name: "schema-payment-update-json", args: []string{"schema", "payment", "update", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-payment-update.json")},
 		{name: "schema-payment-delete-json", args: []string{"schema", "payment", "delete", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-payment-delete.json")},
+		{name: "bank-account-list-help", args: []string{"bank-account", "list", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "bank-account-list-help.txt")},
+		{name: "bank-account-get-help", args: []string{"bank-account", "get", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "bank-account-get-help.txt")},
+		{name: "bank-account-create-help", args: []string{"bank-account", "create", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "bank-account-create-help.txt")},
+		{name: "bank-account-update-help", args: []string{"bank-account", "update", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "bank-account-update-help.txt")},
+		{name: "bank-account-delete-help", args: []string{"bank-account", "delete", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "bank-account-delete-help.txt")},
+		{name: "schema-bank-account-list-json", args: []string{"schema", "bank-account", "list", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-bank-account-list.json")},
+		{name: "schema-bank-account-get-json", args: []string{"schema", "bank-account", "get", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-bank-account-get.json")},
+		{name: "schema-bank-account-create-json", args: []string{"schema", "bank-account", "create", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-bank-account-create.json")},
+		{name: "schema-bank-account-update-json", args: []string{"schema", "bank-account", "update", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-bank-account-update.json")},
+		{name: "schema-bank-account-delete-json", args: []string{"schema", "bank-account", "delete", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-bank-account-delete.json")},
 		{name: "product-list-help", args: []string{"product", "list", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "product-list-help.txt")},
 		{name: "schema-product-list-json", args: []string{"schema", "product", "list", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-product-list.json")},
 		{name: "schema-product-get-json", args: []string{"schema", "product", "get", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-product-get.json")},
@@ -1729,10 +1807,12 @@ func TestGolden(t *testing.T) {
 		{name: "invoice-update-help", args: []string{"invoice", "update", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "invoice-update-help.txt")},
 		{name: "invoice-delete-help", args: []string{"invoice", "delete", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "invoice-delete-help.txt")},
 		{name: "invoice-send-email-help", args: []string{"invoice", "send-email", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "invoice-send-email-help.txt")},
+		{name: "invoice-send-gov-help", args: []string{"invoice", "send-gov", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "invoice-send-gov-help.txt")},
 		{name: "invoice-change-status-help", args: []string{"invoice", "change-status", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "invoice-change-status-help.txt")},
 		{name: "invoice-cancel-help", args: []string{"invoice", "cancel", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "invoice-cancel-help.txt")},
 		{name: "invoice-public-link-help", args: []string{"invoice", "public-link", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "invoice-public-link-help.txt")},
 		{name: "invoice-add-attachment-help", args: []string{"invoice", "add-attachment", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "invoice-add-attachment-help.txt")},
+		{name: "invoice-download-attachment-help", args: []string{"invoice", "download-attachment", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "invoice-download-attachment-help.txt")},
 		{name: "invoice-download-attachments-help", args: []string{"invoice", "download-attachments", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "invoice-download-attachments-help.txt")},
 		{name: "invoice-fiscal-print-help", args: []string{"invoice", "fiscal-print", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "invoice-fiscal-print-help.txt")},
 		{name: "schema-list-json", args: []string{"schema", "list", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-list.json")},
@@ -1743,10 +1823,12 @@ func TestGolden(t *testing.T) {
 		{name: "schema-invoice-update-json", args: []string{"schema", "invoice", "update", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-invoice-update.json")},
 		{name: "schema-invoice-delete-json", args: []string{"schema", "invoice", "delete", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-invoice-delete.json")},
 		{name: "schema-invoice-send-email-json", args: []string{"schema", "invoice", "send-email", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-invoice-send-email.json")},
+		{name: "schema-invoice-send-gov-json", args: []string{"schema", "invoice", "send-gov", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-invoice-send-gov.json")},
 		{name: "schema-invoice-change-status-json", args: []string{"schema", "invoice", "change-status", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-invoice-change-status.json")},
 		{name: "schema-invoice-cancel-json", args: []string{"schema", "invoice", "cancel", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-invoice-cancel.json")},
 		{name: "schema-invoice-public-link-json", args: []string{"schema", "invoice", "public-link", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-invoice-public-link.json")},
 		{name: "schema-invoice-add-attachment-json", args: []string{"schema", "invoice", "add-attachment", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-invoice-add-attachment.json")},
+		{name: "schema-invoice-download-attachment-json", args: []string{"schema", "invoice", "download-attachment", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-invoice-download-attachment.json")},
 		{name: "schema-invoice-download-attachments-json", args: []string{"schema", "invoice", "download-attachments", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-invoice-download-attachments.json")},
 		{name: "schema-invoice-fiscal-print-json", args: []string{"schema", "invoice", "fiscal-print", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-invoice-fiscal-print.json")},
 		{name: "recurring-list-help", args: []string{"recurring", "list", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "recurring-list-help.txt")},
@@ -1897,7 +1979,7 @@ func TestSchemaInvoiceListExposesKnownFields(t *testing.T) {
 		t.Fatalf("Execute() error = %v", err)
 	}
 
-	if !jsonContains(stdout.String(), `"path": "positions[].name"`) {
+	if !jsonContains(stdout.String(), `"path": "positions[].name"`) || !jsonContains(stdout.String(), `"path": "bank_accounts[].bank_account_number"`) {
 		t.Fatalf("expected schema invoice list to advertise nested known fields: %s", stdout.String())
 	}
 }
@@ -2011,6 +2093,62 @@ func TestSchemaPaymentCreateExposesRequestBodySchema(t *testing.T) {
 	body := stdout.String()
 	if !jsonContains(body, `"wrapper_key": "banking_payment"`) || !jsonContains(body, `"path": "invoice_ids[]"`) {
 		t.Fatalf("expected schema payment create to advertise banking payment request fields: %s", body)
+	}
+}
+
+func TestSchemaBankAccountGetExposesKnownFields(t *testing.T) {
+	t.Parallel()
+
+	var stdout bytes.Buffer
+	cmd := NewRootCommand(Dependencies{
+		Auth:      &fakeAuthService{},
+		Client:    &fakeClientService{},
+		Invoice:   &fakeInvoiceService{},
+		Product:   &fakeProductService{},
+		PriceList: &fakePriceListService{},
+		Recurring: &fakeRecurringService{},
+		Warehouse: &fakeWarehouseDocumentService{},
+		Doctor:    &fakeDoctorService{},
+		Self:      &fakeSelfUpdateService{},
+		Stdout:    &stdout,
+		Stderr:    &bytes.Buffer{},
+	})
+	cmd.SetArgs([]string{"schema", "bank-account", "get", "--json"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("Execute() error = %v", err)
+	}
+
+	body := stdout.String()
+	if !jsonContains(body, `"path": "bank_account"`) || !jsonContains(body, `"path": "bank_account_version_departments[].show_on_invoice"`) {
+		t.Fatalf("expected schema bank-account get to advertise known fields: %s", body)
+	}
+}
+
+func TestSchemaBankAccountCreateExposesRequestBodySchema(t *testing.T) {
+	t.Parallel()
+
+	var stdout bytes.Buffer
+	cmd := NewRootCommand(Dependencies{
+		Auth:      &fakeAuthService{},
+		Client:    &fakeClientService{},
+		Invoice:   &fakeInvoiceService{},
+		Product:   &fakeProductService{},
+		PriceList: &fakePriceListService{},
+		Recurring: &fakeRecurringService{},
+		Warehouse: &fakeWarehouseDocumentService{},
+		Doctor:    &fakeDoctorService{},
+		Self:      &fakeSelfUpdateService{},
+		Stdout:    &stdout,
+		Stderr:    &bytes.Buffer{},
+	})
+	cmd.SetArgs([]string{"schema", "bank-account", "create", "--json"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("Execute() error = %v", err)
+	}
+
+	body := stdout.String()
+	if !jsonContains(body, `"wrapper_key": "bank_account"`) || !jsonContains(body, `"path": "bank_account_version_departments[].remove"`) {
+		t.Fatalf("expected schema bank-account create to advertise request-body fields: %s", body)
 	}
 }
 
@@ -2205,7 +2343,7 @@ func TestSchemaInvoiceCreateExposesRequestBodySchema(t *testing.T) {
 	}
 
 	body := stdout.String()
-	if !jsonContains(body, `"wrapper_key": "invoice"`) || !jsonContains(body, `"identify-oss"`) || !jsonContains(body, `"path": "positions[].product_id"`) || !jsonContains(body, `"path": "settlement_positions[].reason"`) {
+	if !jsonContains(body, `"wrapper_key": "invoice"`) || !jsonContains(body, `"identify-oss"`) || !jsonContains(body, `"gov-save-and-send"`) || !jsonContains(body, `"additional_catalog_bases"`) || !jsonContains(body, `"path": "gov_corrected_invoice_number"`) || !jsonContains(body, `"path": "settlement_positions[].reason"`) || !jsonContains(body, `"path": "buyer_mass_payment_code"`) || !jsonContains(body, `"path": "bank_accounts[].bank_account_number"`) {
 		t.Fatalf("expected schema invoice create to advertise companion options and nested request fields: %s", body)
 	}
 }
