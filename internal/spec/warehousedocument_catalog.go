@@ -44,17 +44,8 @@ func warehouseDocumentBaseOutputSpec(shape string, commands []string, includeAct
 		{Path: "client_id", Type: "integer", Description: "Client ID", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Dokumenty magazynowe - przykłady wywołania"},
 	}
 	if includeActions {
-		fields = append(fields,
-			OutputFieldSpec{Path: "warehouse_actions[]", Type: "array<object>", Description: "Warehouse action line items", Projectable: true, Selectable: false, Commands: commands, Presence: "conditional", SourceSection: "Dodawanie dokumentu MM"},
-			OutputFieldSpec{Path: "warehouse_actions[].product_id", Type: "integer", Description: "Referenced product ID", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Dodawanie dokumentu MM"},
-			OutputFieldSpec{Path: "warehouse_actions[].product_name", Type: "string", Description: "Product name", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Dodawanie dokumentu PZ"},
-			OutputFieldSpec{Path: "warehouse_actions[].purchase_tax", Type: "string", Description: "Purchase tax rate", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Dodawanie dokumentu PZ"},
-			OutputFieldSpec{Path: "warehouse_actions[].purchase_price_net", Type: "number", Description: "Net purchase price", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Dodawanie dokumentu PZ"},
-			OutputFieldSpec{Path: "warehouse_actions[].tax", Type: "string", Description: "Sales tax rate", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Dodawanie dokumentu WZ"},
-			OutputFieldSpec{Path: "warehouse_actions[].price_net", Type: "number", Description: "Net price", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Dodawanie dokumentu WZ"},
-			OutputFieldSpec{Path: "warehouse_actions[].quantity", Type: "number", Description: "Quantity", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Dodawanie dokumentu MM"},
-			OutputFieldSpec{Path: "warehouse_actions[].warehouse2_id", Type: "integer", Description: "Target warehouse ID for transfers", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Dodawanie dokumentu MM"},
-		)
+		fields = append(fields, OutputFieldSpec{Path: "warehouse_actions[]", Type: "array<object>", Description: "Warehouse action line items", Projectable: true, Selectable: false, Commands: commands, Presence: "conditional", SourceSection: "Dodawanie dokumentu MM"})
+		fields = append(fields, warehouseActionLeafOutputFields("warehouse_actions[]", commands)...)
 	}
 
 	return &OutputSpec{
@@ -75,7 +66,7 @@ func warehouseDocumentBaseOutputSpec(shape string, commands []string, includeAct
 }
 
 func warehouseDocumentRequestFields() []RequestFieldSpec {
-	return []RequestFieldSpec{
+	fields := []RequestFieldSpec{
 		{Path: "kind", Type: "string", Description: "Warehouse document kind", SourceSection: "Dodawanie dokumentu MM", EnumValues: []string{"mm", "pz", "wz"}},
 		{Path: "warehouse_id", Type: "integer", Description: "Primary warehouse ID", SourceSection: "Dodawanie dokumentu MM"},
 		{Path: "number", Type: "string", Description: "Warehouse document number", SourceSection: "Aktualizacja dokumentu magazynowego"},
@@ -86,13 +77,7 @@ func warehouseDocumentRequestFields() []RequestFieldSpec {
 		{Path: "client_id", Type: "integer", Description: "Client ID", SourceSection: "Aktualizacja dokumentu magazynowego"},
 		{Path: "invoice_ids[]", Type: "integer", Description: "Linked invoice IDs", SourceSection: "Dodawanie numerów powiązanych faktur do dokumentu magazynowego"},
 		{Path: "warehouse_actions[]", Type: "array<object>", Description: "Warehouse action line items", SourceSection: "Dodawanie dokumentu MM"},
-		{Path: "warehouse_actions[].product_id", Type: "integer", Description: "Referenced product ID", SourceSection: "Dodawanie dokumentu MM"},
-		{Path: "warehouse_actions[].product_name", Type: "string", Description: "Product name", SourceSection: "Dodawanie dokumentu PZ"},
-		{Path: "warehouse_actions[].purchase_tax", Type: "string", Description: "Purchase tax rate", SourceSection: "Dodawanie dokumentu PZ"},
-		{Path: "warehouse_actions[].purchase_price_net", Type: "number", Description: "Net purchase price", SourceSection: "Dodawanie dokumentu PZ"},
-		{Path: "warehouse_actions[].tax", Type: "string", Description: "Sales tax rate", SourceSection: "Dodawanie dokumentu WZ"},
-		{Path: "warehouse_actions[].price_net", Type: "number", Description: "Net price", SourceSection: "Dodawanie dokumentu WZ"},
-		{Path: "warehouse_actions[].quantity", Type: "number", Description: "Quantity", SourceSection: "Dodawanie dokumentu MM"},
-		{Path: "warehouse_actions[].warehouse2_id", Type: "integer", Description: "Target warehouse ID for transfers", SourceSection: "Dodawanie dokumentu MM"},
 	}
+	fields = append(fields, warehouseActionLeafRequestFields("warehouse_actions[]")...)
+	return fields
 }

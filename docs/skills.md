@@ -8,7 +8,7 @@ Generated skill docs for the installable `fakturownia` bundle.
 
 | Skill | Description |
 | --- | --- |
-| [fakturownia](../skills/fakturownia/SKILL.md) | Fakturownia CLI bundle: shared guidance, auth, categories, clients, payments, products, price lists, invoices, recurrings, warehouse documents, self-update, schema discovery, diagnostics, and generated invoice recipes for the `fakturownia` command. Use when an agent needs to work with Fakturownia through this CLI. |
+| [fakturownia](../skills/fakturownia/SKILL.md) | Fakturownia CLI bundle: shared guidance, auth, accounts, departments, issuers, users, categories, clients, payments, products, price lists, invoices, recurrings, warehouses, warehouse actions, warehouse documents, webhooks, self-update, schema discovery, diagnostics, and generated invoice recipes for the `fakturownia` command. Use when an agent needs to work with Fakturownia through this CLI. |
 
 ## Core
 
@@ -18,6 +18,7 @@ Core workflow and support skills.
 | --- | --- |
 | [fakturownia-shared](../skills/fakturownia/subskills/shared/SKILL.md) | Fakturownia CLI shared patterns: authentication prerequisites, global flags, output modes, `--fields` vs `--columns`, `--raw`, schema discovery, and binary maintenance. Use before any area-specific fakturownia task. |
 | [fakturownia-auth](../skills/fakturownia/subskills/auth/SKILL.md) | Fakturownia CLI auth: persist, inspect, and remove profiles and API tokens with `fakturownia auth ...`. |
+| [fakturownia-accounts](../skills/fakturownia/subskills/accounts/SKILL.md) | Fakturownia CLI accounts: create, inspect, delete, and unlink system accounts using the README-backed account contract, with sanitized structured output and optional profile persistence. |
 | [fakturownia-schema](../skills/fakturownia/subskills/schema/SKILL.md) | Fakturownia CLI schema discovery: inspect supported commands, flags, examples, exit codes, and output schemas with `fakturownia schema ...`. |
 | [fakturownia-doctor](../skills/fakturownia/subskills/doctor/SKILL.md) | Fakturownia CLI diagnostics: validate config resolution, keychain access, reachability, authenticated API access, and release integrity with `fakturownia doctor run`. |
 
@@ -27,6 +28,10 @@ Task-focused API area skills.
 
 | Skill | Description |
 | --- | --- |
+| [fakturownia-departments](../skills/fakturownia/subskills/departments/SKILL.md) | Fakturownia CLI departments: list, fetch, create, update, delete, and upload department logos, with README-backed request and output discovery. |
+| [fakturownia-issuers](../skills/fakturownia/subskills/issuers/SKILL.md) | Fakturownia CLI issuers: list, fetch, create, update, and delete issuers with README-backed field and payload discovery. |
+| [fakturownia-users](../skills/fakturownia/subskills/users/SKILL.md) | Fakturownia CLI users: create or invite account users through the README-backed add-user endpoint and inspect the accepted user payload shape. |
+| [fakturownia-webhooks](../skills/fakturownia/subskills/webhooks/SKILL.md) | Fakturownia CLI webhooks: list, fetch, create, update, and delete webhooks using conservative README-backed request and output discovery. |
 | [fakturownia-categories](../skills/fakturownia/subskills/categories/SKILL.md) | Fakturownia CLI categories: list, fetch, create, update, and delete categories, and inspect README-backed category fields and request schemas. |
 | [fakturownia-clients](../skills/fakturownia/subskills/clients/SKILL.md) | Fakturownia CLI clients: list, fetch, create, update, and delete clients, and inspect README-backed client fields and request schemas. |
 | [fakturownia-payments](../skills/fakturownia/subskills/payments/SKILL.md) | Fakturownia CLI payments: list, fetch, create, update, and delete banking payments, including the README-backed `include=invoices` list mode and request-body discovery. |
@@ -34,6 +39,8 @@ Task-focused API area skills.
 | [fakturownia-price-lists](../skills/fakturownia/subskills/price-lists/SKILL.md) | Fakturownia CLI price lists: list, fetch, create, update, and delete price lists, including upstream-shaped position payloads and schema-backed discovery. |
 | [fakturownia-invoices](../skills/fakturownia/subskills/invoices/SKILL.md) | Fakturownia CLI invoices: list, fetch, create, update, delete, email, cancel, print, attach files, derive public links, and discover invoice fields and payloads through schema output. |
 | [fakturownia-recurrings](../skills/fakturownia/subskills/recurrings/SKILL.md) | Fakturownia CLI recurrings: list, create, and update recurring invoice definitions with README-backed request and output discovery. |
+| [fakturownia-warehouses](../skills/fakturownia/subskills/warehouses/SKILL.md) | Fakturownia CLI warehouses: list, fetch, create, update, and delete warehouses, and inspect README-backed warehouse fields and request schemas. |
+| [fakturownia-warehouse-actions](../skills/fakturownia/subskills/warehouse-actions/SKILL.md) | Fakturownia CLI warehouse actions: list warehouse actions with explicit README-backed filters and inspect conservative action fields through schema output. |
 | [fakturownia-warehouse-documents](../skills/fakturownia/subskills/warehouse-documents/SKILL.md) | Fakturownia CLI warehouse documents: list, fetch, create, update, and delete warehouse documents, including kind selection and invoice linking through payload fields. |
 
 ## Recipes

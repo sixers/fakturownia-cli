@@ -12,6 +12,10 @@ import (
 )
 
 func ParseObject(raw string, stdin io.Reader, noun string) (map[string]any, error) {
+	return ParseObjectWithHint(raw, stdin, noun, fmt.Sprintf("pass the inner %s object, for example '{\"name\":\"Acme\"}'", noun))
+}
+
+func ParseObjectWithHint(raw string, stdin io.Reader, noun, shapeHint string) (map[string]any, error) {
 	trimmed := strings.TrimSpace(raw)
 	if trimmed == "" {
 		return nil, output.Usage("missing_input", fmt.Sprintf("%s input is required", noun), "pass --input -|@file.json|'{...}'")
@@ -38,7 +42,11 @@ func ParseObject(raw string, stdin io.Reader, noun string) (map[string]any, erro
 
 	object, ok := value.(map[string]any)
 	if !ok {
-		return nil, output.Usage("invalid_input_shape", "--input must be a JSON object", fmt.Sprintf("pass the inner %s object, for example '{\"name\":\"Acme\"}'", noun))
+		hint := strings.TrimSpace(shapeHint)
+		if hint == "" {
+			hint = "provide a JSON object"
+		}
+		return nil, output.Usage("invalid_input_shape", "--input must be a JSON object", hint)
 	}
 	return object, nil
 }

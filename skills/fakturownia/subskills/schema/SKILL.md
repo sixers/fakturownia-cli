@@ -7,10 +7,17 @@ metadata:
   prerequisite: "fakturownia-shared"
   related_skills:
     - "fakturownia-shared"
+    - "fakturownia-accounts"
+    - "fakturownia-departments"
+    - "fakturownia-issuers"
+    - "fakturownia-users"
     - "fakturownia-products"
     - "fakturownia-price-lists"
     - "fakturownia-invoices"
     - "fakturownia-recurrings"
+    - "fakturownia-webhooks"
+    - "fakturownia-warehouses"
+    - "fakturownia-warehouse-actions"
     - "fakturownia-warehouse-documents"
   command_refs:
     - "schema list"
@@ -49,8 +56,8 @@ metadata:
 
 - `schema list` enumerates supported commands.
 - `schema <noun> <verb>` returns flags, env vars, examples, exit codes, output modes, and output schema details.
-- For category, client, invoice, payment, product, and recurring commands, inspect `output.known_fields`, `path_syntax`, and the generated `data_schema` before building `--fields` selectors.
-- For category, client, invoice, payment, product, and recurring write commands, inspect `request_body_schema` before constructing `--input` payloads.
+- For account, auth exchange, category, client, department, invoice, issuer, payment, product, price-list, recurring, warehouse, warehouse-action, warehouse-document, and webhook commands, inspect `output.known_fields`, `path_syntax`, and the generated `data_schema` before building `--fields` selectors.
+- For account, category, client, department, invoice, issuer, payment, product, price-list, recurring, user, warehouse, warehouse-document, and webhook write commands, inspect `request_body_schema` before constructing `--input` payloads.
 
 ## Examples
 
@@ -64,8 +71,15 @@ fakturownia schema auth login --json
 ## Related Skills
 
 - [fakturownia-shared](../shared/SKILL.md)
+- [fakturownia-accounts](../accounts/SKILL.md)
+- [fakturownia-departments](../departments/SKILL.md)
+- [fakturownia-issuers](../issuers/SKILL.md)
+- [fakturownia-users](../users/SKILL.md)
 - [fakturownia-products](../products/SKILL.md)
 - [fakturownia-price-lists](../price-lists/SKILL.md)
 - [fakturownia-invoices](../invoices/SKILL.md)
 - [fakturownia-recurrings](../recurrings/SKILL.md)
+- [fakturownia-webhooks](../webhooks/SKILL.md)
+- [fakturownia-warehouses](../warehouses/SKILL.md)
+- [fakturownia-warehouse-actions](../warehouse-actions/SKILL.md)
 - [fakturownia-warehouse-documents](../warehouse-documents/SKILL.md)

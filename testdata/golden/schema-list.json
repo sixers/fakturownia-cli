@@ -10,6 +10,12 @@
     },
     {
       "noun": "auth",
+      "summary": "Exchange login credentials for account metadata and an API token when available",
+      "use": "exchange --login LOGIN --password PASSWORD",
+      "verb": "exchange"
+    },
+    {
+      "noun": "auth",
       "summary": "Show the resolved authentication state",
       "use": "status",
       "verb": "status"
@@ -19,6 +25,132 @@
       "summary": "Remove a persisted profile and token",
       "use": "logout --yes",
       "verb": "logout"
+    },
+    {
+      "noun": "account",
+      "summary": "Create a system account from the full upstream request object",
+      "use": "create --input -|@file|JSON",
+      "verb": "create"
+    },
+    {
+      "noun": "account",
+      "summary": "Fetch current system-account metadata",
+      "use": "get",
+      "verb": "get"
+    },
+    {
+      "noun": "account",
+      "summary": "Request deletion of the current system account",
+      "use": "delete --yes",
+      "verb": "delete"
+    },
+    {
+      "noun": "account",
+      "summary": "Unlink system accounts from a partner integration",
+      "use": "unlink --prefix PREFIX...",
+      "verb": "unlink"
+    },
+    {
+      "noun": "department",
+      "summary": "List departments",
+      "use": "list",
+      "verb": "list"
+    },
+    {
+      "noun": "department",
+      "summary": "Fetch a single department by ID",
+      "use": "get --id ID",
+      "verb": "get"
+    },
+    {
+      "noun": "department",
+      "summary": "Create a department",
+      "use": "create --input -|@file|JSON",
+      "verb": "create"
+    },
+    {
+      "noun": "department",
+      "summary": "Update a department",
+      "use": "update --id ID --input -|@file|JSON",
+      "verb": "update"
+    },
+    {
+      "noun": "department",
+      "summary": "Delete a department",
+      "use": "delete --id ID --yes",
+      "verb": "delete"
+    },
+    {
+      "noun": "department",
+      "summary": "Upload a department logo",
+      "use": "set-logo --id ID --file PATH|-",
+      "verb": "set-logo"
+    },
+    {
+      "noun": "issuer",
+      "summary": "List issuers",
+      "use": "list",
+      "verb": "list"
+    },
+    {
+      "noun": "issuer",
+      "summary": "Fetch a single issuer by ID",
+      "use": "get --id ID",
+      "verb": "get"
+    },
+    {
+      "noun": "issuer",
+      "summary": "Create an issuer",
+      "use": "create --input -|@file|JSON",
+      "verb": "create"
+    },
+    {
+      "noun": "issuer",
+      "summary": "Update an issuer",
+      "use": "update --id ID --input -|@file|JSON",
+      "verb": "update"
+    },
+    {
+      "noun": "issuer",
+      "summary": "Delete an issuer",
+      "use": "delete --id ID --yes",
+      "verb": "delete"
+    },
+    {
+      "noun": "user",
+      "summary": "Create or invite an account user",
+      "use": "create --input -|@file|JSON --integration-token TOKEN",
+      "verb": "create"
+    },
+    {
+      "noun": "webhook",
+      "summary": "List webhooks",
+      "use": "list",
+      "verb": "list"
+    },
+    {
+      "noun": "webhook",
+      "summary": "Fetch a single webhook by ID",
+      "use": "get --id ID",
+      "verb": "get"
+    },
+    {
+      "noun": "webhook",
+      "summary": "Create a webhook from the full top-level request object",
+      "use": "create --input -|@file|JSON",
+      "verb": "create"
+    },
+    {
+      "noun": "webhook",
+      "summary": "Update a webhook from the full top-level request object",
+      "use": "update --id ID --input -|@file|JSON",
+      "verb": "update"
+    },
+    {
+      "noun": "webhook",
+      "summary": "Delete a webhook",
+      "use": "delete --id ID --yes",
+      "verb": "delete"
     },
     {
       "noun": "category",
@@ -289,6 +421,42 @@
       "summary": "Delete a warehouse document",
       "use": "delete --id ID --yes",
       "verb": "delete"
+    },
+    {
+      "noun": "warehouse",
+      "summary": "List warehouses",
+      "use": "list",
+      "verb": "list"
+    },
+    {
+      "noun": "warehouse",
+      "summary": "Fetch a single warehouse by ID",
+      "use": "get --id ID",
+      "verb": "get"
+    },
+    {
+      "noun": "warehouse",
+      "summary": "Create a warehouse",
+      "use": "create --input -|@file|JSON",
+      "verb": "create"
+    },
+    {
+      "noun": "warehouse",
+      "summary": "Update a warehouse",
+      "use": "update --id ID --input -|@file|JSON",
+      "verb": "update"
+    },
+    {
+      "noun": "warehouse",
+      "summary": "Delete a warehouse",
+      "use": "delete --id ID --yes",
+      "verb": "delete"
+    },
+    {
+      "noun": "warehouse-action",
+      "summary": "List warehouse actions",
+      "use": "list",
+      "verb": "list"
     },
     {
       "noun": "doctor",

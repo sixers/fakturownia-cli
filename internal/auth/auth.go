@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"os/exec"
 	"runtime"
 	"strings"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/sixers/fakturownia-cli/internal/config"
 	"github.com/sixers/fakturownia-cli/internal/output"
+	"github.com/sixers/fakturownia-cli/internal/transport"
 )
 
 var ErrSecretNotFound = config.ErrSecretNotFound
@@ -37,8 +39,9 @@ type MemoryStore struct {
 }
 
 type Service struct {
-	store Store
-	now   func() time.Time
+	store      Store
+	now        func() time.Time
+	httpClient *http.Client
 }
 
 type LoginRequest struct {
@@ -62,6 +65,38 @@ type StatusRequest struct {
 	ConfigPath string
 	Profile    string
 	Env        config.Env
+}
+
+type ExchangeRequest struct {
+	ConfigPath       string
+	Login            string
+	Password         string
+	IntegrationToken string
+	SaveAs           string
+	Timeout          time.Duration
+	MaxRetries       int
+}
+
+type ExchangeResult struct {
+	Login           string `json:"login,omitempty"`
+	Email           string `json:"email,omitempty"`
+	Prefix          string `json:"prefix,omitempty"`
+	URL             string `json:"url,omitempty"`
+	FirstName       string `json:"first_name,omitempty"`
+	LastName        string `json:"last_name,omitempty"`
+	APITokenPresent bool   `json:"api_token_present"`
+	SavedProfile    string `json:"saved_profile,omitempty"`
+	TokenStored     bool   `json:"token_stored"`
+	ConfigPath      string `json:"config_path,omitempty"`
+	RequestID       string `json:"request_id,omitempty"`
+	RawBody         []byte `json:"-"`
+}
+
+func (r *ExchangeResult) GetProfile() string {
+	if r == nil {
+		return ""
+	}
+	return r.SavedProfile
 }
 
 type StatusResult struct {
@@ -288,6 +323,113 @@ func (s *Service) Login(_ context.Context, req LoginRequest) (*LoginResult, erro
 		TokenStored:    true,
 		ConfigPath:     configPath,
 	}, nil
+}
+
+func (s *Service) Exchange(ctx context.Context, req ExchangeRequest) (*ExchangeResult, error) {
+	login := strings.TrimSpace(req.Login)
+	if login == "" {
+		return nil, output.Usage("missing_login", "login is required", "pass --login <login-or-email>")
+	}
+	password := strings.TrimSpace(req.Password)
+	if password == "" {
+		return nil, output.Usage("missing_password", "password is required", "pass --password <password>")
+	}
+	timeout := req.Timeout
+	if timeout <= 0 {
+		timeout = 30 * time.Second
+	}
+
+	client, err := transport.NewClient("https://app.fakturownia.pl", "", timeout, req.MaxRetries, s.httpClient)
+	if err != nil {
+		return nil, err
+	}
+
+	payload := map[string]any{
+		"login":    login,
+		"password": password,
+	}
+	if integrationToken := strings.TrimSpace(req.IntegrationToken); integrationToken != "" {
+		payload["integration_token"] = integrationToken
+	}
+
+	var upstream struct {
+		Login     string `json:"login"`
+		Email     string `json:"email"`
+		Prefix    string `json:"prefix"`
+		URL       string `json:"url"`
+		FirstName string `json:"first_name"`
+		LastName  string `json:"last_name"`
+		APIToken  string `json:"api_token"`
+	}
+	resp, err := client.PostJSON(ctx, "/login.json", payload, &upstream)
+	if err != nil {
+		return nil, err
+	}
+
+	accountURL := strings.TrimSpace(upstream.URL)
+	if accountURL == "" && strings.TrimSpace(upstream.Prefix) != "" {
+		accountURL, err = config.NormalizePrefix(upstream.Prefix)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if accountURL == "" {
+		return nil, output.Remote("missing_account_url", "login succeeded but the API did not return an account URL", "rerun with --raw to inspect the upstream response", false).WithRawBody(resp.RawBody)
+	}
+	accountURL, err = config.NormalizeURL(accountURL)
+	if err != nil {
+		return nil, err
+	}
+
+	result := &ExchangeResult{
+		Login:           upstream.Login,
+		Email:           upstream.Email,
+		Prefix:          upstream.Prefix,
+		URL:             accountURL,
+		FirstName:       upstream.FirstName,
+		LastName:        upstream.LastName,
+		APITokenPresent: strings.TrimSpace(upstream.APIToken) != "",
+		RequestID:       resp.RequestID,
+		RawBody:         resp.RawBody,
+	}
+	if !result.APITokenPresent {
+		return nil, output.AuthFailure("missing_api_token", "login succeeded but the user does not have an API token", "generate an API token in Fakturownia and retry `fakturownia auth exchange`").WithRawBody(resp.RawBody)
+	}
+
+	profileName := strings.TrimSpace(req.SaveAs)
+	if profileName == "" {
+		profileName = strings.TrimSpace(upstream.Prefix)
+	}
+	if profileName == "" {
+		profileName = config.DeriveProfileName(accountURL)
+	}
+	if err := config.ValidateProfileName(profileName); err != nil {
+		return nil, err
+	}
+
+	configPath, err := config.ResolveConfigPath(req.ConfigPath)
+	if err != nil {
+		return nil, err
+	}
+	cfg, err := config.Load(configPath)
+	if err != nil {
+		return nil, err
+	}
+	config.UpsertProfile(cfg, profileName, accountURL, s.now())
+	if cfg.DefaultProfile == "" {
+		cfg.DefaultProfile = profileName
+	}
+	if err := config.Save(configPath, cfg); err != nil {
+		return nil, err
+	}
+	if err := s.store.Set(profileName, strings.TrimSpace(upstream.APIToken)); err != nil {
+		return nil, err
+	}
+
+	result.SavedProfile = profileName
+	result.TokenStored = true
+	result.ConfigPath = configPath
+	return result, nil
 }
 
 func (s *Service) Status(_ context.Context, req StatusRequest) (*StatusResult, error) {

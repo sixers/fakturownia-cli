@@ -42,6 +42,7 @@ type RequestPlan struct {
 }
 
 type MultipartUpload struct {
+	Method          string
 	URL             string
 	Fields          map[string]string
 	FileField       string
@@ -169,10 +170,18 @@ func PlanJSONRequest(method, path string, query url.Values, payload map[string]a
 func PlanMultipartUpload(upload MultipartUpload) MultipartUploadPlan {
 	fields := make(map[string]string, len(upload.Fields))
 	for key, value := range upload.Fields {
+		if key == "api_token" {
+			fields[key] = "[redacted]"
+			continue
+		}
 		fields[key] = value
 	}
+	method := strings.TrimSpace(upload.Method)
+	if method == "" {
+		method = http.MethodPost
+	}
 	return MultipartUploadPlan{
-		Method:    http.MethodPost,
+		Method:    method,
 		URL:       upload.URL,
 		Fields:    fields,
 		FileField: upload.FileField,
@@ -199,6 +208,10 @@ func (c *Client) UploadMultipart(ctx context.Context, upload MultipartUpload) (*
 	if fileField == "" {
 		fileField = "file"
 	}
+	method := strings.TrimSpace(upload.Method)
+	if method == "" {
+		method = http.MethodPost
+	}
 
 	var body bytes.Buffer
 	writer := multipart.NewWriter(&body)
@@ -219,7 +232,7 @@ func (c *Client) UploadMultipart(ctx context.Context, upload MultipartUpload) (*
 	}
 
 	requestID := newRequestID()
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, upload.URL, bytes.NewReader(body.Bytes()))
+	req, err := http.NewRequestWithContext(ctx, method, upload.URL, bytes.NewReader(body.Bytes()))
 	if err != nil {
 		return nil, output.Internal(err, "build multipart upload request")
 	}
@@ -255,7 +268,7 @@ func (c *Client) UploadMultipart(ctx context.Context, upload MultipartUpload) (*
 
 func (c *Client) doJSON(ctx context.Context, method, path string, query url.Values, payload map[string]any, dest any) (*Response, error) {
 	body := cloneMap(payload)
-	if body != nil {
+	if body != nil && c.token != "" {
 		body["api_token"] = c.token
 	}
 
@@ -273,7 +286,7 @@ func (c *Client) doJSON(ctx context.Context, method, path string, query url.Valu
 		}
 		opts.Body = raw
 		opts.ContentType = "application/json"
-	} else if method == http.MethodDelete {
+	} else if method == http.MethodDelete && c.token != "" {
 		opts.Query = url.Values{}
 		opts.Query.Set("api_token", c.token)
 	}
@@ -298,7 +311,7 @@ func (c *Client) do(ctx context.Context, opts requestOptions) (*Response, error)
 	if query == nil {
 		query = url.Values{}
 	}
-	if opts.Method == http.MethodGet || len(opts.Body) == 0 {
+	if c.token != "" && (opts.Method == http.MethodGet || len(opts.Body) == 0) {
 		query.Set("api_token", c.token)
 	}
 

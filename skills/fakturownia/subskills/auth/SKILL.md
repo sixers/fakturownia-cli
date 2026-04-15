@@ -7,9 +7,11 @@ metadata:
   prerequisite: "fakturownia-shared"
   related_skills:
     - "fakturownia-shared"
+    - "fakturownia-accounts"
     - "fakturownia-doctor"
   command_refs:
     - "auth login"
+    - "auth exchange"
     - "auth status"
     - "auth logout"
   cli_help: "fakturownia auth --help"
@@ -26,12 +28,13 @@ metadata:
 
 ## Use This Skill When
 
-- You need to save a profile, verify which profile is active, or clean up a persisted token.
-- You need to explain or troubleshoot how env vars, profiles, and keychain-backed credentials resolve.
+- You need to save a profile, exchange login credentials for an API token, verify which profile is active, or clean up a persisted token.
+- You need to explain or troubleshoot how env vars, profiles, keychain-backed credentials, and sanitized secret-handling resolve.
 
 ## Covered Commands
 
 - `fakturownia auth login` — Persist a Fakturownia profile and API token
+- `fakturownia auth exchange` — Exchange login credentials for account metadata and an API token when available
 - `fakturownia auth status` — Show the resolved authentication state
 - `fakturownia auth logout` — Remove a persisted profile and token
 
@@ -41,6 +44,10 @@ metadata:
 - `--prefix`: Account prefix such as acme
 - `--api-token` (required): Fakturownia API token
 - `--set-default` (default `false`): Make the saved profile the default selection
+- `--login` (required): Login or email address
+- `--password` (required): Account password
+- `--integration-token`: Integration token for partner API login
+- `--save-as`: Override the saved profile name; defaults to the returned prefix
 - `--yes` (required, default `false`): Confirm profile removal
 
 ## Environment
@@ -49,11 +56,21 @@ metadata:
 - `FAKTUROWNIA_URL`: Override the base account URL from any profile
 - `FAKTUROWNIA_API_TOKEN`: Override the API token from any profile
 
+## Credential Exchange
+
+- Use `fakturownia auth exchange --login ... --password ... --json` to exchange login credentials for account metadata and an API token when the upstream account has one.
+- Structured output is sanitized and reports `api_token_present` instead of exposing the token directly.
+- Use `--raw` only when you explicitly need the exact upstream login response, including secrets.
+- By default, `auth exchange` stores the returned token under the returned prefix; add `--save-as` to override the saved profile name.
+
 ## Examples
 
 ```bash
 fakturownia auth login --prefix acme --api-token $FAKTUROWNIA_API_TOKEN
 fakturownia auth login --url https://acme.fakturownia.pl --api-token TOKEN --profile work --set-default
+fakturownia auth exchange --login user@example.com --password secret --json
+fakturownia auth exchange --login partner@example.com --password secret --integration-token PARTNER_TOKEN
+fakturownia auth exchange --login user@example.com --password secret --save-as work --raw
 fakturownia auth status
 fakturownia auth status --json
 fakturownia auth logout --profile work --yes
@@ -62,4 +79,5 @@ fakturownia auth logout --profile work --yes
 ## Related Skills
 
 - [fakturownia-shared](../shared/SKILL.md)
+- [fakturownia-accounts](../accounts/SKILL.md)
 - [fakturownia-doctor](../doctor/SKILL.md)

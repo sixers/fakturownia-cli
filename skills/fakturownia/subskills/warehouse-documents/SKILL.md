@@ -9,6 +9,8 @@ metadata:
     - "fakturownia-shared"
     - "fakturownia-products"
     - "fakturownia-invoices"
+    - "fakturownia-warehouses"
+    - "fakturownia-warehouse-actions"
     - "fakturownia-schema"
     - "fakturownia-doctor"
   command_refs:
@@ -82,5 +84,7 @@ fakturownia warehouse-document delete --id 15 --yes --dry-run --json
 - [fakturownia-shared](../shared/SKILL.md)
 - [fakturownia-products](../products/SKILL.md)
 - [fakturownia-invoices](../invoices/SKILL.md)
+- [fakturownia-warehouses](../warehouses/SKILL.md)
+- [fakturownia-warehouse-actions](../warehouse-actions/SKILL.md)
 - [fakturownia-schema](../schema/SKILL.md)
 - [fakturownia-doctor](../doctor/SKILL.md)

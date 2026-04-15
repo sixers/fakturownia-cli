@@ -239,6 +239,26 @@ func renderAreaSkill(bundle SkillBundleSpec, area SkillAreaSpec) (string, error)
 		b.WriteString("- Add `--dry-run --json` to preview the download URLs and target install path without modifying the binary.\n\n")
 	}
 
+	if area.Key == "auth" {
+		writeAuthDiscoverySection(&b)
+	}
+
+	if area.Key == "accounts" {
+		writeAccountsDiscoverySection(&b)
+	}
+
+	if area.Key == "departments" {
+		writeDepartmentsDiscoverySection(&b)
+	}
+
+	if area.Key == "issuers" {
+		writeIssuersDiscoverySection(&b)
+	}
+
+	if area.Key == "users" {
+		writeUsersDiscoverySection(&b)
+	}
+
 	if area.Key == "invoices" {
 		writeInvoicesDiscoverySection(&b)
 	}
@@ -263,12 +283,24 @@ func renderAreaSkill(bundle SkillBundleSpec, area SkillAreaSpec) (string, error)
 		writeProductsDiscoverySection(&b)
 	}
 
+	if area.Key == "warehouses" {
+		writeWarehousesDiscoverySection(&b)
+	}
+
+	if area.Key == "warehouse-actions" {
+		writeWarehouseActionsDiscoverySection(&b)
+	}
+
+	if area.Key == "webhooks" {
+		writeWebhooksDiscoverySection(&b)
+	}
+
 	if area.Key == "schema" {
 		b.WriteString("## Schema Output\n\n")
 		b.WriteString("- `schema list` enumerates supported commands.\n")
 		b.WriteString("- `schema <noun> <verb>` returns flags, env vars, examples, exit codes, output modes, and output schema details.\n")
-		b.WriteString("- For category, client, invoice, payment, product, and recurring commands, inspect `output.known_fields`, `path_syntax`, and the generated `data_schema` before building `--fields` selectors.\n")
-		b.WriteString("- For category, client, invoice, payment, product, and recurring write commands, inspect `request_body_schema` before constructing `--input` payloads.\n\n")
+		b.WriteString("- For account, auth exchange, category, client, department, invoice, issuer, payment, product, price-list, recurring, warehouse, warehouse-action, warehouse-document, and webhook commands, inspect `output.known_fields`, `path_syntax`, and the generated `data_schema` before building `--fields` selectors.\n")
+		b.WriteString("- For account, category, client, department, invoice, issuer, payment, product, price-list, recurring, user, warehouse, warehouse-document, and webhook write commands, inspect `request_body_schema` before constructing `--input` payloads.\n\n")
 	}
 
 	if area.Key == "doctor" {
@@ -348,6 +380,47 @@ func writeInvoicesDiscoverySection(b *strings.Builder) {
 	b.WriteString("- `output.known_fields` is curated, not exhaustive, so valid undocumented paths may still work.\n\n")
 }
 
+func writeAuthDiscoverySection(b *strings.Builder) {
+	b.WriteString("## Credential Exchange\n\n")
+	b.WriteString("- Use `fakturownia auth exchange --login ... --password ... --json` to exchange login credentials for account metadata and an API token when the upstream account has one.\n")
+	b.WriteString("- Structured output is sanitized and reports `api_token_present` instead of exposing the token directly.\n")
+	b.WriteString("- Use `--raw` only when you explicitly need the exact upstream login response, including secrets.\n")
+	b.WriteString("- By default, `auth exchange` stores the returned token under the returned prefix; add `--save-as` to override the saved profile name.\n\n")
+}
+
+func writeAccountsDiscoverySection(b *strings.Builder) {
+	b.WriteString("## Output and Request Discovery\n\n")
+	b.WriteString("- Use `fakturownia schema account get --json` to inspect sanitized account output fields such as `prefix`, `url`, `login`, `email`, and `api_token_present`.\n")
+	b.WriteString("- Use `fakturownia schema account create --json` before building the full top-level account request object.\n")
+	b.WriteString("- Unlike most CRUD nouns, `account create` accepts the full upstream request object, including top-level `account`, `user`, `company`, and optional `integration_token`.\n")
+	b.WriteString("- Structured output is sanitized and omits the raw returned API token; use `--raw` only when you explicitly need the exact upstream response.\n\n")
+}
+
+func writeDepartmentsDiscoverySection(b *strings.Builder) {
+	b.WriteString("## Output and Request Discovery\n\n")
+	b.WriteString("- Use `fakturownia schema department list --json` and `fakturownia schema department get --json` before building selectors.\n")
+	b.WriteString("- Read `output.known_fields` to discover README-backed department fields such as `name`, `shortcut`, and `tax_no`.\n")
+	b.WriteString("- Use `fakturownia schema department create --json` and `fakturownia schema department update --json` to inspect `request_body_schema` and accepted `--input` modes.\n")
+	b.WriteString("- `--input` accepts inline JSON, `@file`, or `-` for stdin, and the CLI wraps the inner object into the upstream `department` envelope.\n")
+	b.WriteString("- `department set-logo` uploads multipart content using `department[logo]`; when using `--file -`, pass `--name` as well.\n\n")
+}
+
+func writeIssuersDiscoverySection(b *strings.Builder) {
+	b.WriteString("## Output and Request Discovery\n\n")
+	b.WriteString("- Use `fakturownia schema issuer list --json` and `fakturownia schema issuer get --json` before building selectors.\n")
+	b.WriteString("- Read `output.known_fields` to discover README-backed issuer output fields such as `name` and `tax_no`.\n")
+	b.WriteString("- Use `fakturownia schema issuer create --json` and `fakturownia schema issuer update --json` to inspect `request_body_schema` and accepted `--input` modes.\n")
+	b.WriteString("- `--input` accepts inline JSON, `@file`, or `-` for stdin, and the CLI wraps the inner object into the upstream `issuer` envelope.\n\n")
+}
+
+func writeUsersDiscoverySection(b *strings.Builder) {
+	b.WriteString("## Request Discovery\n\n")
+	b.WriteString("- Use `fakturownia schema user create --json` before building invite or password-based user payloads.\n")
+	b.WriteString("- The CLI accepts the inner `user` object and wraps it into the upstream `{ \"user\": ... }` envelope.\n")
+	b.WriteString("- Pass `--integration-token` separately; the active profile supplies `api_token` automatically.\n")
+	b.WriteString("- Inspect request fields such as `invite`, `email`, `password`, `role`, and `department_ids[]` before constructing the payload.\n\n")
+}
+
 func writeRecurringsDiscoverySection(b *strings.Builder) {
 	b.WriteString("## Output and Request Discovery\n\n")
 	b.WriteString("- Use `fakturownia schema recurring list --json` to inspect README-backed recurring output fields such as `name`, `every`, and `next_invoice_date`.\n")
@@ -387,6 +460,31 @@ func writeProductsDiscoverySection(b *strings.Builder) {
 	b.WriteString("- Use `fakturownia schema product create --json` and `fakturownia schema product update --json` to inspect `request_body_schema` and accepted `--input` modes.\n")
 	b.WriteString("- `--input` accepts inline JSON, `@file`, or `-` for stdin, and the CLI wraps the inner object into the upstream `product` envelope.\n")
 	b.WriteString("- Package-product payloads use `package_products_details` as an open object whose values contain `id` and `quantity`.\n\n")
+}
+
+func writeWarehousesDiscoverySection(b *strings.Builder) {
+	b.WriteString("## Output and Request Discovery\n\n")
+	b.WriteString("- Use `fakturownia schema warehouse list --json` and `fakturownia schema warehouse get --json` before building selectors.\n")
+	b.WriteString("- Read `output.known_fields` to discover conservative README-backed warehouse fields such as `name`, `kind`, and `description`.\n")
+	b.WriteString("- Use `fakturownia schema warehouse create --json` and `fakturownia schema warehouse update --json` to inspect `request_body_schema` and accepted `--input` modes.\n")
+	b.WriteString("- `--input` accepts inline JSON, `@file`, or `-` for stdin, and the CLI wraps the inner object into the upstream `warehouse` envelope.\n\n")
+}
+
+func writeWarehouseActionsDiscoverySection(b *strings.Builder) {
+	b.WriteString("## Output Discovery\n\n")
+	b.WriteString("- Use `fakturownia schema warehouse-action list --json` before building selectors.\n")
+	b.WriteString("- Read `output.known_fields` to discover conservative README-backed action fields such as `product_id`, `quantity`, `warehouse_id`, `warehouse_document_id`, and `warehouse2_id`.\n")
+	b.WriteString("- `warehouse-action list` exposes only explicit first-class filter flags in v1: `--warehouse-id`, `--kind`, `--product-id`, `--date-from`, `--date-to`, `--from-warehouse-document`, `--to-warehouse-document`, and `--warehouse-document-id`.\n")
+	b.WriteString("- There is no request body schema for warehouse actions in v1 because the CLI exposes this noun as read-only.\n\n")
+}
+
+func writeWebhooksDiscoverySection(b *strings.Builder) {
+	b.WriteString("## Output and Request Discovery\n\n")
+	b.WriteString("- Use `fakturownia schema webhook list --json` and `fakturownia schema webhook get --json` before building selectors.\n")
+	b.WriteString("- Read `output.known_fields` to discover conservative webhook fields such as `kind`, `url`, `api_token`, `active`, `created_at`, and `updated_at`.\n")
+	b.WriteString("- Use `fakturownia schema webhook create --json` and `fakturownia schema webhook update --json` to inspect `request_body_schema` before building webhook payloads.\n")
+	b.WriteString("- Unlike most CRUD nouns, webhook create and update accept the full top-level request object because the direct README documents endpoints but not a wrapper key.\n")
+	b.WriteString("- Start from the curated `kind` values in schema output and keep the payload conservative rather than inventing undocumented fields.\n\n")
 }
 
 func writeAreaRecipesSection(b *strings.Builder, area SkillAreaSpec) {

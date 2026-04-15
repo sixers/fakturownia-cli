@@ -68,6 +68,21 @@ metadata:
 ```bash
 fakturownia auth login --prefix acme --api-token $FAKTUROWNIA_API_TOKEN
 fakturownia auth login --url https://acme.fakturownia.pl --api-token TOKEN --profile work --set-default
+fakturownia auth exchange --login user@example.com --password secret --json
+fakturownia auth exchange --login partner@example.com --password secret --integration-token PARTNER_TOKEN
+fakturownia auth exchange --login user@example.com --password secret --save-as work --raw
+fakturownia account get --json
+fakturownia account get --integration-token PARTNER_TOKEN
+fakturownia account get --raw
+fakturownia department list --json
+fakturownia department list --columns id,name,shortcut,tax_no
+fakturownia department list --page 2 --per-page 25 --raw
+fakturownia issuer list --json
+fakturownia issuer list --columns id,name,tax_no
+fakturownia issuer list --page 2 --per-page 25 --raw
+fakturownia webhook list --json
+fakturownia webhook list --columns id,kind,url,active
+fakturownia webhook list --page 2 --per-page 25 --raw
 fakturownia category list --json
 fakturownia category list --columns id,name,description
 fakturownia category list --page 2 --per-page 25 --raw
@@ -98,6 +113,13 @@ fakturownia invoice list --page 2 --per-page 25 --raw
 fakturownia recurring list --json
 fakturownia recurring list --columns id,name,every,next_invoice_date,send_email
 fakturownia recurring list --raw
+fakturownia warehouse list --json
+fakturownia warehouse list --columns id,name,kind,description
+fakturownia warehouse list --page 2 --per-page 25 --raw
+fakturownia warehouse-action list --json
+fakturownia warehouse-action list --warehouse-id 1 --kind mm --product-id 7 --json
+fakturownia warehouse-action list --warehouse-document-id 15 --columns id,kind,product_id,quantity,warehouse_document_id
+fakturownia warehouse-action list --page 2 --per-page 25 --raw
 fakturownia warehouse-document list --json
 fakturownia warehouse-document list --columns id,kind,number,client_name
 fakturownia warehouse-document list --page 2 --per-page 25 --raw

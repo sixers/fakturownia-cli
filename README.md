@@ -14,8 +14,37 @@ The current implementation covers these command groups:
 ### Auth
 
 - `auth login`
+- `auth exchange`
 - `auth status`
 - `auth logout`
+
+### Accounts
+
+- `account create`
+- `account get`
+- `account delete`
+- `account unlink`
+
+### Departments
+
+- `department list`
+- `department get`
+- `department create`
+- `department update`
+- `department delete`
+- `department set-logo`
+
+### Issuers
+
+- `issuer list`
+- `issuer get`
+- `issuer create`
+- `issuer update`
+- `issuer delete`
+
+### Users
+
+- `user create`
 
 ### Categories
 
@@ -78,6 +107,18 @@ The current implementation covers these command groups:
 - `recurring create`
 - `recurring update`
 
+### Warehouses
+
+- `warehouse list`
+- `warehouse get`
+- `warehouse create`
+- `warehouse update`
+- `warehouse delete`
+
+### Warehouse Actions
+
+- `warehouse-action list`
+
 ### Warehouse Documents
 
 - `warehouse-document list`
@@ -85,6 +126,14 @@ The current implementation covers these command groups:
 - `warehouse-document create`
 - `warehouse-document update`
 - `warehouse-document delete`
+
+### Webhooks
+
+- `webhook list`
+- `webhook get`
+- `webhook create`
+- `webhook update`
+- `webhook delete`
 
 ### Schema
 
@@ -247,6 +296,7 @@ Example:
 
 ```bash
 fakturownia auth login --prefix acme --api-token "$FAKTUROWNIA_API_TOKEN"
+fakturownia auth exchange --login user@example.com --password secret --json
 fakturownia auth status --json
 ```
 
@@ -280,8 +330,8 @@ Envelope shape:
 
 `schema` describes both the command contract and the README-backed output and request catalogs for supported resources.
 
-- `fakturownia schema invoice list --json`, `fakturownia schema invoice get --json`, `fakturownia schema category list --json`, `fakturownia schema category get --json`, `fakturownia schema client list --json`, `fakturownia schema payment list --json`, `fakturownia schema payment get --json`, `fakturownia schema product list --json`, `fakturownia schema price-list list --json`, `fakturownia schema price-list get --json`, `fakturownia schema recurring list --json`, `fakturownia schema warehouse-document list --json`, and `fakturownia schema warehouse-document get --json` expose `output.known_fields`
-- `fakturownia schema invoice create --json`, `fakturownia schema invoice update --json`, `fakturownia schema category create --json`, `fakturownia schema category update --json`, `fakturownia schema client create --json`, `fakturownia schema client update --json`, `fakturownia schema payment create --json`, `fakturownia schema payment update --json`, `fakturownia schema product create --json`, `fakturownia schema product update --json`, `fakturownia schema price-list create --json`, `fakturownia schema price-list update --json`, `fakturownia schema recurring create --json`, `fakturownia schema recurring update --json`, `fakturownia schema warehouse-document create --json`, and `fakturownia schema warehouse-document update --json` expose `request_body_schema`
+- `fakturownia schema auth exchange --json`, `fakturownia schema account get --json`, `fakturownia schema department list --json`, `fakturownia schema department get --json`, `fakturownia schema issuer list --json`, `fakturownia schema issuer get --json`, `fakturownia schema webhook list --json`, `fakturownia schema webhook get --json`, `fakturownia schema invoice list --json`, `fakturownia schema invoice get --json`, `fakturownia schema category list --json`, `fakturownia schema category get --json`, `fakturownia schema client list --json`, `fakturownia schema payment list --json`, `fakturownia schema payment get --json`, `fakturownia schema product list --json`, `fakturownia schema price-list list --json`, `fakturownia schema price-list get --json`, `fakturownia schema recurring list --json`, `fakturownia schema warehouse list --json`, `fakturownia schema warehouse get --json`, `fakturownia schema warehouse-action list --json`, `fakturownia schema warehouse-document list --json`, and `fakturownia schema warehouse-document get --json` expose `output.known_fields`
+- `fakturownia schema account create --json`, `fakturownia schema department create --json`, `fakturownia schema department update --json`, `fakturownia schema issuer create --json`, `fakturownia schema issuer update --json`, `fakturownia schema user create --json`, `fakturownia schema webhook create --json`, `fakturownia schema webhook update --json`, `fakturownia schema invoice create --json`, `fakturownia schema invoice update --json`, `fakturownia schema category create --json`, `fakturownia schema category update --json`, `fakturownia schema client create --json`, `fakturownia schema client update --json`, `fakturownia schema payment create --json`, `fakturownia schema payment update --json`, `fakturownia schema product create --json`, `fakturownia schema product update --json`, `fakturownia schema price-list create --json`, `fakturownia schema price-list update --json`, `fakturownia schema recurring create --json`, `fakturownia schema recurring update --json`, `fakturownia schema warehouse create --json`, `fakturownia schema warehouse update --json`, and `fakturownia schema warehouse-document create --json`, and `fakturownia schema warehouse-document update --json` expose `request_body_schema`
 - `known_fields` and request body catalogs are curated from the upstream [Fakturownia README](https://github.com/fakturownia/API/blob/master/README.md)
 - nested paths use `dot_bracket` syntax such as `positions[].name`
 - the catalog is intentionally not exhaustive; syntactically valid paths outside the catalog are still allowed and produce warnings instead of hard failures
@@ -290,6 +340,12 @@ Examples:
 
 ```bash
 fakturownia schema invoice list --json
+fakturownia schema auth exchange --json
+fakturownia schema account create --json
+fakturownia schema department create --json
+fakturownia schema issuer create --json
+fakturownia schema user create --json
+fakturownia schema webhook create --json
 fakturownia schema invoice create --json
 fakturownia schema recurring create --json
 fakturownia schema category create --json
@@ -297,17 +353,24 @@ fakturownia schema client create --json
 fakturownia schema payment create --json
 fakturownia schema product create --json
 fakturownia schema price-list create --json
+fakturownia schema warehouse create --json
+fakturownia schema warehouse-action list --json
 fakturownia schema warehouse-document create --json
 fakturownia category list --fields name,description --json
 fakturownia client list --fields name,email --json
 fakturownia payment list --include invoices --fields name,price,paid --json
 fakturownia product list --fields name,code,stock_level --json
 fakturownia price-list get --id 8523 --fields id,name,price_list_positions[].price_gross --json
+fakturownia warehouse list --fields name,description --json
+fakturownia warehouse-action list --warehouse-document-id 15 --fields kind,product_id,quantity --json
 fakturownia warehouse-document get --id 15 --fields id,kind,warehouse_actions[].quantity --json
 fakturownia product create --input '{"name":"Widget","code":"W001","tax":"23"}' --json
 fakturownia client create --input '{"name":"Acme","email":"billing@example.com"}' --json
 fakturownia price-list create --input '{"name":"Dropshipper","currency":"PLN"}' --json
+fakturownia warehouse create --input '{"name":"my_warehouse","kind":null,"description":null}' --json
 fakturownia warehouse-document create --input '{"kind":"mm","warehouse_actions":[{"product_id":7,"quantity":2,"warehouse2_id":3}]}' --json
+fakturownia account create --input '{"account":{"prefix":"acme"},"user":{"login":"owner","email":"owner@example.com","password":"secret"},"company":{"name":"Acme"}}' --json
+fakturownia webhook create --input '{"kind":"invoice:create","url":"https://example.com/hook","active":true}' --json
 fakturownia invoice list --include-positions --fields number,positions[].name --json
 fakturownia invoice create --input '{"kind":"vat","client_id":1,"positions":[{"product_id":1,"quantity":2}]}' --dry-run --json
 fakturownia invoice list --columns number,positions[].name
@@ -319,8 +382,42 @@ fakturownia invoice list --columns number,positions[].name
 
 ```bash
 fakturownia auth login --prefix acme --api-token "$FAKTUROWNIA_API_TOKEN"
+fakturownia auth exchange --login user@example.com --password secret --json
 fakturownia auth status --json
 fakturownia auth logout --yes
+```
+
+### Accounts
+
+```bash
+fakturownia account create --input '{"account":{"prefix":"acme"},"user":{"login":"owner","email":"owner@example.com","password":"secret"},"company":{"name":"Acme"}}' --json
+fakturownia account get --json
+fakturownia account unlink --prefix acme --prefix beta --json
+fakturownia account delete --yes --dry-run --json
+```
+
+### Departments
+
+```bash
+fakturownia department list --json
+fakturownia department get --id 10 --json
+fakturownia department create --input '{"name":"Sales","shortcut":"SALES","tax_no":"1234567890"}' --json
+fakturownia department set-logo --id 10 --file ./logo.png --json
+```
+
+### Issuers
+
+```bash
+fakturownia issuer list --json
+fakturownia issuer get --id 3 --json
+fakturownia issuer create --input '{"name":"HQ","tax_no":"1234567890"}' --json
+fakturownia issuer delete --id 3 --yes --dry-run --json
+```
+
+### Users
+
+```bash
+fakturownia user create --integration-token PARTNER_TOKEN --input '{"invite":true,"email":"user@example.com","role":"member"}' --json
 ```
 
 ### Clients
@@ -392,6 +489,24 @@ fakturownia recurring create --input '{"name":"Miesięczna","invoice_id":1,"ever
 fakturownia recurring update --id 77 --input '{"next_invoice_date":"2026-05-01"}' --json
 ```
 
+### Warehouses
+
+```bash
+fakturownia warehouse list --json
+fakturownia warehouse get --id 1 --json
+fakturownia warehouse create --input '{"name":"my_warehouse","kind":null,"description":null}' --json
+fakturownia warehouse update --id 1 --input '{"description":"new_description"}' --json
+fakturownia warehouse delete --id 1 --yes --json
+```
+
+### Warehouse Actions
+
+```bash
+fakturownia warehouse-action list --json
+fakturownia warehouse-action list --warehouse-id 1 --kind mm --product-id 7 --json
+fakturownia warehouse-action list --warehouse-document-id 15 --fields kind,product_id,quantity --json
+```
+
 ### Warehouse Documents
 
 ```bash
@@ -402,15 +517,33 @@ fakturownia warehouse-document update --id 15 --input '{"invoice_ids":[100,111]}
 fakturownia warehouse-document delete --id 15 --yes --json
 ```
 
+### Webhooks
+
+```bash
+fakturownia webhook list --json
+fakturownia webhook get --id 7 --json
+fakturownia webhook create --input '{"kind":"invoice:create","url":"https://example.com/hook","active":true}' --json
+fakturownia webhook update --id 7 --input '{"active":false}' --json
+fakturownia webhook delete --id 7 --yes --json
+```
+
 ### Schema
 
 ```bash
 fakturownia schema list --json
+fakturownia schema auth exchange --json
+fakturownia schema account create --json
+fakturownia schema department create --json
+fakturownia schema issuer create --json
+fakturownia schema user create --json
+fakturownia schema webhook create --json
 fakturownia schema invoice list --json
 fakturownia schema invoice create --json
 fakturownia schema recurring create --json
 fakturownia schema client create --json
 fakturownia schema price-list create --json
+fakturownia schema warehouse create --json
+fakturownia schema warehouse-action list --json
 fakturownia schema warehouse-document create --json
 ```
 

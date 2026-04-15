@@ -237,6 +237,38 @@ func TestClientPatchJSONUsesBodyToken(t *testing.T) {
 	}
 }
 
+func TestClientPostJSONWithoutTokenDoesNotInjectAPIToken(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			t.Fatalf("ReadAll() error = %v", err)
+		}
+		var payload map[string]any
+		if err := json.Unmarshal(body, &payload); err != nil {
+			t.Fatalf("Unmarshal() error = %v", err)
+		}
+		if _, ok := payload["api_token"]; ok {
+			t.Fatalf("did not expect api_token in tokenless payload: %#v", payload)
+		}
+		if got := r.URL.Query().Get("api_token"); got != "" {
+			t.Fatalf("did not expect api_token query parameter, got %q", got)
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{"ok": true})
+	}))
+	defer server.Close()
+
+	client, err := NewClient(server.URL, "", 5*time.Second, 0, server.Client())
+	if err != nil {
+		t.Fatalf("NewClient() error = %v", err)
+	}
+
+	if _, err := client.PostJSON(context.Background(), "/login.json", map[string]any{"login": "user", "password": "secret"}, &map[string]any{}); err != nil {
+		t.Fatalf("PostJSON() error = %v", err)
+	}
+}
+
 func TestUploadMultipartPostsFieldsAndFile(t *testing.T) {
 	t.Parallel()
 
@@ -298,5 +330,56 @@ func TestUploadMultipartPostsFieldsAndFile(t *testing.T) {
 		FileContent: []byte("pdf-bytes"),
 	}); err != nil {
 		t.Fatalf("UploadMultipart() error = %v", err)
+	}
+}
+
+func TestUploadMultipartHonorsMethod(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPut {
+			t.Fatalf("expected PUT, got %s", r.Method)
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	client, err := NewClient(server.URL, "token", 5*time.Second, 0, server.Client())
+	if err != nil {
+		t.Fatalf("NewClient() error = %v", err)
+	}
+
+	if _, err := client.UploadMultipart(context.Background(), MultipartUpload{
+		Method:      http.MethodPut,
+		URL:         server.URL + "/departments/10.json",
+		Fields:      map[string]string{"api_token": "token"},
+		FileField:   "department[logo]",
+		FileName:    "logo.png",
+		FileContent: []byte("png"),
+	}); err != nil {
+		t.Fatalf("UploadMultipart() error = %v", err)
+	}
+}
+
+func TestPlanMultipartUploadRedactsAPIToken(t *testing.T) {
+	t.Parallel()
+
+	plan := PlanMultipartUpload(MultipartUpload{
+		Method:      http.MethodPut,
+		URL:         "https://example.test/departments/10.json",
+		Fields:      map[string]string{"api_token": "secret", "kind": "logo"},
+		FileField:   "department[logo]",
+		FileName:    "logo.png",
+		FileContent: []byte("png"),
+	})
+
+	if plan.Method != http.MethodPut {
+		t.Fatalf("expected PUT method, got %#v", plan)
+	}
+	if plan.Fields["api_token"] != "[redacted]" {
+		t.Fatalf("expected redacted api_token, got %#v", plan.Fields)
+	}
+	if plan.Fields["kind"] != "logo" {
+		t.Fatalf("expected other fields to remain intact, got %#v", plan.Fields)
 	}
 }

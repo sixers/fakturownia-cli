@@ -36,6 +36,12 @@ func TestGeneratedSkillFilesMatchGolden(t *testing.T) {
 		bundleRootSkillPath(),
 		bundleIndexPath(),
 		skillAreaPath(sharedSkillArea(SkillBundle())),
+		filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "auth", "SKILL.md")),
+		filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "accounts", "SKILL.md")),
+		filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "departments", "SKILL.md")),
+		filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "issuers", "SKILL.md")),
+		filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "users", "SKILL.md")),
+		filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "webhooks", "SKILL.md")),
 		filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "categories", "SKILL.md")),
 		filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "clients", "SKILL.md")),
 		filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "payments", "SKILL.md")),
@@ -43,6 +49,8 @@ func TestGeneratedSkillFilesMatchGolden(t *testing.T) {
 		filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "price-lists", "SKILL.md")),
 		filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "invoices", "SKILL.md")),
 		filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "recurrings", "SKILL.md")),
+		filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "warehouses", "SKILL.md")),
+		filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "warehouse-actions", "SKILL.md")),
 		filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "warehouse-documents", "SKILL.md")),
 		recipeIndexPath(),
 		recipePath(Recipes()[0]),
@@ -120,6 +128,50 @@ func TestInvoicesSkillIncludesOutputDiscovery(t *testing.T) {
 	for _, needle := range want {
 		if !strings.Contains(invoices, needle) {
 			t.Fatalf("expected invoices skill to include %q: %s", needle, invoices)
+		}
+	}
+}
+
+func TestAuthSkillIncludesExchangeGuidance(t *testing.T) {
+	t.Parallel()
+
+	files, err := RenderSkillFiles()
+	if err != nil {
+		t.Fatalf("RenderSkillFiles() error = %v", err)
+	}
+	byPath := generatedFileMap(files)
+
+	authSkill := byPath[filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "auth", "SKILL.md"))]
+	want := []string{
+		"auth exchange",
+		"api_token_present",
+		"`--raw`",
+	}
+	for _, needle := range want {
+		if !strings.Contains(authSkill, needle) {
+			t.Fatalf("expected auth skill to include %q: %s", needle, authSkill)
+		}
+	}
+}
+
+func TestAccountsSkillIncludesFullObjectDiscovery(t *testing.T) {
+	t.Parallel()
+
+	files, err := RenderSkillFiles()
+	if err != nil {
+		t.Fatalf("RenderSkillFiles() error = %v", err)
+	}
+	byPath := generatedFileMap(files)
+
+	accounts := byPath[filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "accounts", "SKILL.md"))]
+	want := []string{
+		"schema account create --json",
+		"full top-level account request object",
+		"`--raw`",
+	}
+	for _, needle := range want {
+		if !strings.Contains(accounts, needle) {
+			t.Fatalf("expected accounts skill to include %q: %s", needle, accounts)
 		}
 	}
 }
@@ -257,6 +309,52 @@ func TestPriceListsSkillIncludesRequestDiscovery(t *testing.T) {
 	for _, needle := range want {
 		if !strings.Contains(priceLists, needle) {
 			t.Fatalf("expected price-lists skill to include %q: %s", needle, priceLists)
+		}
+	}
+}
+
+func TestWarehousesSkillIncludesRequestDiscovery(t *testing.T) {
+	t.Parallel()
+
+	files, err := RenderSkillFiles()
+	if err != nil {
+		t.Fatalf("RenderSkillFiles() error = %v", err)
+	}
+	byPath := generatedFileMap(files)
+
+	warehouses := byPath[filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "warehouses", "SKILL.md"))]
+	want := []string{
+		"fakturownia schema warehouse list --json",
+		"fakturownia schema warehouse create --json",
+		"request_body_schema",
+		"`--input` accepts inline JSON, `@file`, or `-` for stdin",
+	}
+	for _, needle := range want {
+		if !strings.Contains(warehouses, needle) {
+			t.Fatalf("expected warehouses skill to include %q: %s", needle, warehouses)
+		}
+	}
+}
+
+func TestWarehouseActionsSkillIncludesFilterDiscovery(t *testing.T) {
+	t.Parallel()
+
+	files, err := RenderSkillFiles()
+	if err != nil {
+		t.Fatalf("RenderSkillFiles() error = %v", err)
+	}
+	byPath := generatedFileMap(files)
+
+	actions := byPath[filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "warehouse-actions", "SKILL.md"))]
+	want := []string{
+		"fakturownia schema warehouse-action list --json",
+		"`--warehouse-id`",
+		"`--warehouse-document-id`",
+		"read-only",
+	}
+	for _, needle := range want {
+		if !strings.Contains(actions, needle) {
+			t.Fatalf("expected warehouse-actions skill to include %q: %s", needle, actions)
 		}
 	}
 }

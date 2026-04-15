@@ -1,0 +1,400 @@
+{
+  "schema_version": "fakturownia-cli/v1alpha1",
+  "status": "success",
+  "data": {
+    "schema_version": "fakturownia-cli/v1alpha1",
+    "command": "user create",
+    "use": "create --input -|@file|JSON --integration-token TOKEN",
+    "summary": "Create or invite an account user",
+    "flags": [
+      {
+        "name": "profile",
+        "type": "string",
+        "description": "Select a named profile",
+        "required": false
+      },
+      {
+        "name": "json",
+        "type": "bool",
+        "description": "Alias for --output json",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "output",
+        "type": "string",
+        "description": "Output format",
+        "required": false,
+        "default": "human",
+        "enum": [
+          "human",
+          "json"
+        ]
+      },
+      {
+        "name": "quiet",
+        "type": "bool",
+        "description": "Emit bare values when exactly one field or column remains",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "fields",
+        "type": "string[]",
+        "description": "Project JSON envelope data fields using dot/bracket paths like number or positions[].name",
+        "required": false,
+        "repeatable": true
+      },
+      {
+        "name": "columns",
+        "type": "string[]",
+        "description": "Select human table columns using dot/bracket paths like number or positions[].name",
+        "required": false,
+        "repeatable": true
+      },
+      {
+        "name": "raw",
+        "type": "bool",
+        "description": "Emit the upstream JSON response body directly when supported",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "dry-run",
+        "type": "bool",
+        "description": "Accepted on read-only commands and reserved for future mutating request previews",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "timeout-ms",
+        "type": "int",
+        "description": "HTTP timeout in milliseconds",
+        "required": false,
+        "default": "30000"
+      },
+      {
+        "name": "max-retries",
+        "type": "int",
+        "description": "Maximum retry attempts for idempotent reads on network or 5xx failures",
+        "required": false,
+        "default": "2"
+      },
+      {
+        "name": "non-interactive",
+        "type": "bool",
+        "description": "Disable interactive behavior",
+        "required": false,
+        "default": "true"
+      },
+      {
+        "name": "config",
+        "type": "string",
+        "description": "Override the config file path",
+        "required": false
+      },
+      {
+        "name": "input",
+        "type": "string",
+        "description": "User JSON input as inline JSON, @file, or - for stdin",
+        "required": true
+      },
+      {
+        "name": "integration-token",
+        "type": "string",
+        "description": "Integration token required by the upstream add_user endpoint",
+        "required": true
+      }
+    ],
+    "env_vars": [
+      {
+        "name": "FAKTUROWNIA_PROFILE",
+        "description": "Select a profile unless --profile is provided"
+      },
+      {
+        "name": "FAKTUROWNIA_URL",
+        "description": "Override the base account URL from any profile"
+      },
+      {
+        "name": "FAKTUROWNIA_API_TOKEN",
+        "description": "Override the API token from any profile"
+      }
+    ],
+    "output_modes": [
+      "human",
+      "json"
+    ],
+    "exit_codes": [
+      {
+        "code": 0,
+        "description": "success"
+      },
+      {
+        "code": 2,
+        "description": "usage or validation error"
+      },
+      {
+        "code": 3,
+        "description": "not found"
+      },
+      {
+        "code": 4,
+        "description": "authentication or permission failure"
+      },
+      {
+        "code": 5,
+        "description": "conflict"
+      },
+      {
+        "code": 6,
+        "description": "network or timeout failure"
+      },
+      {
+        "code": 7,
+        "description": "reserved for throttling or retry budget exhaustion"
+      },
+      {
+        "code": 8,
+        "description": "remote API rejected the request"
+      },
+      {
+        "code": 9,
+        "description": "internal CLI failure"
+      }
+    ],
+    "raw_supported": true,
+    "examples": [
+      "fakturownia user create --integration-token PARTNER_TOKEN --input '{\"invite\":true,\"email\":\"user@example.com\",\"role\":\"member\"}' --json",
+      "fakturownia user create --integration-token PARTNER_TOKEN --input '{\"invite\":false,\"email\":\"user@example.com\",\"password\":\"secret\",\"role\":\"admin\",\"department_ids\":[1,2]}' --json",
+      "fakturownia user create --integration-token PARTNER_TOKEN --input @user.json --dry-run --json"
+    ],
+    "data_schema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object"
+    },
+    "request_body": {
+      "input_flag": "input",
+      "input_modes": [
+        "inline_json",
+        "@file",
+        "stdin"
+      ],
+      "wrapper_key": "user",
+      "open_ended": true,
+      "catalog_basis": {
+        "source": "readme",
+        "url": "https://github.com/fakturownia/API/blob/master/README.md"
+      },
+      "path_syntax": "dot_bracket",
+      "known_fields": [
+        {
+          "path": "invite",
+          "type": "boolean",
+          "description": "Invite an existing user instead of creating one",
+          "source_section": "Dodawanie użytkowników"
+        },
+        {
+          "path": "email",
+          "type": "string",
+          "description": "User email address",
+          "source_section": "Dodawanie użytkowników"
+        },
+        {
+          "path": "password",
+          "type": "string",
+          "description": "User password when invite=false",
+          "source_section": "Dodawanie użytkowników"
+        },
+        {
+          "path": "role",
+          "type": "string",
+          "description": "User role such as member, admin, accountant, or a custom role ID",
+          "source_section": "Dodawanie użytkowników"
+        },
+        {
+          "path": "department_ids[]",
+          "type": "array<integer>",
+          "description": "Department IDs available to the user",
+          "source_section": "Dodawanie użytkowników"
+        }
+      ],
+      "notes": [
+        "the CLI accepts the inner user object, then wraps it in the upstream {\"user\": ...} envelope",
+        "pass --integration-token separately; the active profile provides api_token automatically",
+        "known_fields is curated from the upstream README and is not exhaustive"
+      ]
+    },
+    "request_body_schema": {
+      "additionalProperties": true,
+      "properties": {
+        "department_ids": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "email": {
+          "type": "string"
+        },
+        "invite": {
+          "type": "boolean"
+        },
+        "password": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "envelope_schema": {
+      "properties": {
+        "data": {
+          "$schema": "https://json-schema.org/draft/2020-12/schema",
+          "type": "object"
+        },
+        "errors": {
+          "items": {
+            "$defs": {
+              "ErrorDetail": {
+                "properties": {
+                  "class": {
+                    "type": "string"
+                  },
+                  "code": {
+                    "type": "string"
+                  },
+                  "hint": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "retryable": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "class",
+                  "code",
+                  "message",
+                  "retryable"
+                ],
+                "type": "object"
+              }
+            },
+            "$id": "https://github.com/sixers/fakturownia-cli/internal/output/error-detail",
+            "$ref": "#/$defs/ErrorDetail",
+            "$schema": "https://json-schema.org/draft/2020-12/schema"
+          },
+          "type": "array"
+        },
+        "meta": {
+          "$defs": {
+            "Meta": {
+              "properties": {
+                "command": {
+                  "type": "string"
+                },
+                "duration_ms": {
+                  "type": "integer"
+                },
+                "pagination": {
+                  "$ref": "#/$defs/Pagination"
+                },
+                "profile": {
+                  "type": "string"
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "command",
+                "duration_ms"
+              ],
+              "type": "object"
+            },
+            "Pagination": {
+              "properties": {
+                "has_next": {
+                  "type": "boolean"
+                },
+                "page": {
+                  "type": "integer"
+                },
+                "per_page": {
+                  "type": "integer"
+                },
+                "returned": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "page",
+                "per_page",
+                "returned",
+                "has_next"
+              ],
+              "type": "object"
+            }
+          },
+          "$id": "https://github.com/sixers/fakturownia-cli/internal/output/meta",
+          "$ref": "#/$defs/Meta",
+          "$schema": "https://json-schema.org/draft/2020-12/schema"
+        },
+        "schema_version": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "success",
+            "error"
+          ],
+          "type": "string"
+        },
+        "warnings": {
+          "items": {
+            "$defs": {
+              "WarningDetail": {
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "message"
+                ],
+                "type": "object"
+              }
+            },
+            "$id": "https://github.com/sixers/fakturownia-cli/internal/output/warning-detail",
+            "$ref": "#/$defs/WarningDetail",
+            "$schema": "https://json-schema.org/draft/2020-12/schema"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "schema_version",
+        "status",
+        "data",
+        "errors",
+        "warnings",
+        "meta"
+      ],
+      "type": "object"
+    }
+  },
+  "errors": [],
+  "warnings": null,
+  "meta": {
+    "command": "schema user create",
+    "duration_ms": 0
+  }
+}
