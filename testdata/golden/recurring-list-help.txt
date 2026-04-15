@@ -1,0 +1,63 @@
+List recurring invoice definitions
+
+Usage
+  fakturownia recurring list
+
+Global Flags
+  --profile (string): Select a named profile
+  --json (bool): Alias for --output json default=false
+  --output (string): Output format default=human enum=human,json
+  --quiet (bool): Emit bare values when exactly one field or column remains default=false
+  --fields (string[]): Project JSON envelope data fields using dot/bracket paths like number or positions[].name
+  --columns (string[]): Select human table columns using dot/bracket paths like number or positions[].name
+  --raw (bool): Emit the upstream JSON response body directly when supported default=false
+  --dry-run (bool): Accepted on read-only commands and reserved for future mutating request previews default=false
+  --timeout-ms (int): HTTP timeout in milliseconds default=30000
+  --max-retries (int): Maximum retry attempts for idempotent reads on network or 5xx failures default=2
+  --non-interactive (bool): Disable interactive behavior default=true
+  --config (string): Override the config file path
+
+Environment Variables
+  FAKTUROWNIA_PROFILE: Select a profile unless --profile is provided
+  FAKTUROWNIA_URL: Override the base account URL from any profile
+  FAKTUROWNIA_API_TOKEN: Override the API token from any profile
+
+Output Modes
+  human, json
+  raw: supported
+
+Exit Codes
+  0: success
+  2: usage or validation error
+  3: not found
+  4: authentication or permission failure
+  5: conflict
+  6: network or timeout failure
+  7: reserved for throttling or retry budget exhaustion
+  8: remote API rejected the request
+  9: internal CLI failure
+
+Examples
+  fakturownia recurring list --json
+  fakturownia recurring list --columns id,name,every,next_invoice_date,send_email
+  fakturownia recurring list --raw
+
+Usage:
+  fakturownia recurring list [flags]
+
+Flags:
+  -h, --help   help for list
+
+Global Flags:
+      --columns strings   select human table columns using dot/bracket paths like number or positions[].name
+      --config string     override the config file path
+      --dry-run           accepted on read-only commands and reserved for future mutating previews
+      --fields strings    project JSON envelope data fields using dot/bracket paths like number or positions[].name
+      --json              alias for --output json
+      --max-retries int   maximum retries for idempotent reads (default 2)
+      --non-interactive   disable interactive behavior (default true)
+      --output string     output format: human|json (default "human")
+      --profile string    select a named profile
+  -q, --quiet             emit bare values when exactly one field or column remains
+      --raw               emit the upstream JSON response body directly when supported
+      --timeout-ms int    HTTP timeout in milliseconds (default 30000)

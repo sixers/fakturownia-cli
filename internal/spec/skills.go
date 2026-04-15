@@ -47,7 +47,7 @@ func SkillBundle() SkillBundleSpec {
 	return SkillBundleSpec{
 		Name:        "fakturownia",
 		Title:       "fakturownia",
-		Description: "Fakturownia CLI bundle: shared guidance, auth, clients, products, invoices, self-update, schema discovery, and diagnostics for the `fakturownia` command. Use when an agent needs to work with Fakturownia through this CLI.",
+		Description: "Fakturownia CLI bundle: shared guidance, auth, clients, products, invoices, recurrings, self-update, schema discovery, diagnostics, and generated invoice recipes for the `fakturownia` command. Use when an agent needs to work with Fakturownia through this CLI.",
 		CLIHelp:     "fakturownia --help",
 		RequiresBins: []string{
 			"fakturownia",
@@ -70,6 +70,7 @@ func SkillBundle() SkillBundleSpec {
 					{Noun: "client", Verb: "list"},
 					{Noun: "product", Verb: "list"},
 					{Noun: "invoice", Verb: "list"},
+					{Noun: "recurring", Verb: "list"},
 				},
 				CLIHelp: "fakturownia --help",
 				RequiresBins: []string{
@@ -169,18 +170,29 @@ func SkillBundle() SkillBundleSpec {
 				Key:          "invoices",
 				Name:         "fakturownia-invoices",
 				Title:        "Invoices",
-				Description:  "Fakturownia CLI invoices: list invoices, fetch a single invoice, download invoice PDFs, and discover invoice fields through schema output.",
+				Description:  "Fakturownia CLI invoices: list, fetch, create, update, delete, email, cancel, print, attach files, derive public links, and discover invoice fields and payloads through schema output.",
 				Category:     "api-area",
 				Prerequisite: "shared",
 				RelatedSkills: []string{
 					"shared",
 					"products",
+					"recurrings",
 					"schema",
 					"doctor",
 				},
 				CommandRefs: []SkillCommandRef{
 					{Noun: "invoice", Verb: "list"},
 					{Noun: "invoice", Verb: "get"},
+					{Noun: "invoice", Verb: "create"},
+					{Noun: "invoice", Verb: "update"},
+					{Noun: "invoice", Verb: "delete"},
+					{Noun: "invoice", Verb: "send-email"},
+					{Noun: "invoice", Verb: "change-status"},
+					{Noun: "invoice", Verb: "cancel"},
+					{Noun: "invoice", Verb: "public-link"},
+					{Noun: "invoice", Verb: "add-attachment"},
+					{Noun: "invoice", Verb: "download-attachments"},
+					{Noun: "invoice", Verb: "fiscal-print"},
 					{Noun: "invoice", Verb: "download"},
 				},
 				CLIHelp: "fakturownia invoice --help",
@@ -189,8 +201,37 @@ func SkillBundle() SkillBundleSpec {
 				},
 				DiscoveryHint: "Use `fakturownia schema invoice list --json` or `fakturownia schema invoice get --json` before building `--fields` selectors or nested invoice projections.",
 				WhenToUse: []string{
-					"The task is about reading invoices, narrowing invoice fields, or downloading invoice PDFs.",
-					"You need to discover invoice output fields such as `number`, `status`, or nested paths like `positions[].name`.",
+					"The task is about reading or mutating invoices, sending invoice emails, cancelling invoices, printing fiscally, or attaching files.",
+					"You need to discover invoice output fields such as `number`, `status`, `token`, or nested paths like `positions[].name`.",
+					"You need to inspect `request_body_schema` before constructing `invoice create` or `invoice update` payloads.",
+				},
+			},
+			{
+				Key:          "recurrings",
+				Name:         "fakturownia-recurrings",
+				Title:        "Recurrings",
+				Description:  "Fakturownia CLI recurrings: list, create, and update recurring invoice definitions with README-backed request and output discovery.",
+				Category:     "api-area",
+				Prerequisite: "shared",
+				RelatedSkills: []string{
+					"shared",
+					"invoices",
+					"schema",
+					"doctor",
+				},
+				CommandRefs: []SkillCommandRef{
+					{Noun: "recurring", Verb: "list"},
+					{Noun: "recurring", Verb: "create"},
+					{Noun: "recurring", Verb: "update"},
+				},
+				CLIHelp: "fakturownia recurring --help",
+				RequiresBins: []string{
+					"fakturownia",
+				},
+				DiscoveryHint: "Use `fakturownia schema recurring list --json` and `fakturownia schema recurring create --json` before building selectors or payloads.",
+				WhenToUse: []string{
+					"The task is about recurring invoice definitions rather than concrete invoice documents.",
+					"You need README-backed `request_body_schema` guidance for recurring creation or next-date updates.",
 				},
 			},
 			{
@@ -204,6 +245,7 @@ func SkillBundle() SkillBundleSpec {
 					"shared",
 					"products",
 					"invoices",
+					"recurrings",
 				},
 				CommandRefs: []SkillCommandRef{
 					{Noun: "schema", Verb: "list"},
@@ -216,7 +258,7 @@ func SkillBundle() SkillBundleSpec {
 				DiscoveryHint: "Use schema output to inspect a command before calling it; for invoices, read `output.known_fields` and `path_syntax`.",
 				WhenToUse: []string{
 					"You need machine-readable command discovery instead of scraping `--help` text.",
-					"You need to inspect flags, env vars, examples, exit codes, or output catalogs before executing a command.",
+					"You need to inspect flags, env vars, examples, exit codes, output catalogs, or request-body schemas before executing a command.",
 				},
 			},
 			{

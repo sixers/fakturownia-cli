@@ -1,0 +1,647 @@
+{
+  "schema_version": "fakturownia-cli/v1alpha1",
+  "status": "success",
+  "data": {
+    "schema_version": "fakturownia-cli/v1alpha1",
+    "command": "recurring create",
+    "use": "create --input -|@file|JSON",
+    "summary": "Create a recurring invoice definition",
+    "flags": [
+      {
+        "name": "profile",
+        "type": "string",
+        "description": "Select a named profile",
+        "required": false
+      },
+      {
+        "name": "json",
+        "type": "bool",
+        "description": "Alias for --output json",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "output",
+        "type": "string",
+        "description": "Output format",
+        "required": false,
+        "default": "human",
+        "enum": [
+          "human",
+          "json"
+        ]
+      },
+      {
+        "name": "quiet",
+        "type": "bool",
+        "description": "Emit bare values when exactly one field or column remains",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "fields",
+        "type": "string[]",
+        "description": "Project JSON envelope data fields using dot/bracket paths like number or positions[].name",
+        "required": false,
+        "repeatable": true
+      },
+      {
+        "name": "columns",
+        "type": "string[]",
+        "description": "Select human table columns using dot/bracket paths like number or positions[].name",
+        "required": false,
+        "repeatable": true
+      },
+      {
+        "name": "raw",
+        "type": "bool",
+        "description": "Emit the upstream JSON response body directly when supported",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "dry-run",
+        "type": "bool",
+        "description": "Accepted on read-only commands and reserved for future mutating request previews",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "timeout-ms",
+        "type": "int",
+        "description": "HTTP timeout in milliseconds",
+        "required": false,
+        "default": "30000"
+      },
+      {
+        "name": "max-retries",
+        "type": "int",
+        "description": "Maximum retry attempts for idempotent reads on network or 5xx failures",
+        "required": false,
+        "default": "2"
+      },
+      {
+        "name": "non-interactive",
+        "type": "bool",
+        "description": "Disable interactive behavior",
+        "required": false,
+        "default": "true"
+      },
+      {
+        "name": "config",
+        "type": "string",
+        "description": "Override the config file path",
+        "required": false
+      },
+      {
+        "name": "input",
+        "type": "string",
+        "description": "Recurring JSON input as inline JSON, @file, or - for stdin",
+        "required": true
+      }
+    ],
+    "env_vars": [
+      {
+        "name": "FAKTUROWNIA_PROFILE",
+        "description": "Select a profile unless --profile is provided"
+      },
+      {
+        "name": "FAKTUROWNIA_URL",
+        "description": "Override the base account URL from any profile"
+      },
+      {
+        "name": "FAKTUROWNIA_API_TOKEN",
+        "description": "Override the API token from any profile"
+      }
+    ],
+    "output_modes": [
+      "human",
+      "json"
+    ],
+    "exit_codes": [
+      {
+        "code": 0,
+        "description": "success"
+      },
+      {
+        "code": 2,
+        "description": "usage or validation error"
+      },
+      {
+        "code": 3,
+        "description": "not found"
+      },
+      {
+        "code": 4,
+        "description": "authentication or permission failure"
+      },
+      {
+        "code": 5,
+        "description": "conflict"
+      },
+      {
+        "code": 6,
+        "description": "network or timeout failure"
+      },
+      {
+        "code": 7,
+        "description": "reserved for throttling or retry budget exhaustion"
+      },
+      {
+        "code": 8,
+        "description": "remote API rejected the request"
+      },
+      {
+        "code": 9,
+        "description": "internal CLI failure"
+      }
+    ],
+    "raw_supported": true,
+    "examples": [
+      "fakturownia recurring create --input '{\"name\":\"Nazwa cyklicznosci\",\"invoice_id\":1,\"start_date\":\"2016-01-01\",\"every\":\"1m\",\"send_email\":true}' --json",
+      "fakturownia recurring create --input '{\"name\":\"Nazwa cyklicznosci\",\"invoice_id\":1,\"every\":\"1m\"}' --dry-run --json"
+    ],
+    "data_schema": {
+      "additionalProperties": true,
+      "properties": {
+        "buyer_email": {
+          "type": "string"
+        },
+        "end_date": {
+          "type": "string"
+        },
+        "every": {
+          "type": "string"
+        },
+        "id": {
+          "type": "integer"
+        },
+        "invoice_id": {
+          "type": "integer"
+        },
+        "issue_working_day_only": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        },
+        "next_invoice_date": {
+          "type": "string"
+        },
+        "send_email": {
+          "type": "boolean"
+        },
+        "start_date": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "request_body": {
+      "input_flag": "input",
+      "input_modes": [
+        "inline_json",
+        "@file",
+        "stdin"
+      ],
+      "wrapper_key": "recurring",
+      "open_ended": true,
+      "catalog_basis": {
+        "source": "readme",
+        "url": "https://github.com/fakturownia/API/blob/master/README.md"
+      },
+      "path_syntax": "dot_bracket",
+      "known_fields": [
+        {
+          "path": "id",
+          "type": "integer",
+          "description": "Recurring definition ID",
+          "source_section": "Pobranie listy definicji faktur cyklicznych"
+        },
+        {
+          "path": "name",
+          "type": "string",
+          "description": "Recurring definition name",
+          "source_section": "Dodanie definicji faktury cyklicznej"
+        },
+        {
+          "path": "invoice_id",
+          "type": "integer",
+          "description": "Template invoice ID",
+          "source_section": "Dodanie definicji faktury cyklicznej"
+        },
+        {
+          "path": "start_date",
+          "type": "string",
+          "description": "Recurring start date",
+          "source_section": "Dodanie definicji faktury cyklicznej"
+        },
+        {
+          "path": "every",
+          "type": "string",
+          "description": "Recurring schedule expression",
+          "source_section": "Dodanie definicji faktury cyklicznej"
+        },
+        {
+          "path": "issue_working_day_only",
+          "type": "boolean",
+          "description": "Only issue on working days",
+          "source_section": "Dodanie definicji faktury cyklicznej"
+        },
+        {
+          "path": "send_email",
+          "type": "boolean",
+          "description": "Send invoice email automatically",
+          "source_section": "Dodanie definicji faktury cyklicznej"
+        },
+        {
+          "path": "buyer_email",
+          "type": "string",
+          "description": "Email recipients used for auto-send",
+          "source_section": "Dodanie definicji faktury cyklicznej"
+        },
+        {
+          "path": "end_date",
+          "type": "string",
+          "description": "Recurring end date",
+          "source_section": "Dodanie definicji faktury cyklicznej"
+        },
+        {
+          "path": "next_invoice_date",
+          "type": "string",
+          "description": "Next invoice issue date",
+          "source_section": "Aktualizacja definicji faktury cyklicznej (zmiana daty wystawienia następnej faktury)"
+        }
+      ],
+      "notes": [
+        "the CLI accepts the inner recurring object, then wraps it in the upstream {\"recurring\": ...} envelope",
+        "known_fields is curated from the upstream README and is not exhaustive"
+      ]
+    },
+    "request_body_schema": {
+      "additionalProperties": true,
+      "properties": {
+        "buyer_email": {
+          "type": "string"
+        },
+        "end_date": {
+          "type": "string"
+        },
+        "every": {
+          "type": "string"
+        },
+        "id": {
+          "type": "integer"
+        },
+        "invoice_id": {
+          "type": "integer"
+        },
+        "issue_working_day_only": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        },
+        "next_invoice_date": {
+          "type": "string"
+        },
+        "send_email": {
+          "type": "boolean"
+        },
+        "start_date": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "envelope_schema": {
+      "properties": {
+        "data": {
+          "additionalProperties": true,
+          "properties": {
+            "buyer_email": {
+              "type": "string"
+            },
+            "end_date": {
+              "type": "string"
+            },
+            "every": {
+              "type": "string"
+            },
+            "id": {
+              "type": "integer"
+            },
+            "invoice_id": {
+              "type": "integer"
+            },
+            "issue_working_day_only": {
+              "type": "boolean"
+            },
+            "name": {
+              "type": "string"
+            },
+            "next_invoice_date": {
+              "type": "string"
+            },
+            "send_email": {
+              "type": "boolean"
+            },
+            "start_date": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "errors": {
+          "items": {
+            "$defs": {
+              "ErrorDetail": {
+                "properties": {
+                  "class": {
+                    "type": "string"
+                  },
+                  "code": {
+                    "type": "string"
+                  },
+                  "hint": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "retryable": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "class",
+                  "code",
+                  "message",
+                  "retryable"
+                ],
+                "type": "object"
+              }
+            },
+            "$id": "https://github.com/sixers/fakturownia-cli/internal/output/error-detail",
+            "$ref": "#/$defs/ErrorDetail",
+            "$schema": "https://json-schema.org/draft/2020-12/schema"
+          },
+          "type": "array"
+        },
+        "meta": {
+          "$defs": {
+            "Meta": {
+              "properties": {
+                "command": {
+                  "type": "string"
+                },
+                "duration_ms": {
+                  "type": "integer"
+                },
+                "pagination": {
+                  "$ref": "#/$defs/Pagination"
+                },
+                "profile": {
+                  "type": "string"
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "command",
+                "duration_ms"
+              ],
+              "type": "object"
+            },
+            "Pagination": {
+              "properties": {
+                "has_next": {
+                  "type": "boolean"
+                },
+                "page": {
+                  "type": "integer"
+                },
+                "per_page": {
+                  "type": "integer"
+                },
+                "returned": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "page",
+                "per_page",
+                "returned",
+                "has_next"
+              ],
+              "type": "object"
+            }
+          },
+          "$id": "https://github.com/sixers/fakturownia-cli/internal/output/meta",
+          "$ref": "#/$defs/Meta",
+          "$schema": "https://json-schema.org/draft/2020-12/schema"
+        },
+        "schema_version": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "success",
+            "error"
+          ],
+          "type": "string"
+        },
+        "warnings": {
+          "items": {
+            "$defs": {
+              "WarningDetail": {
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "message"
+                ],
+                "type": "object"
+              }
+            },
+            "$id": "https://github.com/sixers/fakturownia-cli/internal/output/warning-detail",
+            "$ref": "#/$defs/WarningDetail",
+            "$schema": "https://json-schema.org/draft/2020-12/schema"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "schema_version",
+        "status",
+        "data",
+        "errors",
+        "warnings",
+        "meta"
+      ],
+      "type": "object"
+    },
+    "output": {
+      "shape": "object",
+      "open_ended": true,
+      "catalog_basis": {
+        "source": "readme",
+        "url": "https://github.com/fakturownia/API/blob/master/README.md"
+      },
+      "path_syntax": "dot_bracket",
+      "known_fields": [
+        {
+          "path": "id",
+          "type": "integer",
+          "description": "Recurring definition ID",
+          "projectable": true,
+          "selectable": true,
+          "default_column": true,
+          "commands": [
+            "recurring create"
+          ],
+          "presence": "common",
+          "source_section": "Pobranie listy definicji faktur cyklicznych"
+        },
+        {
+          "path": "name",
+          "type": "string",
+          "description": "Recurring definition name",
+          "projectable": true,
+          "selectable": true,
+          "default_column": true,
+          "commands": [
+            "recurring create"
+          ],
+          "presence": "common",
+          "source_section": "Dodanie definicji faktury cyklicznej"
+        },
+        {
+          "path": "invoice_id",
+          "type": "integer",
+          "description": "Template invoice ID",
+          "projectable": true,
+          "selectable": true,
+          "default_column": true,
+          "commands": [
+            "recurring create"
+          ],
+          "presence": "common",
+          "source_section": "Dodanie definicji faktury cyklicznej"
+        },
+        {
+          "path": "start_date",
+          "type": "string",
+          "description": "Recurring start date",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "recurring create"
+          ],
+          "presence": "conditional",
+          "source_section": "Dodanie definicji faktury cyklicznej"
+        },
+        {
+          "path": "every",
+          "type": "string",
+          "description": "Recurring schedule expression",
+          "projectable": true,
+          "selectable": true,
+          "default_column": true,
+          "commands": [
+            "recurring create"
+          ],
+          "presence": "common",
+          "source_section": "Dodanie definicji faktury cyklicznej"
+        },
+        {
+          "path": "issue_working_day_only",
+          "type": "boolean",
+          "description": "Only issue on working days",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "recurring create"
+          ],
+          "presence": "conditional",
+          "source_section": "Dodanie definicji faktury cyklicznej"
+        },
+        {
+          "path": "send_email",
+          "type": "boolean",
+          "description": "Send invoice email automatically",
+          "projectable": true,
+          "selectable": true,
+          "default_column": true,
+          "commands": [
+            "recurring create"
+          ],
+          "presence": "conditional",
+          "source_section": "Dodanie definicji faktury cyklicznej"
+        },
+        {
+          "path": "buyer_email",
+          "type": "string",
+          "description": "Email recipients used for auto-send",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "recurring create"
+          ],
+          "presence": "conditional",
+          "source_section": "Dodanie definicji faktury cyklicznej"
+        },
+        {
+          "path": "end_date",
+          "type": "string",
+          "description": "Recurring end date",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "recurring create"
+          ],
+          "presence": "conditional",
+          "source_section": "Dodanie definicji faktury cyklicznej"
+        },
+        {
+          "path": "next_invoice_date",
+          "type": "string",
+          "description": "Next invoice issue date",
+          "projectable": true,
+          "selectable": true,
+          "default_column": true,
+          "commands": [
+            "recurring create"
+          ],
+          "presence": "conditional",
+          "source_section": "Aktualizacja definicji faktury cyklicznej (zmiana daty wystawienia następnej faktury)"
+        }
+      ],
+      "default_columns": [
+        "id",
+        "name",
+        "invoice_id",
+        "every",
+        "next_invoice_date",
+        "send_email"
+      ],
+      "notes": [
+        "known_fields is curated from the upstream README and is not exhaustive",
+        "unknown upstream fields may still appear in data and can still be selected when the path syntax is valid"
+      ]
+    }
+  },
+  "errors": [],
+  "warnings": null,
+  "meta": {
+    "command": "schema recurring create",
+    "duration_ms": 0
+  }
+}

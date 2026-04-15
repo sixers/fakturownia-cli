@@ -8,6 +8,7 @@ import (
 	"github.com/sixers/fakturownia-cli/internal/doctor"
 	"github.com/sixers/fakturownia-cli/internal/invoice"
 	"github.com/sixers/fakturownia-cli/internal/product"
+	"github.com/sixers/fakturownia-cli/internal/recurring"
 	"github.com/sixers/fakturownia-cli/internal/selfupdate"
 	"github.com/sixers/fakturownia-cli/internal/spec"
 )
@@ -19,14 +20,15 @@ func main() {
 	}
 
 	root := spec.NewRootCommand(spec.Dependencies{
-		Auth:    auth.NewService(store),
-		Client:  client.NewService(store),
-		Invoice: invoice.NewService(store),
-		Product: product.NewService(store),
-		Doctor:  doctor.NewService(store),
-		Self:    selfupdate.NewService(),
-		Stdout:  os.Stdout,
-		Stderr:  os.Stderr,
+		Auth:      auth.NewService(store),
+		Client:    client.NewService(store),
+		Invoice:   invoice.NewService(store),
+		Product:   product.NewService(store),
+		Recurring: recurring.NewService(store),
+		Doctor:    doctor.NewService(store),
+		Self:      selfupdate.NewService(),
+		Stdout:    os.Stdout,
+		Stderr:    os.Stderr,
 	})
 
 	if err := root.Execute(); err != nil {

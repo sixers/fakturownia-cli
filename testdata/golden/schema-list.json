@@ -39,6 +39,84 @@
       "verb": "download"
     },
     {
+      "noun": "invoice",
+      "summary": "Create an invoice",
+      "use": "create --input -|@file|JSON",
+      "verb": "create"
+    },
+    {
+      "noun": "invoice",
+      "summary": "Update an invoice",
+      "use": "update --id ID --input -|@file|JSON",
+      "verb": "update"
+    },
+    {
+      "noun": "invoice",
+      "summary": "Delete an invoice",
+      "use": "delete --id ID --yes",
+      "verb": "delete"
+    },
+    {
+      "noun": "invoice",
+      "summary": "Send an invoice by email",
+      "use": "send-email --id ID",
+      "verb": "send-email"
+    },
+    {
+      "noun": "invoice",
+      "summary": "Change an invoice status",
+      "use": "change-status --id ID --status STATUS",
+      "verb": "change-status"
+    },
+    {
+      "noun": "invoice",
+      "summary": "Cancel an invoice",
+      "use": "cancel --id ID --yes",
+      "verb": "cancel"
+    },
+    {
+      "noun": "invoice",
+      "summary": "Derive public invoice and PDF links from the invoice token",
+      "use": "public-link --id ID",
+      "verb": "public-link"
+    },
+    {
+      "noun": "invoice",
+      "summary": "Upload and attach a file to an invoice",
+      "use": "add-attachment --id ID --file PATH|-",
+      "verb": "add-attachment"
+    },
+    {
+      "noun": "invoice",
+      "summary": "Download all invoice attachments as a ZIP archive",
+      "use": "download-attachments --id ID",
+      "verb": "download-attachments"
+    },
+    {
+      "noun": "invoice",
+      "summary": "Trigger a fiscal printer job for one or more invoices",
+      "use": "fiscal-print --invoice-id ID...",
+      "verb": "fiscal-print"
+    },
+    {
+      "noun": "recurring",
+      "summary": "List recurring invoice definitions",
+      "use": "list",
+      "verb": "list"
+    },
+    {
+      "noun": "recurring",
+      "summary": "Create a recurring invoice definition",
+      "use": "create --input -|@file|JSON",
+      "verb": "create"
+    },
+    {
+      "noun": "recurring",
+      "summary": "Update a recurring invoice definition",
+      "use": "update --id ID --input -|@file|JSON",
+      "verb": "update"
+    },
+    {
       "noun": "client",
       "summary": "List clients",
       "use": "list",

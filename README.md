@@ -36,7 +36,23 @@ The current implementation covers these command groups:
 
 - `invoice list`
 - `invoice get`
+- `invoice create`
+- `invoice update`
+- `invoice delete`
+- `invoice send-email`
+- `invoice change-status`
+- `invoice cancel`
+- `invoice public-link`
+- `invoice add-attachment`
+- `invoice download-attachments`
+- `invoice fiscal-print`
 - `invoice download`
+
+### Recurrings
+
+- `recurring list`
+- `recurring create`
+- `recurring update`
 
 ### Schema
 
@@ -59,6 +75,7 @@ The repo ships a generated, single-installable skill bundle at `skills/fakturown
 
 - root install target: `skills/fakturownia`
 - generated bundle-local index: `skills/fakturownia/references/skills-index.md`
+- generated recipe index: `skills/fakturownia/recipes/index.md`
 - generated repo index for browsing: `docs/skills.md`
 - regenerate from code: `just generate-skills`
 
@@ -231,8 +248,8 @@ Envelope shape:
 
 `schema` describes both the command contract and the README-backed output and request catalogs for supported resources.
 
-- `fakturownia schema invoice list --json`, `fakturownia schema client list --json`, and `fakturownia schema product list --json` expose `output.known_fields`
-- `fakturownia schema client create --json`, `fakturownia schema client update --json`, `fakturownia schema product create --json`, and `fakturownia schema product update --json` expose `request_body_schema`
+- `fakturownia schema invoice list --json`, `fakturownia schema invoice get --json`, `fakturownia schema client list --json`, `fakturownia schema product list --json`, and `fakturownia schema recurring list --json` expose `output.known_fields`
+- `fakturownia schema invoice create --json`, `fakturownia schema invoice update --json`, `fakturownia schema client create --json`, `fakturownia schema client update --json`, `fakturownia schema product create --json`, `fakturownia schema product update --json`, `fakturownia schema recurring create --json`, and `fakturownia schema recurring update --json` expose `request_body_schema`
 - `known_fields` and request body catalogs are curated from the upstream [Fakturownia README](https://github.com/fakturownia/API/blob/master/README.md)
 - nested paths use `dot_bracket` syntax such as `positions[].name`
 - the catalog is intentionally not exhaustive; syntactically valid paths outside the catalog are still allowed and produce warnings instead of hard failures
@@ -241,6 +258,8 @@ Examples:
 
 ```bash
 fakturownia schema invoice list --json
+fakturownia schema invoice create --json
+fakturownia schema recurring create --json
 fakturownia schema client create --json
 fakturownia schema product create --json
 fakturownia client list --fields name,email --json
@@ -248,6 +267,7 @@ fakturownia product list --fields name,code,stock_level --json
 fakturownia product create --input '{"name":"Widget","code":"W001","tax":"23"}' --json
 fakturownia client create --input '{"name":"Acme","email":"billing@example.com"}' --json
 fakturownia invoice list --include-positions --fields number,positions[].name --json
+fakturownia invoice create --input '{"kind":"vat","client_id":1,"positions":[{"product_id":1,"quantity":2}]}' --dry-run --json
 fakturownia invoice list --columns number,positions[].name
 ```
 
@@ -285,7 +305,23 @@ fakturownia invoice list --json
 fakturownia invoice list --period this_month --columns id,number,price_gross
 fakturownia invoice get --id 123 --fields id,number,status --json
 fakturownia invoice get --id 123 --fields number,positions[].name --json
+fakturownia invoice get --id 123 --include descriptions --fields descriptions[].content --json
+fakturownia invoice get --id 123 --additional-field corrected_content_before --additional-field corrected_content_after --correction-positions full --json
+fakturownia invoice create --input '{"kind":"vat","client_id":1,"positions":[{"product_id":1,"quantity":2}]}' --json
+fakturownia invoice update --id 123 --input '{"buyer_name":"Nowa nazwa"}' --json
+fakturownia invoice send-email --id 123 --email-to billing@example.com --email-pdf --json
+fakturownia invoice public-link --id 123 --json
+fakturownia invoice add-attachment --id 123 --file ./scan.pdf --json
+fakturownia invoice fiscal-print --invoice-id 123 --invoice-id 124 --json
 fakturownia invoice download --id 123 --dir ./invoices --json
+```
+
+### Recurrings
+
+```bash
+fakturownia recurring list --json
+fakturownia recurring create --input '{"name":"Miesięczna","invoice_id":1,"every":"1m"}' --json
+fakturownia recurring update --id 77 --input '{"next_invoice_date":"2026-05-01"}' --json
 ```
 
 ### Schema
@@ -293,6 +329,8 @@ fakturownia invoice download --id 123 --dir ./invoices --json
 ```bash
 fakturownia schema list --json
 fakturownia schema invoice list --json
+fakturownia schema invoice create --json
+fakturownia schema recurring create --json
 fakturownia schema client create --json
 ```
 

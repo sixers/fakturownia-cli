@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net"
 	"net/http"
 	"net/url"
@@ -38,6 +39,24 @@ type RequestPlan struct {
 	Path   string              `json:"path"`
 	Query  map[string][]string `json:"query,omitempty"`
 	Body   any                 `json:"body,omitempty"`
+}
+
+type MultipartUpload struct {
+	URL             string
+	Fields          map[string]string
+	FileField       string
+	FileName        string
+	FileContent     []byte
+	FileContentType string
+}
+
+type MultipartUploadPlan struct {
+	Method    string            `json:"method"`
+	URL       string            `json:"url"`
+	Fields    map[string]string `json:"fields,omitempty"`
+	FileField string            `json:"file_field"`
+	FileName  string            `json:"file_name"`
+	Bytes     int               `json:"bytes"`
 }
 
 func NewClient(baseURL, token string, timeout time.Duration, maxRetries int, httpClient *http.Client) (*Client, error) {
@@ -81,25 +100,40 @@ func (c *Client) GetJSON(ctx context.Context, path string, query url.Values, des
 }
 
 func (c *Client) GetBinary(ctx context.Context, path string, query url.Values) (*Response, error) {
+	return c.GetContent(ctx, path, query, "application/pdf")
+}
+
+func (c *Client) GetContent(ctx context.Context, path string, query url.Values, accept string) (*Response, error) {
+	if strings.TrimSpace(accept) == "" {
+		accept = "*/*"
+	}
 	return c.do(ctx, requestOptions{
 		Method:    http.MethodGet,
 		Path:      path,
 		Query:     query,
-		Accept:    "application/pdf",
+		Accept:    accept,
 		Retryable: true,
 	})
 }
 
 func (c *Client) PostJSON(ctx context.Context, path string, payload map[string]any, dest any) (*Response, error) {
-	return c.doJSON(ctx, http.MethodPost, path, payload, dest)
+	return c.doJSON(ctx, http.MethodPost, path, nil, payload, dest)
+}
+
+func (c *Client) PostJSONQuery(ctx context.Context, path string, query url.Values, payload map[string]any, dest any) (*Response, error) {
+	return c.doJSON(ctx, http.MethodPost, path, query, payload, dest)
 }
 
 func (c *Client) PutJSON(ctx context.Context, path string, payload map[string]any, dest any) (*Response, error) {
-	return c.doJSON(ctx, http.MethodPut, path, payload, dest)
+	return c.doJSON(ctx, http.MethodPut, path, nil, payload, dest)
+}
+
+func (c *Client) PutJSONQuery(ctx context.Context, path string, query url.Values, payload map[string]any, dest any) (*Response, error) {
+	return c.doJSON(ctx, http.MethodPut, path, query, payload, dest)
 }
 
 func (c *Client) DeleteJSON(ctx context.Context, path string, payload map[string]any, dest any) (*Response, error) {
-	return c.doJSON(ctx, http.MethodDelete, path, payload, dest)
+	return c.doJSON(ctx, http.MethodDelete, path, nil, payload, dest)
 }
 
 func PlanJSONRequest(method, path string, query url.Values, payload map[string]any) RequestPlan {
@@ -124,6 +158,21 @@ func PlanJSONRequest(method, path string, query url.Values, payload map[string]a
 	}
 }
 
+func PlanMultipartUpload(upload MultipartUpload) MultipartUploadPlan {
+	fields := make(map[string]string, len(upload.Fields))
+	for key, value := range upload.Fields {
+		fields[key] = value
+	}
+	return MultipartUploadPlan{
+		Method:    http.MethodPost,
+		URL:       upload.URL,
+		Fields:    fields,
+		FileField: upload.FileField,
+		FileName:  upload.FileName,
+		Bytes:     len(upload.FileContent),
+	}
+}
+
 type requestOptions struct {
 	Method      string
 	Path        string
@@ -134,7 +183,69 @@ type requestOptions struct {
 	Retryable   bool
 }
 
-func (c *Client) doJSON(ctx context.Context, method, path string, payload map[string]any, dest any) (*Response, error) {
+func (c *Client) UploadMultipart(ctx context.Context, upload MultipartUpload) (*Response, error) {
+	if strings.TrimSpace(upload.URL) == "" {
+		return nil, output.Usage("missing_upload_url", "upload URL is required", "retry fetching attachment credentials")
+	}
+	fileField := strings.TrimSpace(upload.FileField)
+	if fileField == "" {
+		fileField = "file"
+	}
+
+	var body bytes.Buffer
+	writer := multipart.NewWriter(&body)
+	for key, value := range upload.Fields {
+		if err := writer.WriteField(key, value); err != nil {
+			return nil, output.Internal(err, "write multipart field")
+		}
+	}
+	part, err := writer.CreateFormFile(fileField, upload.FileName)
+	if err != nil {
+		return nil, output.Internal(err, "create multipart file field")
+	}
+	if _, err := part.Write(upload.FileContent); err != nil {
+		return nil, output.Internal(err, "write multipart file body")
+	}
+	if err := writer.Close(); err != nil {
+		return nil, output.Internal(err, "close multipart request body")
+	}
+
+	requestID := newRequestID()
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, upload.URL, bytes.NewReader(body.Bytes()))
+	if err != nil {
+		return nil, output.Internal(err, "build multipart upload request")
+	}
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	req.Header.Set("Accept", "*/*")
+	req.Header.Set("User-Agent", "fakturownia-cli/dev")
+	req.Header.Set("X-Request-ID", requestID)
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, output.Network("request_failed", err.Error(), "verify network access and retry with a higher --timeout-ms if needed", shouldRetryTransport(err)).WithCause(err)
+	}
+	rawBody, readErr := io.ReadAll(resp.Body)
+	closeErr := resp.Body.Close()
+	if readErr != nil {
+		return nil, output.Internal(readErr, "read multipart upload response body")
+	}
+	if closeErr != nil {
+		return nil, output.Internal(closeErr, "close multipart upload response body")
+	}
+
+	response := &Response{
+		StatusCode: resp.StatusCode,
+		RequestID:  headerRequestID(resp.Header, requestID),
+		RawBody:    rawBody,
+		Header:     resp.Header.Clone(),
+	}
+	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+		return response, nil
+	}
+	return nil, mapHTTPError(resp.StatusCode, rawBody).WithRawBody(rawBody)
+}
+
+func (c *Client) doJSON(ctx context.Context, method, path string, query url.Values, payload map[string]any, dest any) (*Response, error) {
 	body := cloneMap(payload)
 	if body != nil {
 		body["api_token"] = c.token
@@ -143,6 +254,7 @@ func (c *Client) doJSON(ctx context.Context, method, path string, payload map[st
 	opts := requestOptions{
 		Method:    method,
 		Path:      path,
+		Query:     query,
 		Accept:    "application/json",
 		Retryable: method == http.MethodGet,
 	}

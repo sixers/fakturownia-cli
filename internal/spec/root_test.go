@@ -15,6 +15,7 @@ import (
 	"github.com/sixers/fakturownia-cli/internal/invoice"
 	"github.com/sixers/fakturownia-cli/internal/output"
 	"github.com/sixers/fakturownia-cli/internal/product"
+	"github.com/sixers/fakturownia-cli/internal/recurring"
 	"github.com/sixers/fakturownia-cli/internal/selfupdate"
 	"github.com/sixers/fakturownia-cli/internal/transport"
 )
@@ -41,8 +42,18 @@ func (f *fakeAuthService) Logout(_ context.Context, req auth.LogoutRequest) (*au
 }
 
 type fakeInvoiceService struct {
-	getReq      invoice.GetRequest
-	downloadReq invoice.DownloadRequest
+	getReq                 invoice.GetRequest
+	downloadReq            invoice.DownloadRequest
+	createReq              invoice.CreateRequest
+	updateReq              invoice.UpdateRequest
+	deleteReq              invoice.DeleteRequest
+	sendEmailReq           invoice.SendEmailRequest
+	changeStatusReq        invoice.ChangeStatusRequest
+	cancelReq              invoice.CancelRequest
+	publicLinkReq          invoice.PublicLinkRequest
+	addAttachmentReq       invoice.AddAttachmentRequest
+	downloadAttachmentsReq invoice.DownloadAttachmentsRequest
+	fiscalPrintReq         invoice.FiscalPrintRequest
 }
 
 func (f *fakeInvoiceService) List(_ context.Context, req invoice.ListRequest) (*invoice.ListResponse, error) {
@@ -75,12 +86,19 @@ func (f *fakeInvoiceService) Get(_ context.Context, req invoice.GetRequest) (*in
 			"id":     1,
 			"number": "FV/1",
 			"status": "issued",
+			"token":  "TOKEN-1",
 			"positions": []any{
 				map[string]any{"name": "Produkt A", "tax": "23"},
 				map[string]any{"name": "Produkt B", "tax": "8"},
 			},
+			"descriptions": []any{
+				map[string]any{"content": "Treść uwagi"},
+			},
+			"settlement_positions": []any{
+				map[string]any{"kind": "charge", "amount": "100.00", "reason": "Koszty transportu"},
+			},
 		},
-		RawBody:   []byte(`{"id":1,"number":"FV/1","status":"issued","positions":[{"name":"Produkt A","tax":"23"},{"name":"Produkt B","tax":"8"}]}`),
+		RawBody:   []byte(`{"id":1,"number":"FV/1","status":"issued","token":"TOKEN-1","positions":[{"name":"Produkt A","tax":"23"},{"name":"Produkt B","tax":"8"}],"descriptions":[{"content":"Treść uwagi"}],"settlement_positions":[{"kind":"charge","amount":"100.00","reason":"Koszty transportu"}]}`),
 		Profile:   req.Profile,
 		RequestID: "req-2",
 	}, nil
@@ -89,6 +107,139 @@ func (f *fakeInvoiceService) Get(_ context.Context, req invoice.GetRequest) (*in
 func (f *fakeInvoiceService) Download(_ context.Context, req invoice.DownloadRequest) (*invoice.DownloadResponse, error) {
 	f.downloadReq = req
 	return &invoice.DownloadResponse{ID: req.ID, Path: filepath.Join(".", "invoice-"+req.ID+".pdf"), Bytes: 12, Profile: req.Profile}, nil
+}
+
+func (f *fakeInvoiceService) Create(_ context.Context, req invoice.CreateRequest) (*invoice.CreateResponse, error) {
+	f.createReq = req
+	payload := map[string]any{"invoice": req.Input}
+	if req.IdentifyOSS {
+		payload["identify_oss"] = "1"
+	}
+	if req.FillDefaultDescriptions {
+		payload["fill_default_descriptions"] = true
+	}
+	var query map[string][]string
+	if req.CorrectionPositions != "" {
+		query = map[string][]string{"correction_positions": {req.CorrectionPositions}}
+	}
+	if req.DryRun {
+		plan := transport.RequestPlan{Method: "POST", Path: "/invoices.json", Query: query, Body: map[string]any{"invoice": req.Input, "api_token": "[redacted]"}}
+		if req.IdentifyOSS {
+			plan.Body.(map[string]any)["identify_oss"] = "1"
+		}
+		if req.FillDefaultDescriptions {
+			plan.Body.(map[string]any)["fill_default_descriptions"] = true
+		}
+		return &invoice.CreateResponse{Profile: req.Profile, DryRun: &plan}, nil
+	}
+	return &invoice.CreateResponse{
+		Invoice:   map[string]any{"id": 31, "kind": req.Input["kind"], "client_id": req.Input["client_id"]},
+		RawBody:   []byte(`{"id":31,"kind":"vat"}`),
+		Profile:   req.Profile,
+		RequestID: "req-invoice-create",
+	}, nil
+}
+
+func (f *fakeInvoiceService) Update(_ context.Context, req invoice.UpdateRequest) (*invoice.UpdateResponse, error) {
+	f.updateReq = req
+	payload := map[string]any{"invoice": req.Input}
+	if req.IdentifyOSS {
+		payload["identify_oss"] = "1"
+	}
+	if req.FillDefaultDescriptions {
+		payload["fill_default_descriptions"] = true
+	}
+	if req.DryRun {
+		plan := transport.PlanJSONRequest("PUT", "/invoices/"+req.ID+".json", nil, payload)
+		return &invoice.UpdateResponse{Profile: req.Profile, DryRun: &plan}, nil
+	}
+	return &invoice.UpdateResponse{
+		Invoice:   map[string]any{"id": req.ID, "buyer_name": req.Input["buyer_name"], "show_attachments": req.Input["show_attachments"]},
+		RawBody:   []byte(`{"id":31}`),
+		Profile:   req.Profile,
+		RequestID: "req-invoice-update",
+	}, nil
+}
+
+func (f *fakeInvoiceService) Delete(_ context.Context, req invoice.DeleteRequest) (*invoice.DeleteResponse, error) {
+	f.deleteReq = req
+	if req.DryRun {
+		plan := transport.PlanJSONRequest("DELETE", "/invoices/"+req.ID+".json", nil, nil)
+		return &invoice.DeleteResponse{ID: req.ID, Profile: req.Profile, DryRun: &plan}, nil
+	}
+	return &invoice.DeleteResponse{ID: req.ID, Deleted: true, Profile: req.Profile, RequestID: "req-invoice-delete"}, nil
+}
+
+func (f *fakeInvoiceService) SendEmail(_ context.Context, req invoice.SendEmailRequest) (*invoice.SendEmailResponse, error) {
+	f.sendEmailReq = req
+	if req.DryRun {
+		plan := transport.PlanJSONRequest("POST", "/invoices/"+req.ID+"/send_by_email.json", nil, nil)
+		return &invoice.SendEmailResponse{ID: req.ID, Profile: req.Profile, DryRun: &plan}, nil
+	}
+	return &invoice.SendEmailResponse{ID: req.ID, Sent: true, Profile: req.Profile, RequestID: "req-invoice-send"}, nil
+}
+
+func (f *fakeInvoiceService) ChangeStatus(_ context.Context, req invoice.ChangeStatusRequest) (*invoice.ChangeStatusResponse, error) {
+	f.changeStatusReq = req
+	if req.DryRun {
+		plan := transport.PlanJSONRequest("POST", "/invoices/"+req.ID+"/change_status.json", nil, nil)
+		return &invoice.ChangeStatusResponse{ID: req.ID, Status: req.Status, Profile: req.Profile, DryRun: &plan}, nil
+	}
+	return &invoice.ChangeStatusResponse{ID: req.ID, Status: req.Status, Changed: true, Profile: req.Profile, RequestID: "req-invoice-status"}, nil
+}
+
+func (f *fakeInvoiceService) Cancel(_ context.Context, req invoice.CancelRequest) (*invoice.CancelResponse, error) {
+	f.cancelReq = req
+	if req.DryRun {
+		plan := transport.PlanJSONRequest("POST", "/invoices/cancel.json", nil, map[string]any{"cancel_invoice_id": req.ID, "cancel_reason": req.Reason})
+		return &invoice.CancelResponse{ID: req.ID, Reason: req.Reason, Profile: req.Profile, DryRun: &plan}, nil
+	}
+	return &invoice.CancelResponse{ID: req.ID, Cancelled: true, Reason: req.Reason, Profile: req.Profile, RequestID: "req-invoice-cancel"}, nil
+}
+
+func (f *fakeInvoiceService) PublicLink(_ context.Context, req invoice.PublicLinkRequest) (*invoice.PublicLinkResponse, error) {
+	f.publicLinkReq = req
+	return &invoice.PublicLinkResponse{
+		ID:           req.ID,
+		Token:        "TOKEN-1",
+		ViewURL:      "https://acme.fakturownia.pl/invoice/TOKEN-1",
+		PDFURL:       "https://acme.fakturownia.pl/invoice/TOKEN-1.pdf",
+		PDFInlineURL: "https://acme.fakturownia.pl/invoice/TOKEN-1.pdf?inline=yes",
+		Profile:      req.Profile,
+		RequestID:    "req-invoice-link",
+	}, nil
+}
+
+func (f *fakeInvoiceService) AddAttachment(_ context.Context, req invoice.AddAttachmentRequest) (*invoice.AddAttachmentResponse, error) {
+	f.addAttachmentReq = req
+	if req.DryRun {
+		return &invoice.AddAttachmentResponse{
+			ID:      req.ID,
+			Name:    req.Name,
+			Bytes:   len(req.Content),
+			Profile: req.Profile,
+			DryRun: &invoice.AddAttachmentPlan{
+				Steps: []invoice.AttachmentStepPlan{
+					{Name: "get_credentials", Request: transport.PlanJSONRequest("GET", "/invoices/"+req.ID+"/get_new_attachment_credentials.json", nil, nil)},
+				},
+			},
+		}, nil
+	}
+	return &invoice.AddAttachmentResponse{ID: req.ID, Name: req.Name, Bytes: len(req.Content), Attached: true, Profile: req.Profile, RequestID: "req-invoice-attach"}, nil
+}
+
+func (f *fakeInvoiceService) DownloadAttachments(_ context.Context, req invoice.DownloadAttachmentsRequest) (*invoice.DownloadAttachmentsResponse, error) {
+	f.downloadAttachmentsReq = req
+	return &invoice.DownloadAttachmentsResponse{ID: req.ID, Path: filepath.Join(".", "invoice-"+req.ID+"-attachments.zip"), Bytes: 42, Profile: req.Profile, RequestID: "req-invoice-zip"}, nil
+}
+
+func (f *fakeInvoiceService) FiscalPrint(_ context.Context, req invoice.FiscalPrintRequest) (*invoice.FiscalPrintResponse, error) {
+	f.fiscalPrintReq = req
+	if req.DryRun {
+		plan := transport.PlanJSONRequest("GET", "/invoices/fiscal_print", nil, nil)
+		return &invoice.FiscalPrintResponse{InvoiceIDs: req.InvoiceIDs, Printer: req.Printer, Profile: req.Profile, DryRun: &plan}, nil
+	}
+	return &invoice.FiscalPrintResponse{InvoiceIDs: req.InvoiceIDs, Printer: req.Printer, Submitted: true, Profile: req.Profile, RequestID: "req-invoice-fiscal"}, nil
 }
 
 type fakeClientService struct {
@@ -292,6 +443,50 @@ type fakeSelfUpdateService struct {
 	updateReq selfupdate.UpdateRequest
 }
 
+type fakeRecurringService struct {
+	listReq   recurring.ListRequest
+	createReq recurring.CreateRequest
+	updateReq recurring.UpdateRequest
+}
+
+func (f *fakeRecurringService) List(_ context.Context, req recurring.ListRequest) (*recurring.ListResponse, error) {
+	f.listReq = req
+	return &recurring.ListResponse{
+		Recurrings: []map[string]any{{"id": 41, "name": "Miesięczna", "invoice_id": 1, "every": "1m", "next_invoice_date": "2016-02-01", "send_email": true}},
+		RawBody:    []byte(`[{"id":41,"name":"Miesięczna"}]`),
+		Profile:    req.Profile,
+		RequestID:  "req-recurring-list",
+	}, nil
+}
+
+func (f *fakeRecurringService) Create(_ context.Context, req recurring.CreateRequest) (*recurring.CreateResponse, error) {
+	f.createReq = req
+	if req.DryRun {
+		plan := transport.PlanJSONRequest("POST", "/recurrings.json", nil, map[string]any{"recurring": req.Input})
+		return &recurring.CreateResponse{Profile: req.Profile, DryRun: &plan}, nil
+	}
+	return &recurring.CreateResponse{
+		Recurring: map[string]any{"id": 41, "name": req.Input["name"], "every": req.Input["every"]},
+		RawBody:   []byte(`{"id":41,"name":"Miesięczna"}`),
+		Profile:   req.Profile,
+		RequestID: "req-recurring-create",
+	}, nil
+}
+
+func (f *fakeRecurringService) Update(_ context.Context, req recurring.UpdateRequest) (*recurring.UpdateResponse, error) {
+	f.updateReq = req
+	if req.DryRun {
+		plan := transport.PlanJSONRequest("PUT", "/recurrings/"+req.ID+".json", nil, map[string]any{"recurring": req.Input})
+		return &recurring.UpdateResponse{Profile: req.Profile, DryRun: &plan}, nil
+	}
+	return &recurring.UpdateResponse{
+		Recurring: map[string]any{"id": req.ID, "next_invoice_date": req.Input["next_invoice_date"]},
+		RawBody:   []byte(`{"id":41,"next_invoice_date":"2016-02-01"}`),
+		Profile:   req.Profile,
+		RequestID: "req-recurring-update",
+	}, nil
+}
+
 func (f *fakeSelfUpdateService) Update(_ context.Context, req selfupdate.UpdateRequest) (*selfupdate.UpdateResult, error) {
 	f.updateReq = req
 	return &selfupdate.UpdateResult{
@@ -323,20 +518,22 @@ func TestCommandIntegration(t *testing.T) {
 	clientSvc := &fakeClientService{}
 	invoiceSvc := &fakeInvoiceService{}
 	productSvc := &fakeProductService{}
+	recurringSvc := &fakeRecurringService{}
 	doctorSvc := &fakeDoctorService{}
 	selfSvc := &fakeSelfUpdateService{}
 
 	runWithInput := func(input string, args ...string) (string, string, error) {
 		var stdout, stderr bytes.Buffer
 		cmd := NewRootCommand(Dependencies{
-			Auth:    authSvc,
-			Client:  clientSvc,
-			Invoice: invoiceSvc,
-			Product: productSvc,
-			Doctor:  doctorSvc,
-			Self:    selfSvc,
-			Stdout:  &stdout,
-			Stderr:  &stderr,
+			Auth:      authSvc,
+			Client:    clientSvc,
+			Invoice:   invoiceSvc,
+			Product:   productSvc,
+			Recurring: recurringSvc,
+			Doctor:    doctorSvc,
+			Self:      selfSvc,
+			Stdout:    &stdout,
+			Stderr:    &stderr,
 		})
 		if input != "" {
 			cmd.SetIn(strings.NewReader(input))
@@ -477,6 +674,21 @@ func TestCommandIntegration(t *testing.T) {
 		t.Fatalf("unexpected nested projection output: %s", stdout)
 	}
 
+	_, _, err = run("invoice", "get", "--id", "1", "--additional-field", "cancel_reason", "--additional-field", "corrected_content_before", "--json")
+	if err != nil {
+		t.Fatalf("invoice get additional-field error = %v", err)
+	}
+	if len(invoiceSvc.getReq.AdditionalFields) != 2 || invoiceSvc.getReq.AdditionalFields[0] != "cancel_reason" {
+		t.Fatalf("expected invoice additional fields to be forwarded, got %#v", invoiceSvc.getReq.AdditionalFields)
+	}
+	_, _, err = run("invoice", "get", "--id", "1", "--include", "descriptions", "--correction-positions", "full", "--json")
+	if err != nil {
+		t.Fatalf("invoice get include/correction-positions error = %v", err)
+	}
+	if len(invoiceSvc.getReq.Includes) != 1 || invoiceSvc.getReq.Includes[0] != "descriptions" || invoiceSvc.getReq.CorrectionDetails != "full" {
+		t.Fatalf("expected invoice include and correction detail flags to be forwarded, got %#v", invoiceSvc.getReq)
+	}
+
 	stdout, stderr, err := run("invoice", "list", "--columns", "number,positions[].name")
 	if err != nil {
 		t.Fatalf("invoice list nested columns error = %v", err)
@@ -502,6 +714,137 @@ func TestCommandIntegration(t *testing.T) {
 	}
 	if !jsonContains(stdout, `"path": "invoice-1.pdf"`) {
 		t.Fatalf("unexpected invoice download output: %s", stdout)
+	}
+
+	stdout, _, err = run("invoice", "create", "--input", `{"kind":"vat","client_id":1,"positions":[{"product_id":1,"quantity":2}]}`, "--json")
+	if err != nil {
+		t.Fatalf("invoice create error = %v", err)
+	}
+	if invoiceSvc.createReq.Input["kind"] != "vat" {
+		t.Fatalf("expected invoice create input to be parsed, got %#v", invoiceSvc.createReq.Input)
+	}
+	if !jsonContains(stdout, `"id": 31`) {
+		t.Fatalf("unexpected invoice create output: %s", stdout)
+	}
+
+	_, _, err = run("invoice", "update", "--id", "31", "--input", `{"buyer_name":"Nowa nazwa"}`, "--json")
+	if err != nil {
+		t.Fatalf("invoice update error = %v", err)
+	}
+	if invoiceSvc.updateReq.Input["buyer_name"] != "Nowa nazwa" {
+		t.Fatalf("expected invoice update input to be parsed, got %#v", invoiceSvc.updateReq.Input)
+	}
+
+	stdout, _, err = run("invoice", "change-status", "--id", "31", "--status", "paid", "--json")
+	if err != nil {
+		t.Fatalf("invoice change-status error = %v", err)
+	}
+	if invoiceSvc.changeStatusReq.Status != "paid" {
+		t.Fatalf("expected invoice change-status flags to be forwarded, got %#v", invoiceSvc.changeStatusReq)
+	}
+	if !jsonContains(stdout, `"changed": true`) {
+		t.Fatalf("unexpected invoice change-status output: %s", stdout)
+	}
+
+	stdout, _, err = run("invoice", "send-email", "--id", "31", "--email-to", "billing@example.com", "--email-pdf", "--json")
+	if err != nil {
+		t.Fatalf("invoice send-email error = %v", err)
+	}
+	if len(invoiceSvc.sendEmailReq.EmailTo) == 0 || invoiceSvc.sendEmailReq.EmailTo[0] != "billing@example.com" || !invoiceSvc.sendEmailReq.EmailPDF {
+		t.Fatalf("expected invoice send-email flags to be forwarded, got %#v", invoiceSvc.sendEmailReq)
+	}
+	if !jsonContains(stdout, `"sent": true`) {
+		t.Fatalf("unexpected invoice send-email output: %s", stdout)
+	}
+
+	stdout, _, err = run("invoice", "public-link", "--id", "31", "--json")
+	if err != nil {
+		t.Fatalf("invoice public-link error = %v", err)
+	}
+	if !jsonContains(stdout, `"pdf_inline_url": "https://acme.fakturownia.pl/invoice/TOKEN-1.pdf?inline=yes"`) {
+		t.Fatalf("unexpected invoice public-link output: %s", stdout)
+	}
+
+	stdout, _, err = run("invoice", "cancel", "--id", "31", "--yes", "--reason", "Wrong data", "--json")
+	if err != nil {
+		t.Fatalf("invoice cancel error = %v", err)
+	}
+	if invoiceSvc.cancelReq.Reason != "Wrong data" || invoiceSvc.cancelReq.ID != "31" {
+		t.Fatalf("expected invoice cancel flags to be forwarded, got %#v", invoiceSvc.cancelReq)
+	}
+	if !jsonContains(stdout, `"cancelled": true`) {
+		t.Fatalf("unexpected invoice cancel output: %s", stdout)
+	}
+
+	stdout, _, err = runWithInput("attachment-bytes", "invoice", "add-attachment", "--id", "31", "--file", "-", "--name", "scan.pdf", "--dry-run", "--json")
+	if err != nil {
+		t.Fatalf("invoice add-attachment dry-run error = %v", err)
+	}
+	if invoiceSvc.addAttachmentReq.Name != "scan.pdf" || string(invoiceSvc.addAttachmentReq.Content) != "attachment-bytes" {
+		t.Fatalf("expected invoice attachment input to be forwarded, got %#v", invoiceSvc.addAttachmentReq)
+	}
+	if !jsonContains(stdout, `"get_credentials"`) {
+		t.Fatalf("unexpected invoice add-attachment dry-run output: %s", stdout)
+	}
+
+	stdout, _, err = run("invoice", "download-attachments", "--id", "31", "--json")
+	if err != nil {
+		t.Fatalf("invoice download-attachments error = %v", err)
+	}
+	if !jsonContains(stdout, `"path": "invoice-31-attachments.zip"`) {
+		t.Fatalf("unexpected invoice download-attachments output: %s", stdout)
+	}
+
+	stdout, _, err = run("invoice", "fiscal-print", "--invoice-id", "31", "--invoice-id", "32", "--json")
+	if err != nil {
+		t.Fatalf("invoice fiscal-print error = %v", err)
+	}
+	if len(invoiceSvc.fiscalPrintReq.InvoiceIDs) != 2 {
+		t.Fatalf("expected fiscal print IDs to be forwarded, got %#v", invoiceSvc.fiscalPrintReq.InvoiceIDs)
+	}
+	if !jsonContains(stdout, `"submitted": true`) {
+		t.Fatalf("unexpected invoice fiscal-print output: %s", stdout)
+	}
+
+	stdout, _, err = run("invoice", "delete", "--id", "31", "--yes", "--json")
+	if err != nil {
+		t.Fatalf("invoice delete error = %v", err)
+	}
+	if invoiceSvc.deleteReq.ID != "31" {
+		t.Fatalf("expected invoice delete confirmation to be forwarded, got %#v", invoiceSvc.deleteReq)
+	}
+	if !jsonContains(stdout, `"deleted": true`) {
+		t.Fatalf("unexpected invoice delete output: %s", stdout)
+	}
+
+	stdout, _, err = run("recurring", "list", "--json")
+	if err != nil {
+		t.Fatalf("recurring list error = %v", err)
+	}
+	if !jsonContains(stdout, `"name": "Miesięczna"`) {
+		t.Fatalf("unexpected recurring list output: %s", stdout)
+	}
+
+	stdout, _, err = run("recurring", "create", "--input", `{"name":"Miesięczna","invoice_id":1,"every":"1m"}`, "--json")
+	if err != nil {
+		t.Fatalf("recurring create error = %v", err)
+	}
+	if recurringSvc.createReq.Input["name"] != "Miesięczna" {
+		t.Fatalf("expected recurring create input to be parsed, got %#v", recurringSvc.createReq.Input)
+	}
+	if !jsonContains(stdout, `"every": "1m"`) {
+		t.Fatalf("unexpected recurring create output: %s", stdout)
+	}
+
+	stdout, _, err = run("recurring", "update", "--id", "11", "--input", `{"next_invoice_date":"2026-05-01"}`, "--json")
+	if err != nil {
+		t.Fatalf("recurring update error = %v", err)
+	}
+	if recurringSvc.updateReq.Input["next_invoice_date"] != "2026-05-01" {
+		t.Fatalf("expected recurring update input to be parsed, got %#v", recurringSvc.updateReq.Input)
+	}
+	if !jsonContains(stdout, `"next_invoice_date": "2026-05-01"`) {
+		t.Fatalf("unexpected recurring update output: %s", stdout)
 	}
 
 	stdout, _, err = run("doctor", "run", "--check-release-integrity", "--json")
@@ -549,9 +892,38 @@ func TestGolden(t *testing.T) {
 		{name: "self-update-help", args: []string{"self", "update", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "self-update-help.txt")},
 		{name: "schema-self-update-json", args: []string{"schema", "self", "update", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-self-update.json")},
 		{name: "invoice-list-help", args: []string{"invoice", "list", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "invoice-list-help.txt")},
+		{name: "invoice-get-help", args: []string{"invoice", "get", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "invoice-get-help.txt")},
+		{name: "invoice-download-help", args: []string{"invoice", "download", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "invoice-download-help.txt")},
+		{name: "invoice-create-help", args: []string{"invoice", "create", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "invoice-create-help.txt")},
+		{name: "invoice-update-help", args: []string{"invoice", "update", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "invoice-update-help.txt")},
+		{name: "invoice-delete-help", args: []string{"invoice", "delete", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "invoice-delete-help.txt")},
+		{name: "invoice-send-email-help", args: []string{"invoice", "send-email", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "invoice-send-email-help.txt")},
+		{name: "invoice-change-status-help", args: []string{"invoice", "change-status", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "invoice-change-status-help.txt")},
+		{name: "invoice-cancel-help", args: []string{"invoice", "cancel", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "invoice-cancel-help.txt")},
+		{name: "invoice-public-link-help", args: []string{"invoice", "public-link", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "invoice-public-link-help.txt")},
+		{name: "invoice-add-attachment-help", args: []string{"invoice", "add-attachment", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "invoice-add-attachment-help.txt")},
+		{name: "invoice-download-attachments-help", args: []string{"invoice", "download-attachments", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "invoice-download-attachments-help.txt")},
+		{name: "invoice-fiscal-print-help", args: []string{"invoice", "fiscal-print", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "invoice-fiscal-print-help.txt")},
 		{name: "schema-list-json", args: []string{"schema", "list", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-list.json")},
 		{name: "schema-invoice-list-json", args: []string{"schema", "invoice", "list", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-invoice-list.json")},
 		{name: "schema-invoice-get-json", args: []string{"schema", "invoice", "get", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-invoice-get.json")},
+		{name: "schema-invoice-download-json", args: []string{"schema", "invoice", "download", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-invoice-download.json")},
+		{name: "schema-invoice-create-json", args: []string{"schema", "invoice", "create", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-invoice-create.json")},
+		{name: "schema-invoice-update-json", args: []string{"schema", "invoice", "update", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-invoice-update.json")},
+		{name: "schema-invoice-delete-json", args: []string{"schema", "invoice", "delete", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-invoice-delete.json")},
+		{name: "schema-invoice-send-email-json", args: []string{"schema", "invoice", "send-email", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-invoice-send-email.json")},
+		{name: "schema-invoice-change-status-json", args: []string{"schema", "invoice", "change-status", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-invoice-change-status.json")},
+		{name: "schema-invoice-cancel-json", args: []string{"schema", "invoice", "cancel", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-invoice-cancel.json")},
+		{name: "schema-invoice-public-link-json", args: []string{"schema", "invoice", "public-link", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-invoice-public-link.json")},
+		{name: "schema-invoice-add-attachment-json", args: []string{"schema", "invoice", "add-attachment", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-invoice-add-attachment.json")},
+		{name: "schema-invoice-download-attachments-json", args: []string{"schema", "invoice", "download-attachments", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-invoice-download-attachments.json")},
+		{name: "schema-invoice-fiscal-print-json", args: []string{"schema", "invoice", "fiscal-print", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-invoice-fiscal-print.json")},
+		{name: "recurring-list-help", args: []string{"recurring", "list", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "recurring-list-help.txt")},
+		{name: "recurring-create-help", args: []string{"recurring", "create", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "recurring-create-help.txt")},
+		{name: "recurring-update-help", args: []string{"recurring", "update", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "recurring-update-help.txt")},
+		{name: "schema-recurring-list-json", args: []string{"schema", "recurring", "list", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-recurring-list.json")},
+		{name: "schema-recurring-create-json", args: []string{"schema", "recurring", "create", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-recurring-create.json")},
+		{name: "schema-recurring-update-json", args: []string{"schema", "recurring", "update", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-recurring-update.json")},
 	}
 
 	for _, tc := range cases {
@@ -559,14 +931,15 @@ func TestGolden(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			var stdout, stderr bytes.Buffer
 			cmd := NewRootCommand(Dependencies{
-				Auth:    &fakeAuthService{},
-				Client:  &fakeClientService{},
-				Invoice: &fakeInvoiceService{},
-				Product: &fakeProductService{},
-				Doctor:  &fakeDoctorService{},
-				Self:    &fakeSelfUpdateService{},
-				Stdout:  &stdout,
-				Stderr:  &stderr,
+				Auth:      &fakeAuthService{},
+				Client:    &fakeClientService{},
+				Invoice:   &fakeInvoiceService{},
+				Product:   &fakeProductService{},
+				Recurring: &fakeRecurringService{},
+				Doctor:    &fakeDoctorService{},
+				Self:      &fakeSelfUpdateService{},
+				Stdout:    &stdout,
+				Stderr:    &stderr,
 			})
 			cmd.SetArgs(tc.args)
 			err := cmd.Execute()
@@ -616,14 +989,15 @@ func TestSchemaListUsesRows(t *testing.T) {
 
 	var stdout bytes.Buffer
 	cmd := NewRootCommand(Dependencies{
-		Auth:    &fakeAuthService{},
-		Client:  &fakeClientService{},
-		Invoice: &fakeInvoiceService{},
-		Product: &fakeProductService{},
-		Doctor:  &fakeDoctorService{},
-		Self:    &fakeSelfUpdateService{},
-		Stdout:  &stdout,
-		Stderr:  &bytes.Buffer{},
+		Auth:      &fakeAuthService{},
+		Client:    &fakeClientService{},
+		Invoice:   &fakeInvoiceService{},
+		Product:   &fakeProductService{},
+		Recurring: &fakeRecurringService{},
+		Doctor:    &fakeDoctorService{},
+		Self:      &fakeSelfUpdateService{},
+		Stdout:    &stdout,
+		Stderr:    &bytes.Buffer{},
 	})
 	cmd.SetArgs([]string{"schema", "list", "--json"})
 	if err := cmd.Execute(); err != nil {
@@ -649,14 +1023,15 @@ func TestSchemaInvoiceListExposesKnownFields(t *testing.T) {
 
 	var stdout bytes.Buffer
 	cmd := NewRootCommand(Dependencies{
-		Auth:    &fakeAuthService{},
-		Client:  &fakeClientService{},
-		Invoice: &fakeInvoiceService{},
-		Product: &fakeProductService{},
-		Doctor:  &fakeDoctorService{},
-		Self:    &fakeSelfUpdateService{},
-		Stdout:  &stdout,
-		Stderr:  &bytes.Buffer{},
+		Auth:      &fakeAuthService{},
+		Client:    &fakeClientService{},
+		Invoice:   &fakeInvoiceService{},
+		Product:   &fakeProductService{},
+		Recurring: &fakeRecurringService{},
+		Doctor:    &fakeDoctorService{},
+		Self:      &fakeSelfUpdateService{},
+		Stdout:    &stdout,
+		Stderr:    &bytes.Buffer{},
 	})
 	cmd.SetArgs([]string{"schema", "invoice", "list", "--json"})
 	if err := cmd.Execute(); err != nil {
@@ -673,14 +1048,15 @@ func TestSchemaProductCreateExposesRequestBodySchema(t *testing.T) {
 
 	var stdout bytes.Buffer
 	cmd := NewRootCommand(Dependencies{
-		Auth:    &fakeAuthService{},
-		Client:  &fakeClientService{},
-		Invoice: &fakeInvoiceService{},
-		Product: &fakeProductService{},
-		Doctor:  &fakeDoctorService{},
-		Self:    &fakeSelfUpdateService{},
-		Stdout:  &stdout,
-		Stderr:  &bytes.Buffer{},
+		Auth:      &fakeAuthService{},
+		Client:    &fakeClientService{},
+		Invoice:   &fakeInvoiceService{},
+		Product:   &fakeProductService{},
+		Recurring: &fakeRecurringService{},
+		Doctor:    &fakeDoctorService{},
+		Self:      &fakeSelfUpdateService{},
+		Stdout:    &stdout,
+		Stderr:    &bytes.Buffer{},
 	})
 	cmd.SetArgs([]string{"schema", "product", "create", "--json"})
 	if err := cmd.Execute(); err != nil {
@@ -698,14 +1074,15 @@ func TestSchemaProductListExposesKnownFields(t *testing.T) {
 
 	var stdout bytes.Buffer
 	cmd := NewRootCommand(Dependencies{
-		Auth:    &fakeAuthService{},
-		Client:  &fakeClientService{},
-		Invoice: &fakeInvoiceService{},
-		Product: &fakeProductService{},
-		Doctor:  &fakeDoctorService{},
-		Self:    &fakeSelfUpdateService{},
-		Stdout:  &stdout,
-		Stderr:  &bytes.Buffer{},
+		Auth:      &fakeAuthService{},
+		Client:    &fakeClientService{},
+		Invoice:   &fakeInvoiceService{},
+		Product:   &fakeProductService{},
+		Recurring: &fakeRecurringService{},
+		Doctor:    &fakeDoctorService{},
+		Self:      &fakeSelfUpdateService{},
+		Stdout:    &stdout,
+		Stderr:    &bytes.Buffer{},
 	})
 	cmd.SetArgs([]string{"schema", "product", "list", "--json"})
 	if err := cmd.Execute(); err != nil {
@@ -718,20 +1095,73 @@ func TestSchemaProductListExposesKnownFields(t *testing.T) {
 	}
 }
 
+func TestSchemaInvoiceCreateExposesRequestBodySchema(t *testing.T) {
+	t.Parallel()
+
+	var stdout bytes.Buffer
+	cmd := NewRootCommand(Dependencies{
+		Auth:      &fakeAuthService{},
+		Client:    &fakeClientService{},
+		Invoice:   &fakeInvoiceService{},
+		Product:   &fakeProductService{},
+		Recurring: &fakeRecurringService{},
+		Doctor:    &fakeDoctorService{},
+		Self:      &fakeSelfUpdateService{},
+		Stdout:    &stdout,
+		Stderr:    &bytes.Buffer{},
+	})
+	cmd.SetArgs([]string{"schema", "invoice", "create", "--json"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("Execute() error = %v", err)
+	}
+
+	body := stdout.String()
+	if !jsonContains(body, `"wrapper_key": "invoice"`) || !jsonContains(body, `"identify-oss"`) || !jsonContains(body, `"path": "positions[].product_id"`) || !jsonContains(body, `"path": "settlement_positions[].reason"`) {
+		t.Fatalf("expected schema invoice create to advertise companion options and nested request fields: %s", body)
+	}
+}
+
+func TestSchemaRecurringCreateExposesRequestBodySchema(t *testing.T) {
+	t.Parallel()
+
+	var stdout bytes.Buffer
+	cmd := NewRootCommand(Dependencies{
+		Auth:      &fakeAuthService{},
+		Client:    &fakeClientService{},
+		Invoice:   &fakeInvoiceService{},
+		Product:   &fakeProductService{},
+		Recurring: &fakeRecurringService{},
+		Doctor:    &fakeDoctorService{},
+		Self:      &fakeSelfUpdateService{},
+		Stdout:    &stdout,
+		Stderr:    &bytes.Buffer{},
+	})
+	cmd.SetArgs([]string{"schema", "recurring", "create", "--json"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("Execute() error = %v", err)
+	}
+
+	body := stdout.String()
+	if !jsonContains(body, `"wrapper_key": "recurring"`) || !jsonContains(body, `"path": "next_invoice_date"`) || !jsonContains(body, `"path": "buyer_email"`) {
+		t.Fatalf("expected schema recurring create to advertise request-body fields: %s", body)
+	}
+}
+
 func TestConfigFlagPassThrough(t *testing.T) {
 	t.Parallel()
 
 	var stdout bytes.Buffer
 	authSvc := &fakeAuthService{}
 	cmd := NewRootCommand(Dependencies{
-		Auth:    authSvc,
-		Client:  &fakeClientService{},
-		Invoice: &fakeInvoiceService{},
-		Product: &fakeProductService{},
-		Doctor:  &fakeDoctorService{},
-		Self:    &fakeSelfUpdateService{},
-		Stdout:  &stdout,
-		Stderr:  &bytes.Buffer{},
+		Auth:      authSvc,
+		Client:    &fakeClientService{},
+		Invoice:   &fakeInvoiceService{},
+		Product:   &fakeProductService{},
+		Recurring: &fakeRecurringService{},
+		Doctor:    &fakeDoctorService{},
+		Self:      &fakeSelfUpdateService{},
+		Stdout:    &stdout,
+		Stderr:    &bytes.Buffer{},
 	})
 	cmd.SetArgs([]string{"auth", "status", "--config", filepath.Join(t.TempDir(), "config.json"), "--json"})
 	if err := cmd.Execute(); err != nil {

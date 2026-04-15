@@ -22,8 +22,9 @@ func RenderSkillFiles() ([]generatedSkillFile, error) {
 	if err := validateSkillBundle(bundle); err != nil {
 		return nil, err
 	}
+	recipes := Recipes()
 
-	files := make([]generatedSkillFile, 0, len(bundle.Areas)+3)
+	files := make([]generatedSkillFile, 0, len(bundle.Areas)+len(recipes)+4)
 	rootContent, err := renderRootSkill(bundle)
 	if err != nil {
 		return nil, err
@@ -36,12 +37,26 @@ func RenderSkillFiles() ([]generatedSkillFile, error) {
 	}
 	files = append(files, generatedSkillFile{Path: bundleIndexPath(), Content: indexContent})
 
+	recipeIndexContent, err := renderRecipesIndex(recipes)
+	if err != nil {
+		return nil, err
+	}
+	files = append(files, generatedSkillFile{Path: recipeIndexPath(), Content: recipeIndexContent})
+
 	for _, area := range bundle.Areas {
 		content, err := renderAreaSkill(bundle, area)
 		if err != nil {
 			return nil, err
 		}
 		files = append(files, generatedSkillFile{Path: skillAreaPath(area), Content: content})
+	}
+
+	for _, recipe := range recipes {
+		content, err := renderRecipeSkill(bundle, recipe)
+		if err != nil {
+			return nil, err
+		}
+		files = append(files, generatedSkillFile{Path: recipePath(recipe), Content: content})
 	}
 
 	docsContent, err := renderDocsSkillsIndex(bundle)
@@ -119,6 +134,8 @@ func renderRootSkill(bundle SkillBundleSpec) (string, error) {
 		fmt.Fprintf(&b, "- [%s](subskills/%s/SKILL.md): %s\n", area.Name, area.Key, area.Description)
 	}
 	b.WriteString("\n")
+	b.WriteString("## Recipes\n\n")
+	b.WriteString("- Open the [recipes index](recipes/index.md) for higher-level invoice and recurring workflows from the upstream README.\n\n")
 	b.WriteString("## CLI Entry Point\n\n")
 	fmt.Fprintf(&b, "```bash\n%s\n```\n", bundle.CLIHelp)
 	return b.String(), nil
@@ -131,6 +148,7 @@ func renderBundleSkillsIndex(bundle SkillBundleSpec) (string, error) {
 	b.WriteString("Start with [fakturownia-shared](../subskills/shared/SKILL.md), then open the skill that matches the task.\n\n")
 	writeIndexSection(&b, "Core", "Core workflow and support skills for auth, schema discovery, and diagnostics.", skillsByCategory(bundle, "core"), "../subskills")
 	writeIndexSection(&b, "API Areas", "Task-focused API area skills.", skillsByCategory(bundle, "api-area"), "../subskills")
+	writeRecipeIndexSection(&b, Recipes(), "../recipes")
 	return b.String(), nil
 }
 
@@ -145,6 +163,7 @@ func renderDocsSkillsIndex(bundle SkillBundleSpec) (string, error) {
 	fmt.Fprintf(&b, "| [%s](../%s) | %s |\n\n", bundle.Name, bundleRootSkillPath(), bundle.Description)
 	writeIndexSection(&b, "Core", "Core workflow and support skills.", skillsByCategory(bundle, "core"), "../skills/fakturownia/subskills")
 	writeIndexSection(&b, "API Areas", "Task-focused API area skills.", skillsByCategory(bundle, "api-area"), "../skills/fakturownia/subskills")
+	writeRecipeIndexSection(&b, Recipes(), "../skills/fakturownia/recipes")
 	return b.String(), nil
 }
 
@@ -224,6 +243,10 @@ func renderAreaSkill(bundle SkillBundleSpec, area SkillAreaSpec) (string, error)
 		writeInvoicesDiscoverySection(&b)
 	}
 
+	if area.Key == "recurrings" {
+		writeRecurringsDiscoverySection(&b)
+	}
+
 	if area.Key == "clients" {
 		writeClientsDiscoverySection(&b)
 	}
@@ -236,8 +259,8 @@ func renderAreaSkill(bundle SkillBundleSpec, area SkillAreaSpec) (string, error)
 		b.WriteString("## Schema Output\n\n")
 		b.WriteString("- `schema list` enumerates supported commands.\n")
 		b.WriteString("- `schema <noun> <verb>` returns flags, env vars, examples, exit codes, output modes, and output schema details.\n")
-		b.WriteString("- For product, client, and invoice commands, inspect `output.known_fields`, `path_syntax`, and the generated `data_schema` before building `--fields` selectors.\n")
-		b.WriteString("- For product and client write commands, inspect `request_body_schema` before constructing `--input` payloads.\n\n")
+		b.WriteString("- For product, client, invoice, and recurring commands, inspect `output.known_fields`, `path_syntax`, and the generated `data_schema` before building `--fields` selectors.\n")
+		b.WriteString("- For product, client, invoice, and recurring write commands, inspect `request_body_schema` before constructing `--input` payloads.\n\n")
 	}
 
 	if area.Key == "doctor" {
@@ -245,6 +268,8 @@ func renderAreaSkill(bundle SkillBundleSpec, area SkillAreaSpec) (string, error)
 		b.WriteString("- `doctor run` checks config-path resolution, keychain access, DNS/TLS reachability, and authenticated API access.\n")
 		b.WriteString("- Add `--check-release-integrity` when you need checksum verification against the published release.\n\n")
 	}
+
+	writeAreaRecipesSection(&b, area)
 
 	examples := examplesForCommands(exampleSpecs)
 	if len(examples) > 0 {
@@ -267,12 +292,59 @@ func renderAreaSkill(bundle SkillBundleSpec, area SkillAreaSpec) (string, error)
 	return b.String(), nil
 }
 
+func renderRecipesIndex(recipes []RecipeSpec) (string, error) {
+	var b strings.Builder
+	writeGeneratedHeader(&b)
+	b.WriteString("# Recipes\n\n")
+	b.WriteString("Generated workflow recipes for common invoice and recurring tasks. Start with the relevant area skill, then open the matching recipe.\n\n")
+	writeRecipeIndexSection(&b, recipes, ".")
+	return b.String(), nil
+}
+
+func renderRecipeSkill(bundle SkillBundleSpec, recipe RecipeSpec) (string, error) {
+	var b strings.Builder
+	writeSkillFrontmatter(&b, recipe.Name, recipe.Description, skillDocMeta{
+		Bundle:        bundle.Name,
+		Category:      "recipe",
+		RelatedSkills: recipeRelatedSkillNames(bundle, recipe),
+		CommandRefs:   formatCommandRefs(recipe.CommandRefs),
+	})
+	writeGeneratedHeader(&b)
+	b.WriteString("# ")
+	b.WriteString(recipe.Title)
+	b.WriteString("\n\n")
+	if area, ok := skillAreaByKey(bundle, recipe.AreaKey); ok {
+		fmt.Fprintf(&b, "> Read [%s](%s) first.\n\n", area.Name, relativeRecipeAreaLink(recipe, area))
+	}
+	b.WriteString(recipe.Markdown)
+	if !strings.HasSuffix(recipe.Markdown, "\n") {
+		b.WriteString("\n")
+	}
+	if len(recipe.RelatedSkills) > 0 {
+		b.WriteString("\n## Related Skills\n\n")
+		for _, key := range recipe.RelatedSkills {
+			if area, ok := skillAreaByKey(bundle, key); ok {
+				fmt.Fprintf(&b, "- [%s](%s)\n", area.Name, relativeRecipeAreaLink(recipe, area))
+			}
+		}
+	}
+	return b.String(), nil
+}
+
 func writeInvoicesDiscoverySection(b *strings.Builder) {
 	b.WriteString("## Output Discovery\n\n")
 	b.WriteString("- Use `fakturownia schema invoice list --json` and `fakturownia schema invoice get --json` before building selectors.\n")
 	b.WriteString("- Read `output.known_fields` to discover README-backed invoice field names.\n")
 	b.WriteString("- Nested selectors use `dot_bracket` paths such as `positions[].name`.\n")
+	b.WriteString("- Use `fakturownia schema invoice create --json` and `fakturownia schema invoice update --json` before building invoice payloads.\n")
 	b.WriteString("- `output.known_fields` is curated, not exhaustive, so valid undocumented paths may still work.\n\n")
+}
+
+func writeRecurringsDiscoverySection(b *strings.Builder) {
+	b.WriteString("## Output and Request Discovery\n\n")
+	b.WriteString("- Use `fakturownia schema recurring list --json` to inspect README-backed recurring output fields such as `name`, `every`, and `next_invoice_date`.\n")
+	b.WriteString("- Use `fakturownia schema recurring create --json` and `fakturownia schema recurring update --json` to inspect `request_body_schema` and accepted `--input` modes.\n")
+	b.WriteString("- `--input` accepts inline JSON, `@file`, or `-` for stdin, and the CLI wraps the inner object into the upstream `recurring` envelope.\n\n")
 }
 
 func writeClientsDiscoverySection(b *strings.Builder) {
@@ -290,6 +362,18 @@ func writeProductsDiscoverySection(b *strings.Builder) {
 	b.WriteString("- Use `fakturownia schema product create --json` and `fakturownia schema product update --json` to inspect `request_body_schema` and accepted `--input` modes.\n")
 	b.WriteString("- `--input` accepts inline JSON, `@file`, or `-` for stdin, and the CLI wraps the inner object into the upstream `product` envelope.\n")
 	b.WriteString("- Package-product payloads use `package_products_details` as an open object whose values contain `id` and `quantity`.\n\n")
+}
+
+func writeAreaRecipesSection(b *strings.Builder, area SkillAreaSpec) {
+	recipes := recipesForArea(area.Key)
+	if len(recipes) == 0 {
+		return
+	}
+	b.WriteString("## Recipes\n\n")
+	for _, recipe := range recipes {
+		fmt.Fprintf(b, "- [%s](%s): %s\n", recipe.Name, relativeAreaRecipeLink(area, recipe), recipe.Description)
+	}
+	b.WriteString("\n")
 }
 
 func writeGeneratedHeader(b *strings.Builder) {
@@ -460,6 +544,18 @@ func writeIndexSection(b *strings.Builder, title, intro string, areas []SkillAre
 	b.WriteString("\n")
 }
 
+func writeRecipeIndexSection(b *strings.Builder, recipes []RecipeSpec, base string) {
+	b.WriteString("## Recipes\n\n")
+	b.WriteString("Generated workflow recipes for common invoice and recurring tasks.\n\n")
+	b.WriteString("| Recipe | Description |\n")
+	b.WriteString("| --- | --- |\n")
+	for _, recipe := range recipes {
+		link := path.Join(base, recipe.Key, "SKILL.md")
+		fmt.Fprintf(b, "| [%s](%s) | %s |\n", recipe.Name, link, recipe.Description)
+	}
+	b.WriteString("\n")
+}
+
 func generatedFileMap(files []generatedSkillFile) map[string]string {
 	out := make(map[string]string, len(files))
 	for _, file := range files {
@@ -496,4 +592,44 @@ func extractMarkdownLinks(content string) []string {
 
 func normalizeGeneratedText(value string) string {
 	return strings.ReplaceAll(value, "\r\n", "\n")
+}
+
+func recipesForArea(areaKey string) []RecipeSpec {
+	out := make([]RecipeSpec, 0)
+	for _, recipe := range Recipes() {
+		if recipe.AreaKey == areaKey {
+			out = append(out, recipe)
+		}
+	}
+	return out
+}
+
+func recipeRelatedSkillNames(bundle SkillBundleSpec, recipe RecipeSpec) []string {
+	names := make([]string, 0, len(recipe.RelatedSkills))
+	for _, key := range recipe.RelatedSkills {
+		if area, ok := skillAreaByKey(bundle, key); ok {
+			names = append(names, area.Name)
+		}
+	}
+	return names
+}
+
+func relativeAreaRecipeLink(area SkillAreaSpec, recipe RecipeSpec) string {
+	fromPath := path.Join("subskills", area.Key, "SKILL.md")
+	toPath := path.Join("recipes", recipe.Key, "SKILL.md")
+	rel, err := filepath.Rel(filepath.FromSlash(path.Dir(fromPath)), filepath.FromSlash(toPath))
+	if err != nil {
+		return "../../recipes/" + recipe.Key + "/SKILL.md"
+	}
+	return filepath.ToSlash(rel)
+}
+
+func relativeRecipeAreaLink(recipe RecipeSpec, area SkillAreaSpec) string {
+	fromPath := path.Join("recipes", recipe.Key, "SKILL.md")
+	toPath := path.Join("subskills", area.Key, "SKILL.md")
+	rel, err := filepath.Rel(filepath.FromSlash(path.Dir(fromPath)), filepath.FromSlash(toPath))
+	if err != nil {
+		return "../../subskills/" + area.Key + "/SKILL.md"
+	}
+	return filepath.ToSlash(rel)
 }

@@ -1,0 +1,76 @@
+Create an invoice
+
+Usage
+  fakturownia invoice create --input -|@file|JSON
+
+Required Flags
+  --input (string): Invoice JSON input as inline JSON, @file, or - for stdin
+
+Optional Flags
+  --identify-oss (bool): Validate OSS eligibility before marking the invoice as OSS default=false
+  --fill-default-descriptions (bool): Include default account descriptions on the created invoice default=false
+  --correction-positions (string): Pass a correction positions companion option such as full
+
+Global Flags
+  --profile (string): Select a named profile
+  --json (bool): Alias for --output json default=false
+  --output (string): Output format default=human enum=human,json
+  --quiet (bool): Emit bare values when exactly one field or column remains default=false
+  --fields (string[]): Project JSON envelope data fields using dot/bracket paths like number or positions[].name
+  --columns (string[]): Select human table columns using dot/bracket paths like number or positions[].name
+  --raw (bool): Emit the upstream JSON response body directly when supported default=false
+  --dry-run (bool): Accepted on read-only commands and reserved for future mutating request previews default=false
+  --timeout-ms (int): HTTP timeout in milliseconds default=30000
+  --max-retries (int): Maximum retry attempts for idempotent reads on network or 5xx failures default=2
+  --non-interactive (bool): Disable interactive behavior default=true
+  --config (string): Override the config file path
+
+Environment Variables
+  FAKTUROWNIA_PROFILE: Select a profile unless --profile is provided
+  FAKTUROWNIA_URL: Override the base account URL from any profile
+  FAKTUROWNIA_API_TOKEN: Override the API token from any profile
+
+Output Modes
+  human, json
+  raw: supported
+
+Exit Codes
+  0: success
+  2: usage or validation error
+  3: not found
+  4: authentication or permission failure
+  5: conflict
+  6: network or timeout failure
+  7: reserved for throttling or retry budget exhaustion
+  8: remote API rejected the request
+  9: internal CLI failure
+
+Examples
+  fakturownia invoice create --input '{"kind":"vat","client_id":1,"positions":[{"product_id":1,"quantity":2}]}' --json
+  fakturownia invoice create --input '{"copy_invoice_from":42,"kind":"vat"}' --json
+  fakturownia invoice create --input '{"kind":"vat","seller_country":"PL","buyer_country":"FR","use_oss":true,"positions":[{"name":"Produkt","tax":20,"total_price_gross":50,"quantity":1}]}' --identify-oss --json
+  fakturownia invoice create --input '{"kind":"vat","positions":[{"name":"towar","quantity":1,"total_price_gross":123}]}' --fill-default-descriptions --dry-run --json
+
+Usage:
+  fakturownia invoice create --input -|@file|JSON [flags]
+
+Flags:
+      --correction-positions string   pass a correction positions companion option such as full
+      --fill-default-descriptions     include default account descriptions on the created invoice
+  -h, --help                          help for create
+      --identify-oss                  validate OSS eligibility before marking the invoice as OSS
+      --input string                  invoice JSON input as inline JSON, @file, or - for stdin
+
+Global Flags:
+      --columns strings   select human table columns using dot/bracket paths like number or positions[].name
+      --config string     override the config file path
+      --dry-run           accepted on read-only commands and reserved for future mutating previews
+      --fields strings    project JSON envelope data fields using dot/bracket paths like number or positions[].name
+      --json              alias for --output json
+      --max-retries int   maximum retries for idempotent reads (default 2)
+      --non-interactive   disable interactive behavior (default true)
+      --output string     output format: human|json (default "human")
+      --profile string    select a named profile
+  -q, --quiet             emit bare values when exactly one field or column remains
+      --raw               emit the upstream JSON response body directly when supported
+      --timeout-ms int    HTTP timeout in milliseconds (default 30000)

@@ -1,6 +1,6 @@
 ---
 name: "fakturownia-invoices"
-description: "Fakturownia CLI invoices: list invoices, fetch a single invoice, download invoice PDFs, and discover invoice fields through schema output."
+description: "Fakturownia CLI invoices: list, fetch, create, update, delete, email, cancel, print, attach files, derive public links, and discover invoice fields and payloads through schema output."
 metadata:
   bundle: "fakturownia"
   category: "api-area"
@@ -8,11 +8,22 @@ metadata:
   related_skills:
     - "fakturownia-shared"
     - "fakturownia-products"
+    - "fakturownia-recurrings"
     - "fakturownia-schema"
     - "fakturownia-doctor"
   command_refs:
     - "invoice list"
     - "invoice get"
+    - "invoice create"
+    - "invoice update"
+    - "invoice delete"
+    - "invoice send-email"
+    - "invoice change-status"
+    - "invoice cancel"
+    - "invoice public-link"
+    - "invoice add-attachment"
+    - "invoice download-attachments"
+    - "invoice fiscal-print"
     - "invoice download"
   cli_help: "fakturownia invoice --help"
   requires_bins:
@@ -28,13 +39,24 @@ metadata:
 
 ## Use This Skill When
 
-- The task is about reading invoices, narrowing invoice fields, or downloading invoice PDFs.
-- You need to discover invoice output fields such as `number`, `status`, or nested paths like `positions[].name`.
+- The task is about reading or mutating invoices, sending invoice emails, cancelling invoices, printing fiscally, or attaching files.
+- You need to discover invoice output fields such as `number`, `status`, `token`, or nested paths like `positions[].name`.
+- You need to inspect `request_body_schema` before constructing `invoice create` or `invoice update` payloads.
 
 ## Covered Commands
 
 - `fakturownia invoice list` — List invoices
 - `fakturownia invoice get` — Fetch a single invoice by ID
+- `fakturownia invoice create` — Create an invoice
+- `fakturownia invoice update` — Update an invoice
+- `fakturownia invoice delete` — Delete an invoice
+- `fakturownia invoice send-email` — Send an invoice by email
+- `fakturownia invoice change-status` — Change an invoice status
+- `fakturownia invoice cancel` — Cancel an invoice
+- `fakturownia invoice public-link` — Derive public invoice and PDF links from the invoice token
+- `fakturownia invoice add-attachment` — Upload and attach a file to an invoice
+- `fakturownia invoice download-attachments` — Download all invoice attachments as a ZIP archive
+- `fakturownia invoice fiscal-print` — Trigger a fiscal printer job for one or more invoices
 - `fakturownia invoice download` — Download a single invoice PDF
 
 ## Notable Flags
@@ -53,9 +75,26 @@ metadata:
 - `--order`: Sort order
 - `--income` (enum `yes`, `no`): Income selector
 - `--id` (required): Invoice ID
-- `--path`: Explicit output file path
-- `--dir`: Output directory for the downloaded file
+- `--include`: Request upstream invoice includes such as descriptions
+- `--additional-field`: Request additional upstream invoice fields such as cancel_reason, corrected_content_before, corrected_content_after, or connected_payments
+- `--correction-positions`: Request correction position details such as full
+- `--input` (required): Invoice JSON input as inline JSON, @file, or - for stdin
+- `--identify-oss` (default `false`): Validate OSS eligibility before marking the invoice as OSS
+- `--fill-default-descriptions` (default `false`): Include default account descriptions on the created invoice
+- `--yes` (required, default `false`): Confirm invoice deletion
+- `--email-to`: Override recipients for the invoice email
+- `--email-cc`: Override CC recipients for the invoice email
+- `--email-pdf` (default `false`): Attach the invoice PDF
+- `--update-buyer-email` (default `false`): Update the invoice buyer or recipient email when email-to is provided
 - `--print-option` (enum `original`, `copy`, `original_and_copy`, `duplicate`): PDF print option
+- `--status` (required): Target invoice status
+- `--reason`: Optional cancellation reason
+- `--file` (required): Attachment file path or - for stdin
+- `--name`: Attachment file name; required when --file - is used
+- `--path`: Explicit output file path
+- `--dir`: Output directory for the downloaded ZIP file
+- `--invoice-id` (required): Invoice ID to send to fiscal print
+- `--printer`: Fiscal printer name
 
 ## Environment
 
@@ -68,7 +107,21 @@ metadata:
 - Use `fakturownia schema invoice list --json` and `fakturownia schema invoice get --json` before building selectors.
 - Read `output.known_fields` to discover README-backed invoice field names.
 - Nested selectors use `dot_bracket` paths such as `positions[].name`.
+- Use `fakturownia schema invoice create --json` and `fakturownia schema invoice update --json` before building invoice payloads.
 - `output.known_fields` is curated, not exhaustive, so valid undocumented paths may still work.
+
+## Recipes
+
+- [fakturownia-invoice-minimal](../../recipes/invoice-minimal/SKILL.md): Create a minimal invoice when you already know the client and product IDs.
+- [fakturownia-invoice-copy](../../recipes/invoice-copy/SKILL.md): Create a new invoice by copying another invoice, order, or proforma with `copy_invoice_from`.
+- [fakturownia-invoice-correction](../../recipes/invoice-correction/SKILL.md): Create and inspect correction invoices, including before/after correction fields.
+- [fakturownia-invoice-oss](../../recipes/invoice-oss/SKILL.md): Create an OSS invoice and ask the API to validate the OSS conditions before marking it.
+- [fakturownia-invoice-send-email](../../recipes/invoice-send-email/SKILL.md): Send an invoice email, optionally overriding recipients and attaching the PDF.
+- [fakturownia-invoice-cancel](../../recipes/invoice-cancel/SKILL.md): Cancel an invoice and optionally store a cancellation reason.
+- [fakturownia-invoice-recipients-issuers](../../recipes/invoice-recipients-issuers/SKILL.md): Create or update invoice recipients and issuers through the generic invoice payload.
+- [fakturownia-invoice-attachment](../../recipes/invoice-attachment/SKILL.md): Upload a file through the attachment credentials flow and bind it to an invoice.
+- [fakturownia-invoice-fiscal-print](../../recipes/invoice-fiscal-print/SKILL.md): Submit one or more invoices to the fiscal print endpoint, optionally targeting a printer by name.
+- [fakturownia-invoice-receipt-link](../../recipes/invoice-receipt-link/SKILL.md): Link a receipt to an existing invoice or create a new invoice from a receipt using the README-backed payload fields.
 
 ## Examples
 
@@ -78,9 +131,36 @@ fakturownia invoice list --period this_month --columns id,number,buyer_name,pric
 fakturownia invoice list --include-positions --fields number,positions[].name --json
 fakturownia invoice list --page 2 --per-page 25 --raw
 fakturownia invoice get --id 123
+fakturownia invoice get --id 123 --additional-field cancel_reason --json
+fakturownia invoice get --id 123 --include descriptions --fields descriptions[].content --json
+fakturownia invoice get --id 123 --correction-positions full --json
 fakturownia invoice get --id 123 --fields id,number,status --json
 fakturownia invoice get --id 123 --fields number,positions[].name --json
 fakturownia invoice get --id 123 --raw
+fakturownia invoice create --input '{"kind":"vat","client_id":1,"positions":[{"product_id":1,"quantity":2}]}' --json
+fakturownia invoice create --input '{"copy_invoice_from":42,"kind":"vat"}' --json
+fakturownia invoice create --input '{"kind":"vat","seller_country":"PL","buyer_country":"FR","use_oss":true,"positions":[{"name":"Produkt","tax":20,"total_price_gross":50,"quantity":1}]}' --identify-oss --json
+fakturownia invoice create --input '{"kind":"vat","positions":[{"name":"towar","quantity":1,"total_price_gross":123}]}' --fill-default-descriptions --dry-run --json
+fakturownia invoice update --id 111 --input '{"buyer_name":"Nowa nazwa klienta Sp. z o.o."}' --json
+fakturownia invoice update --id 111 --input '{"positions":[{"id":32649087,"name":"test"}]}' --json
+fakturownia invoice update --id 111 --input '{"positions":[{"id":32649087,"_destroy":1}]}' --json
+printf '%s\n' '{"show_attachments":true}' | fakturownia invoice update --id 111 --input - --dry-run --json
+fakturownia invoice delete --id 111 --yes --json
+fakturownia invoice delete --id 111 --yes --dry-run --json
+fakturownia invoice send-email --id 100 --json
+fakturownia invoice send-email --id 100 --email-to billing@example.com --email-pdf --json
+fakturownia invoice send-email --id 100 --email-to billing@example.com --update-buyer-email --print-option original --dry-run --json
+fakturownia invoice change-status --id 111 --status sent --json
+fakturownia invoice change-status --id 111 --status paid --dry-run --json
+fakturownia invoice cancel --id 111 --yes --json
+fakturownia invoice cancel --id 111 --yes --reason 'Powód anulowania' --dry-run --json
+fakturownia invoice public-link --id 100 --json
+fakturownia invoice add-attachment --id 111 --file ./scan.pdf --json
+cat ./scan.pdf | fakturownia invoice add-attachment --id 111 --file - --name scan.pdf --dry-run --json
+fakturownia invoice download-attachments --id 111 --dir ./attachments
+fakturownia invoice download-attachments --id 111 --path ./invoice-111-attachments.zip --json
+fakturownia invoice fiscal-print --invoice-id 111 --invoice-id 112 --json
+fakturownia invoice fiscal-print --invoice-id 111 --printer DRUKARKA --dry-run --json
 fakturownia invoice download --id 123 --dir ./invoices
 fakturownia invoice download --id 123 --path ./invoice-123.pdf --json
 ```
@@ -89,5 +169,6 @@ fakturownia invoice download --id 123 --path ./invoice-123.pdf --json
 
 - [fakturownia-shared](../shared/SKILL.md)
 - [fakturownia-products](../products/SKILL.md)
+- [fakturownia-recurrings](../recurrings/SKILL.md)
 - [fakturownia-schema](../schema/SKILL.md)
 - [fakturownia-doctor](../doctor/SKILL.md)

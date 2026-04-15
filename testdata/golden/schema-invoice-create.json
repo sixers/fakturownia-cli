@@ -1,0 +1,3004 @@
+{
+  "schema_version": "fakturownia-cli/v1alpha1",
+  "status": "success",
+  "data": {
+    "schema_version": "fakturownia-cli/v1alpha1",
+    "command": "invoice create",
+    "use": "create --input -|@file|JSON",
+    "summary": "Create an invoice",
+    "flags": [
+      {
+        "name": "profile",
+        "type": "string",
+        "description": "Select a named profile",
+        "required": false
+      },
+      {
+        "name": "json",
+        "type": "bool",
+        "description": "Alias for --output json",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "output",
+        "type": "string",
+        "description": "Output format",
+        "required": false,
+        "default": "human",
+        "enum": [
+          "human",
+          "json"
+        ]
+      },
+      {
+        "name": "quiet",
+        "type": "bool",
+        "description": "Emit bare values when exactly one field or column remains",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "fields",
+        "type": "string[]",
+        "description": "Project JSON envelope data fields using dot/bracket paths like number or positions[].name",
+        "required": false,
+        "repeatable": true
+      },
+      {
+        "name": "columns",
+        "type": "string[]",
+        "description": "Select human table columns using dot/bracket paths like number or positions[].name",
+        "required": false,
+        "repeatable": true
+      },
+      {
+        "name": "raw",
+        "type": "bool",
+        "description": "Emit the upstream JSON response body directly when supported",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "dry-run",
+        "type": "bool",
+        "description": "Accepted on read-only commands and reserved for future mutating request previews",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "timeout-ms",
+        "type": "int",
+        "description": "HTTP timeout in milliseconds",
+        "required": false,
+        "default": "30000"
+      },
+      {
+        "name": "max-retries",
+        "type": "int",
+        "description": "Maximum retry attempts for idempotent reads on network or 5xx failures",
+        "required": false,
+        "default": "2"
+      },
+      {
+        "name": "non-interactive",
+        "type": "bool",
+        "description": "Disable interactive behavior",
+        "required": false,
+        "default": "true"
+      },
+      {
+        "name": "config",
+        "type": "string",
+        "description": "Override the config file path",
+        "required": false
+      },
+      {
+        "name": "input",
+        "type": "string",
+        "description": "Invoice JSON input as inline JSON, @file, or - for stdin",
+        "required": true
+      },
+      {
+        "name": "identify-oss",
+        "type": "bool",
+        "description": "Validate OSS eligibility before marking the invoice as OSS",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "fill-default-descriptions",
+        "type": "bool",
+        "description": "Include default account descriptions on the created invoice",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "correction-positions",
+        "type": "string",
+        "description": "Pass a correction positions companion option such as full",
+        "required": false
+      }
+    ],
+    "env_vars": [
+      {
+        "name": "FAKTUROWNIA_PROFILE",
+        "description": "Select a profile unless --profile is provided"
+      },
+      {
+        "name": "FAKTUROWNIA_URL",
+        "description": "Override the base account URL from any profile"
+      },
+      {
+        "name": "FAKTUROWNIA_API_TOKEN",
+        "description": "Override the API token from any profile"
+      }
+    ],
+    "output_modes": [
+      "human",
+      "json"
+    ],
+    "exit_codes": [
+      {
+        "code": 0,
+        "description": "success"
+      },
+      {
+        "code": 2,
+        "description": "usage or validation error"
+      },
+      {
+        "code": 3,
+        "description": "not found"
+      },
+      {
+        "code": 4,
+        "description": "authentication or permission failure"
+      },
+      {
+        "code": 5,
+        "description": "conflict"
+      },
+      {
+        "code": 6,
+        "description": "network or timeout failure"
+      },
+      {
+        "code": 7,
+        "description": "reserved for throttling or retry budget exhaustion"
+      },
+      {
+        "code": 8,
+        "description": "remote API rejected the request"
+      },
+      {
+        "code": 9,
+        "description": "internal CLI failure"
+      }
+    ],
+    "raw_supported": true,
+    "examples": [
+      "fakturownia invoice create --input '{\"kind\":\"vat\",\"client_id\":1,\"positions\":[{\"product_id\":1,\"quantity\":2}]}' --json",
+      "fakturownia invoice create --input '{\"copy_invoice_from\":42,\"kind\":\"vat\"}' --json",
+      "fakturownia invoice create --input '{\"kind\":\"vat\",\"seller_country\":\"PL\",\"buyer_country\":\"FR\",\"use_oss\":true,\"positions\":[{\"name\":\"Produkt\",\"tax\":20,\"total_price_gross\":50,\"quantity\":1}]}' --identify-oss --json",
+      "fakturownia invoice create --input '{\"kind\":\"vat\",\"positions\":[{\"name\":\"towar\",\"quantity\":1,\"total_price_gross\":123}]}' --fill-default-descriptions --dry-run --json"
+    ],
+    "data_schema": {
+      "additionalProperties": true,
+      "properties": {
+        "buyer_email": {
+          "type": "string"
+        },
+        "buyer_name": {
+          "type": "string"
+        },
+        "buyer_tax_no": {
+          "type": "string"
+        },
+        "cancel_reason": {
+          "type": "string"
+        },
+        "connected_payments": {
+          "items": {
+            "additionalProperties": true,
+            "properties": {},
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "corrected_content_after": {
+          "type": "string"
+        },
+        "corrected_content_before": {
+          "type": "string"
+        },
+        "correction_reason": {
+          "type": "string"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "descriptions": {
+          "items": {
+            "additionalProperties": true,
+            "properties": {
+              "content": {
+                "type": "string"
+              },
+              "id": {
+                "type": "integer"
+              },
+              "kind": {
+                "type": "string"
+              },
+              "position_index": {
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "row_number": {
+                "type": "integer"
+              }
+            },
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "from_invoice_id": {
+          "type": "integer"
+        },
+        "id": {
+          "type": "integer"
+        },
+        "income": {
+          "enum": [
+            "1",
+            "0"
+          ],
+          "type": "string"
+        },
+        "invoice_id": {
+          "type": "integer"
+        },
+        "issue_date": {
+          "type": "string"
+        },
+        "issuers": {
+          "items": {
+            "additionalProperties": true,
+            "properties": {
+              "email": {
+                "type": "string"
+              },
+              "id": {
+                "type": "integer"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "kind": {
+          "enum": [
+            "vat",
+            "proforma",
+            "bill",
+            "receipt",
+            "advance",
+            "final",
+            "correction",
+            "invoice_other",
+            "vat_margin",
+            "kp",
+            "kw",
+            "estimate",
+            "vat_mp",
+            "vat_rr",
+            "correction_note",
+            "accounting_note"
+          ],
+          "type": "string"
+        },
+        "number": {
+          "type": "string"
+        },
+        "payment_to": {
+          "type": "string"
+        },
+        "payment_type": {
+          "enum": [
+            "transfer",
+            "card",
+            "cash",
+            "barter",
+            "cheque",
+            "bill_of_exchange",
+            "cash_on_delivery",
+            "compensation",
+            "letter_of_credit",
+            "payu",
+            "paypal",
+            "off"
+          ],
+          "type": "string"
+        },
+        "positions": {
+          "items": {
+            "additionalProperties": true,
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "correction_after_attributes": {
+                "additionalProperties": true,
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "quantity": {
+                    "type": "number"
+                  }
+                },
+                "type": "object"
+              },
+              "correction_before_attributes": {
+                "additionalProperties": true,
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "quantity": {
+                    "type": "number"
+                  }
+                },
+                "type": "object"
+              },
+              "description": {
+                "type": "string"
+              },
+              "gtu_code": {
+                "type": "string"
+              },
+              "id": {
+                "type": "integer"
+              },
+              "name": {
+                "type": "string"
+              },
+              "price_gross": {
+                "type": "number"
+              },
+              "price_net": {
+                "type": "number"
+              },
+              "product_id": {
+                "type": "integer"
+              },
+              "quantity": {
+                "type": "number"
+              },
+              "tax": {
+                "type": "string"
+              },
+              "total_price_gross": {
+                "type": "number"
+              },
+              "total_price_net": {
+                "type": "number"
+              }
+            },
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "price_gross": {
+          "type": "number"
+        },
+        "price_net": {
+          "type": "number"
+        },
+        "recipients": {
+          "items": {
+            "additionalProperties": true,
+            "properties": {
+              "city": {
+                "type": "string"
+              },
+              "company": {
+                "type": "boolean"
+              },
+              "country": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string"
+              },
+              "first_name": {
+                "type": "string"
+              },
+              "id": {
+                "type": "integer"
+              },
+              "last_name": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "note": {
+                "type": "string"
+              },
+              "phone": {
+                "type": "string"
+              },
+              "post_code": {
+                "type": "string"
+              },
+              "role": {
+                "type": "string"
+              },
+              "street": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "sale_date": {
+          "type": "string"
+        },
+        "seller_name": {
+          "type": "string"
+        },
+        "seller_tax_no": {
+          "type": "string"
+        },
+        "settlement_positions": {
+          "items": {
+            "additionalProperties": true,
+            "properties": {
+              "amount": {
+                "type": "number"
+              },
+              "id": {
+                "type": "integer"
+              },
+              "kind": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "status": {
+          "enum": [
+            "issued",
+            "sent",
+            "paid",
+            "partial",
+            "rejected"
+          ],
+          "type": "string"
+        },
+        "token": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "request_body": {
+      "input_flag": "input",
+      "input_modes": [
+        "inline_json",
+        "@file",
+        "stdin"
+      ],
+      "wrapper_key": "invoice",
+      "open_ended": true,
+      "catalog_basis": {
+        "source": "readme",
+        "url": "https://github.com/fakturownia/API/blob/master/README.md"
+      },
+      "path_syntax": "dot_bracket",
+      "known_fields": [
+        {
+          "path": "kind",
+          "type": "string",
+          "description": "Invoice kind",
+          "enum_values": [
+            "vat",
+            "proforma",
+            "bill",
+            "receipt",
+            "advance",
+            "final",
+            "correction",
+            "invoice_other",
+            "vat_margin",
+            "kp",
+            "kw",
+            "estimate",
+            "vat_mp",
+            "vat_rr",
+            "correction_note",
+            "accounting_note"
+          ],
+          "source_section": "Dodanie nowej faktury"
+        },
+        {
+          "path": "number",
+          "type": "string",
+          "description": "Invoice number or null for auto-numbering",
+          "source_section": "Dodanie nowej faktury"
+        },
+        {
+          "path": "sell_date",
+          "type": "string",
+          "description": "Invoice sale date",
+          "source_section": "Dodanie nowej faktury"
+        },
+        {
+          "path": "issue_date",
+          "type": "string",
+          "description": "Invoice issue date",
+          "source_section": "Dodanie nowej faktury"
+        },
+        {
+          "path": "payment_to",
+          "type": "string",
+          "description": "Invoice payment due date",
+          "source_section": "Dodanie nowej faktury"
+        },
+        {
+          "path": "payment_to_kind",
+          "type": "integer",
+          "description": "Relative payment term in days",
+          "source_section": "Dodanie nowej faktury - minimalna wersja"
+        },
+        {
+          "path": "payment_type",
+          "type": "string",
+          "description": "Payment type",
+          "enum_values": [
+            "transfer",
+            "card",
+            "cash",
+            "barter",
+            "cheque",
+            "bill_of_exchange",
+            "cash_on_delivery",
+            "compensation",
+            "letter_of_credit",
+            "payu",
+            "paypal",
+            "off"
+          ],
+          "source_section": "Dodanie nowej faktury"
+        },
+        {
+          "path": "currency",
+          "type": "string",
+          "description": "Invoice currency",
+          "source_section": "Dodanie nowej faktury"
+        },
+        {
+          "path": "seller_name",
+          "type": "string",
+          "description": "Seller display name",
+          "source_section": "Dodanie nowej faktury"
+        },
+        {
+          "path": "seller_tax_no",
+          "type": "string",
+          "description": "Seller tax number",
+          "source_section": "Dodanie nowej faktury"
+        },
+        {
+          "path": "seller_country",
+          "type": "string",
+          "description": "Seller country code",
+          "source_section": "Dodanie faktury OSS"
+        },
+        {
+          "path": "buyer_name",
+          "type": "string",
+          "description": "Buyer display name",
+          "source_section": "Dodanie nowej faktury"
+        },
+        {
+          "path": "buyer_email",
+          "type": "string",
+          "description": "Buyer email address",
+          "source_section": "Dodanie nowej faktury"
+        },
+        {
+          "path": "buyer_tax_no",
+          "type": "string",
+          "description": "Buyer tax number",
+          "source_section": "Dodanie nowej faktury"
+        },
+        {
+          "path": "buyer_country",
+          "type": "string",
+          "description": "Buyer country code",
+          "source_section": "Dodanie faktury OSS"
+        },
+        {
+          "path": "buyer_post_code",
+          "type": "string",
+          "description": "Buyer postal code override",
+          "source_section": "Dodanie nowej faktury"
+        },
+        {
+          "path": "buyer_city",
+          "type": "string",
+          "description": "Buyer city override",
+          "source_section": "Dodanie nowej faktury"
+        },
+        {
+          "path": "buyer_street",
+          "type": "string",
+          "description": "Buyer street override",
+          "source_section": "Dodanie nowej faktury"
+        },
+        {
+          "path": "buyer_override",
+          "type": "boolean",
+          "description": "Update selected buyer fields on the linked client card",
+          "source_section": "Dodanie nowej faktury"
+        },
+        {
+          "path": "client_id",
+          "type": "integer",
+          "description": "Referenced client ID",
+          "source_section": "Dodanie nowej faktury - minimalna wersja"
+        },
+        {
+          "path": "department_id",
+          "type": "integer",
+          "description": "Referenced seller department ID",
+          "source_section": "Dodanie nowej faktury - minimalna wersja"
+        },
+        {
+          "path": "recipient_id",
+          "type": "integer",
+          "description": "Referenced recipient ID",
+          "source_section": "Dodanie nowej faktury - minimalna wersja"
+        },
+        {
+          "path": "use_oss",
+          "type": "boolean",
+          "description": "Mark the invoice as OSS",
+          "source_section": "Dodanie faktury OSS"
+        },
+        {
+          "path": "income",
+          "type": "string",
+          "description": "Income selector; use 0 for expense invoices",
+          "enum_values": [
+            "1",
+            "0"
+          ],
+          "source_section": "Dodanie faktury kosztowej"
+        },
+        {
+          "path": "copy_invoice_from",
+          "type": "integer",
+          "description": "Copy invoice, order, or proforma from another document",
+          "source_section": "Dodanie nowej faktury – dokumentu podobnego do faktury o podanym ID (copy_invoice_from)"
+        },
+        {
+          "path": "advance_creation_mode",
+          "type": "string",
+          "description": "Advance invoice creation mode",
+          "enum_values": [
+            "percent",
+            "amount"
+          ],
+          "source_section": "Dodanie faktury zaliczkowej na podstawie zamówienia – % pełnej kwoty"
+        },
+        {
+          "path": "advance_value",
+          "type": "string",
+          "description": "Advance amount or percent",
+          "source_section": "Dodanie faktury zaliczkowej na podstawie zamówienia – % pełnej kwoty"
+        },
+        {
+          "path": "position_name",
+          "type": "string",
+          "description": "Advance position name",
+          "source_section": "Dodanie faktury zaliczkowej na podstawie zamówienia – % pełnej kwoty"
+        },
+        {
+          "path": "invoice_id",
+          "type": "integer",
+          "description": "Linked invoice ID used in corrections and receipt links",
+          "source_section": "Dodanie nowej faktury korygującej"
+        },
+        {
+          "path": "from_invoice_id",
+          "type": "integer",
+          "description": "Source invoice or receipt ID",
+          "source_section": "Dodanie nowej faktury korygującej"
+        },
+        {
+          "path": "invoice_ids[]",
+          "type": "integer",
+          "description": "Referenced advance invoice IDs",
+          "source_section": "Dodanie faktury końcowej na podstawie zamówienia i faktur zaliczkowych"
+        },
+        {
+          "path": "correction_reason",
+          "type": "string",
+          "description": "Correction reason",
+          "source_section": "Dodanie nowej faktury korygującej"
+        },
+        {
+          "path": "additional_params",
+          "type": "string",
+          "description": "Additional upstream mode selector such as for_receipt",
+          "source_section": "Dodawanie faktury do istniejącego paragonu"
+        },
+        {
+          "path": "exclude_from_stock_level",
+          "type": "boolean",
+          "description": "Do not affect stock levels",
+          "source_section": "Połączenie istniejącej faktury i paragonu"
+        },
+        {
+          "path": "use_prices_from_price_lists",
+          "type": "boolean",
+          "description": "Use product prices from a price list",
+          "source_section": "Zaczytanie cen produktów z cennika podczas wystawiania faktury"
+        },
+        {
+          "path": "price_list_id",
+          "type": "integer",
+          "description": "Price list ID used during product pricing",
+          "source_section": "Zaczytanie cen produktów z cennika podczas wystawiania faktury"
+        },
+        {
+          "path": "show_attachments",
+          "type": "boolean",
+          "description": "Expose attachments to the customer on the public invoice page",
+          "source_section": "Dodanie nowego załącznika do faktury"
+        },
+        {
+          "path": "positions[]",
+          "type": "array<object>",
+          "description": "Invoice positions",
+          "source_section": "Dodanie nowej faktury"
+        },
+        {
+          "path": "positions[].id",
+          "type": "integer",
+          "description": "Invoice position ID",
+          "source_section": "Aktualizacja pozycji na fakturze"
+        },
+        {
+          "path": "positions[]._destroy",
+          "type": "boolean",
+          "description": "Delete the referenced position during update",
+          "source_section": "Usunięcie pozycji na fakturze"
+        },
+        {
+          "path": "positions[].product_id",
+          "type": "integer",
+          "description": "Referenced product ID",
+          "source_section": "Dodanie nowej faktury - minimalna wersja"
+        },
+        {
+          "path": "positions[].name",
+          "type": "string",
+          "description": "Position name",
+          "source_section": "Dodanie nowej faktury"
+        },
+        {
+          "path": "positions[].quantity",
+          "type": "number",
+          "description": "Position quantity",
+          "source_section": "Dodanie nowej faktury"
+        },
+        {
+          "path": "positions[].tax",
+          "type": "string",
+          "description": "Position tax rate",
+          "source_section": "Dodanie nowej faktury"
+        },
+        {
+          "path": "positions[].total_price_gross",
+          "type": "number",
+          "description": "Gross line total",
+          "source_section": "Dodanie nowej faktury"
+        },
+        {
+          "path": "positions[].total_price_net",
+          "type": "number",
+          "description": "Net line total",
+          "source_section": "Dodanie nowej faktury"
+        },
+        {
+          "path": "positions[].price_gross",
+          "type": "number",
+          "description": "Gross unit price",
+          "source_section": "Faktury - specyfikacja, rodzaje pól, kody GTU"
+        },
+        {
+          "path": "positions[].price_net",
+          "type": "number",
+          "description": "Net unit price",
+          "source_section": "Faktury - specyfikacja, rodzaje pól, kody GTU"
+        },
+        {
+          "path": "positions[].code",
+          "type": "string",
+          "description": "Product code",
+          "source_section": "Faktury - specyfikacja, rodzaje pól, kody GTU"
+        },
+        {
+          "path": "positions[].kind",
+          "type": "string",
+          "description": "Correction position kind",
+          "source_section": "Dodanie nowej faktury korygującej"
+        },
+        {
+          "path": "positions[].correction_before_attributes",
+          "type": "object",
+          "description": "Values before the correction",
+          "source_section": "Dodanie nowej faktury korygującej"
+        },
+        {
+          "path": "positions[].correction_after_attributes",
+          "type": "object",
+          "description": "Values after the correction",
+          "source_section": "Dodanie nowej faktury korygującej"
+        },
+        {
+          "path": "descriptions[]",
+          "type": "array<object>",
+          "description": "Structured invoice notes",
+          "source_section": "Uwagi na fakturze (descriptions)"
+        },
+        {
+          "path": "descriptions[].id",
+          "type": "integer",
+          "description": "Structured note ID",
+          "source_section": "Uwagi na fakturze (descriptions)"
+        },
+        {
+          "path": "descriptions[]._destroy",
+          "type": "boolean",
+          "description": "Delete the referenced structured note during update",
+          "source_section": "Uwagi na fakturze (descriptions)"
+        },
+        {
+          "path": "descriptions[].kind",
+          "type": "string",
+          "description": "Structured note heading",
+          "source_section": "Uwagi na fakturze (descriptions)"
+        },
+        {
+          "path": "descriptions[].content",
+          "type": "string",
+          "description": "Structured note content",
+          "source_section": "Uwagi na fakturze (descriptions)"
+        },
+        {
+          "path": "descriptions[].position_index",
+          "type": "integer",
+          "description": "Associated position index",
+          "source_section": "Uwagi na fakturze (descriptions)"
+        },
+        {
+          "path": "descriptions[].row_number",
+          "type": "integer",
+          "description": "Display row number",
+          "source_section": "Uwagi na fakturze (descriptions)"
+        },
+        {
+          "path": "settlement_positions[]",
+          "type": "array<object>",
+          "description": "Settlement adjustments applied to the invoice",
+          "source_section": "Rozliczenia na fakturze (settlement_positions)"
+        },
+        {
+          "path": "settlement_positions[].id",
+          "type": "integer",
+          "description": "Settlement position ID",
+          "source_section": "Rozliczenia na fakturze (settlement_positions)"
+        },
+        {
+          "path": "settlement_positions[]._destroy",
+          "type": "boolean",
+          "description": "Delete the referenced settlement position during update",
+          "source_section": "Rozliczenia na fakturze (settlement_positions)"
+        },
+        {
+          "path": "settlement_positions[].kind",
+          "type": "string",
+          "description": "Settlement kind: charge or deduction",
+          "enum_values": [
+            "charge",
+            "deduction"
+          ],
+          "source_section": "Rozliczenia na fakturze (settlement_positions)"
+        },
+        {
+          "path": "settlement_positions[].amount",
+          "type": "number",
+          "description": "Settlement amount",
+          "source_section": "Rozliczenia na fakturze (settlement_positions)"
+        },
+        {
+          "path": "settlement_positions[].reason",
+          "type": "string",
+          "description": "Settlement reason",
+          "source_section": "Rozliczenia na fakturze (settlement_positions)"
+        },
+        {
+          "path": "recipients[]",
+          "type": "array<object>",
+          "description": "Additional recipients",
+          "source_section": "Odbiorcy/Wystawcy na fakturze"
+        },
+        {
+          "path": "issuers[]",
+          "type": "array<object>",
+          "description": "Additional issuers",
+          "source_section": "Odbiorcy/Wystawcy na fakturze"
+        },
+        {
+          "path": "recipients[].id",
+          "type": "integer",
+          "description": "Recipient ID",
+          "source_section": "Odbiorcy/Wystawcy na fakturze"
+        },
+        {
+          "path": "recipients[]._destroy",
+          "type": "boolean",
+          "description": "Delete the referenced recipient during update",
+          "source_section": "Odbiorcy/Wystawcy na fakturze"
+        },
+        {
+          "path": "issuers[].id",
+          "type": "integer",
+          "description": "Issuer ID",
+          "source_section": "Odbiorcy/Wystawcy na fakturze"
+        },
+        {
+          "path": "issuers[]._destroy",
+          "type": "boolean",
+          "description": "Delete the referenced issuer during update",
+          "source_section": "Odbiorcy/Wystawcy na fakturze"
+        },
+        {
+          "path": "recipients[].name",
+          "type": "string",
+          "description": "Recipient name",
+          "source_section": "Odbiorcy/Wystawcy na fakturze"
+        },
+        {
+          "path": "recipients[].first_name",
+          "type": "string",
+          "description": "Recipient first name",
+          "source_section": "Odbiorcy/Wystawcy na fakturze"
+        },
+        {
+          "path": "recipients[].last_name",
+          "type": "string",
+          "description": "Recipient last name",
+          "source_section": "Odbiorcy/Wystawcy na fakturze"
+        },
+        {
+          "path": "recipients[].tax_no",
+          "type": "string",
+          "description": "Recipient tax number",
+          "source_section": "Odbiorcy/Wystawcy na fakturze"
+        },
+        {
+          "path": "recipients[].company",
+          "type": "boolean",
+          "description": "Recipient company flag",
+          "source_section": "Odbiorcy/Wystawcy na fakturze"
+        },
+        {
+          "path": "recipients[].country",
+          "type": "string",
+          "description": "Recipient country",
+          "source_section": "Odbiorcy/Wystawcy na fakturze"
+        },
+        {
+          "path": "recipients[].city",
+          "type": "string",
+          "description": "Recipient city",
+          "source_section": "Odbiorcy/Wystawcy na fakturze"
+        },
+        {
+          "path": "recipients[].post_code",
+          "type": "string",
+          "description": "Recipient postal code",
+          "source_section": "Odbiorcy/Wystawcy na fakturze"
+        },
+        {
+          "path": "recipients[].street",
+          "type": "string",
+          "description": "Recipient street",
+          "source_section": "Odbiorcy/Wystawcy na fakturze"
+        },
+        {
+          "path": "recipients[].phone",
+          "type": "string",
+          "description": "Recipient phone",
+          "source_section": "Odbiorcy/Wystawcy na fakturze"
+        },
+        {
+          "path": "recipients[].email",
+          "type": "string",
+          "description": "Recipient email",
+          "source_section": "Odbiorcy/Wystawcy na fakturze"
+        },
+        {
+          "path": "recipients[].note",
+          "type": "string",
+          "description": "Recipient note",
+          "source_section": "Odbiorcy/Wystawcy na fakturze"
+        },
+        {
+          "path": "recipients[].role",
+          "type": "string",
+          "description": "Recipient role",
+          "source_section": "Odbiorcy/Wystawcy na fakturze"
+        },
+        {
+          "path": "issuers[].name",
+          "type": "string",
+          "description": "Issuer name",
+          "source_section": "Odbiorcy/Wystawcy na fakturze"
+        },
+        {
+          "path": "issuers[].email",
+          "type": "string",
+          "description": "Issuer email",
+          "source_section": "Odbiorcy/Wystawcy na fakturze"
+        }
+      ],
+      "notes": [
+        "the CLI accepts the inner invoice object, then wraps it in the upstream {\"invoice\": ...} envelope",
+        "companion CLI flags `--identify-oss`, `--fill-default-descriptions`, and `--correction-positions` are applied outside the inner invoice object",
+        "known_fields is curated from the upstream README and is not exhaustive"
+      ]
+    },
+    "request_body_schema": {
+      "additionalProperties": true,
+      "properties": {
+        "additional_params": {
+          "type": "string"
+        },
+        "advance_creation_mode": {
+          "enum": [
+            "percent",
+            "amount"
+          ],
+          "type": "string"
+        },
+        "advance_value": {
+          "type": "string"
+        },
+        "buyer_city": {
+          "type": "string"
+        },
+        "buyer_country": {
+          "type": "string"
+        },
+        "buyer_email": {
+          "type": "string"
+        },
+        "buyer_name": {
+          "type": "string"
+        },
+        "buyer_override": {
+          "type": "boolean"
+        },
+        "buyer_post_code": {
+          "type": "string"
+        },
+        "buyer_street": {
+          "type": "string"
+        },
+        "buyer_tax_no": {
+          "type": "string"
+        },
+        "client_id": {
+          "type": "integer"
+        },
+        "copy_invoice_from": {
+          "type": "integer"
+        },
+        "correction_reason": {
+          "type": "string"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "department_id": {
+          "type": "integer"
+        },
+        "descriptions": {
+          "items": {
+            "additionalProperties": true,
+            "properties": {
+              "_destroy": {
+                "type": "boolean"
+              },
+              "content": {
+                "type": "string"
+              },
+              "id": {
+                "type": "integer"
+              },
+              "kind": {
+                "type": "string"
+              },
+              "position_index": {
+                "type": "integer"
+              },
+              "row_number": {
+                "type": "integer"
+              }
+            },
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "exclude_from_stock_level": {
+          "type": "boolean"
+        },
+        "from_invoice_id": {
+          "type": "integer"
+        },
+        "income": {
+          "enum": [
+            "1",
+            "0"
+          ],
+          "type": "string"
+        },
+        "invoice_id": {
+          "type": "integer"
+        },
+        "invoice_ids": {
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "issue_date": {
+          "type": "string"
+        },
+        "issuers": {
+          "items": {
+            "additionalProperties": true,
+            "properties": {
+              "_destroy": {
+                "type": "boolean"
+              },
+              "email": {
+                "type": "string"
+              },
+              "id": {
+                "type": "integer"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "kind": {
+          "enum": [
+            "vat",
+            "proforma",
+            "bill",
+            "receipt",
+            "advance",
+            "final",
+            "correction",
+            "invoice_other",
+            "vat_margin",
+            "kp",
+            "kw",
+            "estimate",
+            "vat_mp",
+            "vat_rr",
+            "correction_note",
+            "accounting_note"
+          ],
+          "type": "string"
+        },
+        "number": {
+          "type": "string"
+        },
+        "payment_to": {
+          "type": "string"
+        },
+        "payment_to_kind": {
+          "type": "integer"
+        },
+        "payment_type": {
+          "enum": [
+            "transfer",
+            "card",
+            "cash",
+            "barter",
+            "cheque",
+            "bill_of_exchange",
+            "cash_on_delivery",
+            "compensation",
+            "letter_of_credit",
+            "payu",
+            "paypal",
+            "off"
+          ],
+          "type": "string"
+        },
+        "position_name": {
+          "type": "string"
+        },
+        "positions": {
+          "items": {
+            "additionalProperties": true,
+            "properties": {
+              "_destroy": {
+                "type": "boolean"
+              },
+              "code": {
+                "type": "string"
+              },
+              "correction_after_attributes": {
+                "additionalProperties": true,
+                "properties": {},
+                "type": "object"
+              },
+              "correction_before_attributes": {
+                "additionalProperties": true,
+                "properties": {},
+                "type": "object"
+              },
+              "id": {
+                "type": "integer"
+              },
+              "kind": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "price_gross": {
+                "type": "number"
+              },
+              "price_net": {
+                "type": "number"
+              },
+              "product_id": {
+                "type": "integer"
+              },
+              "quantity": {
+                "type": "number"
+              },
+              "tax": {
+                "type": "string"
+              },
+              "total_price_gross": {
+                "type": "number"
+              },
+              "total_price_net": {
+                "type": "number"
+              }
+            },
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "price_list_id": {
+          "type": "integer"
+        },
+        "recipient_id": {
+          "type": "integer"
+        },
+        "recipients": {
+          "items": {
+            "additionalProperties": true,
+            "properties": {
+              "_destroy": {
+                "type": "boolean"
+              },
+              "city": {
+                "type": "string"
+              },
+              "company": {
+                "type": "boolean"
+              },
+              "country": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string"
+              },
+              "first_name": {
+                "type": "string"
+              },
+              "id": {
+                "type": "integer"
+              },
+              "last_name": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "note": {
+                "type": "string"
+              },
+              "phone": {
+                "type": "string"
+              },
+              "post_code": {
+                "type": "string"
+              },
+              "role": {
+                "type": "string"
+              },
+              "street": {
+                "type": "string"
+              },
+              "tax_no": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "sell_date": {
+          "type": "string"
+        },
+        "seller_country": {
+          "type": "string"
+        },
+        "seller_name": {
+          "type": "string"
+        },
+        "seller_tax_no": {
+          "type": "string"
+        },
+        "settlement_positions": {
+          "items": {
+            "additionalProperties": true,
+            "properties": {
+              "_destroy": {
+                "type": "boolean"
+              },
+              "amount": {
+                "type": "number"
+              },
+              "id": {
+                "type": "integer"
+              },
+              "kind": {
+                "enum": [
+                  "charge",
+                  "deduction"
+                ],
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "show_attachments": {
+          "type": "boolean"
+        },
+        "use_oss": {
+          "type": "boolean"
+        },
+        "use_prices_from_price_lists": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "envelope_schema": {
+      "properties": {
+        "data": {
+          "additionalProperties": true,
+          "properties": {
+            "buyer_email": {
+              "type": "string"
+            },
+            "buyer_name": {
+              "type": "string"
+            },
+            "buyer_tax_no": {
+              "type": "string"
+            },
+            "cancel_reason": {
+              "type": "string"
+            },
+            "connected_payments": {
+              "items": {
+                "additionalProperties": true,
+                "properties": {},
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "corrected_content_after": {
+              "type": "string"
+            },
+            "corrected_content_before": {
+              "type": "string"
+            },
+            "correction_reason": {
+              "type": "string"
+            },
+            "currency": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            },
+            "descriptions": {
+              "items": {
+                "additionalProperties": true,
+                "properties": {
+                  "content": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "integer"
+                  },
+                  "kind": {
+                    "type": "string"
+                  },
+                  "position_index": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  },
+                  "row_number": {
+                    "type": "integer"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "from_invoice_id": {
+              "type": "integer"
+            },
+            "id": {
+              "type": "integer"
+            },
+            "income": {
+              "enum": [
+                "1",
+                "0"
+              ],
+              "type": "string"
+            },
+            "invoice_id": {
+              "type": "integer"
+            },
+            "issue_date": {
+              "type": "string"
+            },
+            "issuers": {
+              "items": {
+                "additionalProperties": true,
+                "properties": {
+                  "email": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "integer"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "kind": {
+              "enum": [
+                "vat",
+                "proforma",
+                "bill",
+                "receipt",
+                "advance",
+                "final",
+                "correction",
+                "invoice_other",
+                "vat_margin",
+                "kp",
+                "kw",
+                "estimate",
+                "vat_mp",
+                "vat_rr",
+                "correction_note",
+                "accounting_note"
+              ],
+              "type": "string"
+            },
+            "number": {
+              "type": "string"
+            },
+            "payment_to": {
+              "type": "string"
+            },
+            "payment_type": {
+              "enum": [
+                "transfer",
+                "card",
+                "cash",
+                "barter",
+                "cheque",
+                "bill_of_exchange",
+                "cash_on_delivery",
+                "compensation",
+                "letter_of_credit",
+                "payu",
+                "paypal",
+                "off"
+              ],
+              "type": "string"
+            },
+            "positions": {
+              "items": {
+                "additionalProperties": true,
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "correction_after_attributes": {
+                    "additionalProperties": true,
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "quantity": {
+                        "type": "number"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "correction_before_attributes": {
+                    "additionalProperties": true,
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "quantity": {
+                        "type": "number"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "gtu_code": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "integer"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "price_gross": {
+                    "type": "number"
+                  },
+                  "price_net": {
+                    "type": "number"
+                  },
+                  "product_id": {
+                    "type": "integer"
+                  },
+                  "quantity": {
+                    "type": "number"
+                  },
+                  "tax": {
+                    "type": "string"
+                  },
+                  "total_price_gross": {
+                    "type": "number"
+                  },
+                  "total_price_net": {
+                    "type": "number"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "price_gross": {
+              "type": "number"
+            },
+            "price_net": {
+              "type": "number"
+            },
+            "recipients": {
+              "items": {
+                "additionalProperties": true,
+                "properties": {
+                  "city": {
+                    "type": "string"
+                  },
+                  "company": {
+                    "type": "boolean"
+                  },
+                  "country": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "first_name": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "integer"
+                  },
+                  "last_name": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "note": {
+                    "type": "string"
+                  },
+                  "phone": {
+                    "type": "string"
+                  },
+                  "post_code": {
+                    "type": "string"
+                  },
+                  "role": {
+                    "type": "string"
+                  },
+                  "street": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "sale_date": {
+              "type": "string"
+            },
+            "seller_name": {
+              "type": "string"
+            },
+            "seller_tax_no": {
+              "type": "string"
+            },
+            "settlement_positions": {
+              "items": {
+                "additionalProperties": true,
+                "properties": {
+                  "amount": {
+                    "type": "number"
+                  },
+                  "id": {
+                    "type": "integer"
+                  },
+                  "kind": {
+                    "type": "string"
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "status": {
+              "enum": [
+                "issued",
+                "sent",
+                "paid",
+                "partial",
+                "rejected"
+              ],
+              "type": "string"
+            },
+            "token": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "errors": {
+          "items": {
+            "$defs": {
+              "ErrorDetail": {
+                "properties": {
+                  "class": {
+                    "type": "string"
+                  },
+                  "code": {
+                    "type": "string"
+                  },
+                  "hint": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "retryable": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "class",
+                  "code",
+                  "message",
+                  "retryable"
+                ],
+                "type": "object"
+              }
+            },
+            "$id": "https://github.com/sixers/fakturownia-cli/internal/output/error-detail",
+            "$ref": "#/$defs/ErrorDetail",
+            "$schema": "https://json-schema.org/draft/2020-12/schema"
+          },
+          "type": "array"
+        },
+        "meta": {
+          "$defs": {
+            "Meta": {
+              "properties": {
+                "command": {
+                  "type": "string"
+                },
+                "duration_ms": {
+                  "type": "integer"
+                },
+                "pagination": {
+                  "$ref": "#/$defs/Pagination"
+                },
+                "profile": {
+                  "type": "string"
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "command",
+                "duration_ms"
+              ],
+              "type": "object"
+            },
+            "Pagination": {
+              "properties": {
+                "has_next": {
+                  "type": "boolean"
+                },
+                "page": {
+                  "type": "integer"
+                },
+                "per_page": {
+                  "type": "integer"
+                },
+                "returned": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "page",
+                "per_page",
+                "returned",
+                "has_next"
+              ],
+              "type": "object"
+            }
+          },
+          "$id": "https://github.com/sixers/fakturownia-cli/internal/output/meta",
+          "$ref": "#/$defs/Meta",
+          "$schema": "https://json-schema.org/draft/2020-12/schema"
+        },
+        "schema_version": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "success",
+            "error"
+          ],
+          "type": "string"
+        },
+        "warnings": {
+          "items": {
+            "$defs": {
+              "WarningDetail": {
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "message"
+                ],
+                "type": "object"
+              }
+            },
+            "$id": "https://github.com/sixers/fakturownia-cli/internal/output/warning-detail",
+            "$ref": "#/$defs/WarningDetail",
+            "$schema": "https://json-schema.org/draft/2020-12/schema"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "schema_version",
+        "status",
+        "data",
+        "errors",
+        "warnings",
+        "meta"
+      ],
+      "type": "object"
+    },
+    "output": {
+      "shape": "object",
+      "open_ended": true,
+      "catalog_basis": {
+        "source": "readme",
+        "url": "https://github.com/fakturownia/API/blob/master/README.md"
+      },
+      "path_syntax": "dot_bracket",
+      "known_fields": [
+        {
+          "path": "id",
+          "type": "integer",
+          "description": "Invoice ID",
+          "projectable": true,
+          "selectable": true,
+          "default_column": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "common",
+          "source_section": "Faktury - przykłady wywołania"
+        },
+        {
+          "path": "number",
+          "type": "string",
+          "description": "Invoice number",
+          "projectable": true,
+          "selectable": true,
+          "default_column": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "common",
+          "source_section": "Faktury - przykłady wywołania"
+        },
+        {
+          "path": "token",
+          "type": "string",
+          "description": "Public invoice token used to derive view and PDF links",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "source_section": "Link do podglądu faktury i pobieranie do PDF"
+        },
+        {
+          "path": "kind",
+          "type": "string",
+          "description": "Invoice kind",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "common",
+          "source_section": "Faktury - specyfikacja, rodzaje pól, kody GTU",
+          "enum_values": [
+            "vat",
+            "proforma",
+            "bill",
+            "receipt",
+            "advance",
+            "final",
+            "correction",
+            "invoice_other",
+            "vat_margin",
+            "kp",
+            "kw",
+            "estimate",
+            "vat_mp",
+            "vat_rr",
+            "correction_note",
+            "accounting_note"
+          ]
+        },
+        {
+          "path": "status",
+          "type": "string",
+          "description": "Invoice status",
+          "projectable": true,
+          "selectable": true,
+          "default_column": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "common",
+          "source_section": "Faktury - specyfikacja, rodzaje pól, kody GTU",
+          "enum_values": [
+            "issued",
+            "sent",
+            "paid",
+            "partial",
+            "rejected"
+          ]
+        },
+        {
+          "path": "issue_date",
+          "type": "string",
+          "description": "Invoice issue date",
+          "projectable": true,
+          "selectable": true,
+          "default_column": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "common",
+          "source_section": "Pobranie listy faktur z aktualnego miesiąca"
+        },
+        {
+          "path": "sale_date",
+          "type": "string",
+          "description": "Invoice sale date",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "common",
+          "source_section": "Pobranie faktury po ID"
+        },
+        {
+          "path": "payment_to",
+          "type": "string",
+          "description": "Payment due date",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "common",
+          "source_section": "Faktury - specyfikacja, rodzaje pól, kody GTU"
+        },
+        {
+          "path": "payment_type",
+          "type": "string",
+          "description": "Payment type",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "common",
+          "source_section": "Faktury - specyfikacja, rodzaje pól, kody GTU",
+          "enum_values": [
+            "transfer",
+            "card",
+            "cash",
+            "barter",
+            "cheque",
+            "bill_of_exchange",
+            "cash_on_delivery",
+            "compensation",
+            "letter_of_credit",
+            "payu",
+            "paypal",
+            "off"
+          ]
+        },
+        {
+          "path": "currency",
+          "type": "string",
+          "description": "Invoice currency",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "common",
+          "source_section": "Faktury - specyfikacja, rodzaje pól, kody GTU"
+        },
+        {
+          "path": "price_net",
+          "type": "number",
+          "description": "Net invoice total",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "common",
+          "source_section": "Pobranie faktury po ID"
+        },
+        {
+          "path": "price_gross",
+          "type": "number",
+          "description": "Gross invoice total",
+          "projectable": true,
+          "selectable": true,
+          "default_column": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "common",
+          "source_section": "Pobranie listy faktur z aktualnego miesiąca"
+        },
+        {
+          "path": "income",
+          "type": "string",
+          "description": "Income selector",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "common",
+          "source_section": "Faktury - specyfikacja, rodzaje pól, kody GTU",
+          "enum_values": [
+            "1",
+            "0"
+          ]
+        },
+        {
+          "path": "buyer_name",
+          "type": "string",
+          "description": "Buyer display name",
+          "projectable": true,
+          "selectable": true,
+          "default_column": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "common",
+          "source_section": "Faktury - specyfikacja, rodzaje pól, kody GTU"
+        },
+        {
+          "path": "buyer_tax_no",
+          "type": "string",
+          "description": "Buyer tax number",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "common",
+          "source_section": "Faktury - specyfikacja, rodzaje pól, kody GTU"
+        },
+        {
+          "path": "buyer_email",
+          "type": "string",
+          "description": "Buyer email address",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "common",
+          "source_section": "Faktury - specyfikacja, rodzaje pól, kody GTU"
+        },
+        {
+          "path": "seller_name",
+          "type": "string",
+          "description": "Seller display name",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "common",
+          "source_section": "Faktury - specyfikacja, rodzaje pól, kody GTU"
+        },
+        {
+          "path": "seller_tax_no",
+          "type": "string",
+          "description": "Seller tax number",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "common",
+          "source_section": "Faktury - specyfikacja, rodzaje pól, kody GTU"
+        },
+        {
+          "path": "invoice_id",
+          "type": "integer",
+          "description": "Linked source invoice ID",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "source_section": "Dodanie nowej faktury korygującej"
+        },
+        {
+          "path": "from_invoice_id",
+          "type": "integer",
+          "description": "Source invoice or receipt ID",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "source_section": "Dodawanie faktury do istniejącego paragonu"
+        },
+        {
+          "path": "correction_reason",
+          "type": "string",
+          "description": "Correction or cancellation reason",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "source_section": "Dodanie nowej faktury korygującej"
+        },
+        {
+          "path": "cancel_reason",
+          "type": "string",
+          "description": "Cancellation reason returned when requested through additional_fields",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice get --additional-field cancel_reason"
+          ],
+          "source_section": "Anulowanie faktury"
+        },
+        {
+          "path": "corrected_content_before",
+          "type": "string",
+          "description": "Correction content before change",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice get --additional-field corrected_content_before"
+          ],
+          "source_section": "Faktura korekta"
+        },
+        {
+          "path": "corrected_content_after",
+          "type": "string",
+          "description": "Correction content after change",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice get --additional-field corrected_content_after"
+          ],
+          "source_section": "Faktura korekta"
+        },
+        {
+          "path": "connected_payments[]",
+          "type": "array<object>",
+          "description": "Payments connected to the invoice",
+          "projectable": true,
+          "selectable": false,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice get --additional-field connected_payments"
+          ],
+          "source_section": "Pobranie faktury razem z połączonymi płatnościami"
+        },
+        {
+          "path": "description",
+          "type": "string",
+          "description": "First invoice note content",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "source_section": "Uwagi na fakturze (descriptions)"
+        },
+        {
+          "path": "positions[]",
+          "type": "array<object>",
+          "description": "Invoice positions array",
+          "projectable": true,
+          "selectable": false,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice list --include-positions"
+          ],
+          "source_section": "Pobranie listy faktur wraz z ich pozycjami"
+        },
+        {
+          "path": "positions[].id",
+          "type": "integer",
+          "description": "Invoice position ID",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes positions"
+          ],
+          "source_section": "Aktualizacja pozycji na fakturze"
+        },
+        {
+          "path": "positions[].product_id",
+          "type": "integer",
+          "description": "Referenced product ID",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes positions"
+          ],
+          "source_section": "Dodanie nowej faktury - minimalna wersja"
+        },
+        {
+          "path": "positions[].name",
+          "type": "string",
+          "description": "Invoice position name",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice list --include-positions"
+          ],
+          "source_section": "Pobranie listy faktur wraz z ich pozycjami"
+        },
+        {
+          "path": "positions[].quantity",
+          "type": "number",
+          "description": "Invoice position quantity",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice list --include-positions"
+          ],
+          "source_section": "Faktury - specyfikacja, rodzaje pól, kody GTU"
+        },
+        {
+          "path": "positions[].tax",
+          "type": "string",
+          "description": "Invoice position tax rate",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice list --include-positions"
+          ],
+          "source_section": "Faktury - specyfikacja, rodzaje pól, kody GTU"
+        },
+        {
+          "path": "positions[].price_net",
+          "type": "number",
+          "description": "Invoice position net price",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes positions"
+          ],
+          "source_section": "Faktury - specyfikacja, rodzaje pól, kody GTU"
+        },
+        {
+          "path": "positions[].price_gross",
+          "type": "number",
+          "description": "Invoice position gross price",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes positions"
+          ],
+          "source_section": "Faktury - specyfikacja, rodzaje pól, kody GTU"
+        },
+        {
+          "path": "positions[].total_price_net",
+          "type": "number",
+          "description": "Invoice position net total",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes positions"
+          ],
+          "source_section": "Faktury - specyfikacja, rodzaje pól, kody GTU"
+        },
+        {
+          "path": "positions[].total_price_gross",
+          "type": "number",
+          "description": "Invoice position gross total",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice list --include-positions"
+          ],
+          "source_section": "Pobranie listy faktur wraz z ich pozycjami"
+        },
+        {
+          "path": "positions[].description",
+          "type": "string",
+          "description": "Invoice position description",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes positions"
+          ],
+          "source_section": "Faktury - specyfikacja, rodzaje pól, kody GTU"
+        },
+        {
+          "path": "positions[].code",
+          "type": "string",
+          "description": "Invoice position product code",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes positions"
+          ],
+          "source_section": "Faktury - specyfikacja, rodzaje pól, kody GTU"
+        },
+        {
+          "path": "positions[].gtu_code",
+          "type": "string",
+          "description": "Invoice position GTU code",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes positions"
+          ],
+          "source_section": "Faktury - kody GTU"
+        },
+        {
+          "path": "positions[].correction_before_attributes",
+          "type": "object",
+          "description": "Correction values before the change",
+          "projectable": true,
+          "selectable": false,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice correction positions"
+          ],
+          "source_section": "Dodanie nowej faktury korygującej"
+        },
+        {
+          "path": "positions[].correction_before_attributes.name",
+          "type": "string",
+          "description": "Corrected item name before change",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice correction positions"
+          ],
+          "source_section": "Dodanie nowej faktury korygującej"
+        },
+        {
+          "path": "positions[].correction_before_attributes.quantity",
+          "type": "number",
+          "description": "Corrected item quantity before change",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice correction positions"
+          ],
+          "source_section": "Dodanie nowej faktury korygującej"
+        },
+        {
+          "path": "positions[].correction_after_attributes",
+          "type": "object",
+          "description": "Correction values after the change",
+          "projectable": true,
+          "selectable": false,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice correction positions"
+          ],
+          "source_section": "Dodanie nowej faktury korygującej"
+        },
+        {
+          "path": "positions[].correction_after_attributes.name",
+          "type": "string",
+          "description": "Corrected item name after change",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice correction positions"
+          ],
+          "source_section": "Dodanie nowej faktury korygującej"
+        },
+        {
+          "path": "positions[].correction_after_attributes.quantity",
+          "type": "number",
+          "description": "Corrected item quantity after change",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice correction positions"
+          ],
+          "source_section": "Dodanie nowej faktury korygującej"
+        },
+        {
+          "path": "descriptions[]",
+          "type": "array<object>",
+          "description": "Structured invoice notes",
+          "projectable": true,
+          "selectable": false,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice get --include descriptions"
+          ],
+          "source_section": "Uwagi na fakturze (descriptions)"
+        },
+        {
+          "path": "descriptions[].id",
+          "type": "integer",
+          "description": "Structured note ID",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice get --include descriptions"
+          ],
+          "source_section": "Uwagi na fakturze (descriptions)"
+        },
+        {
+          "path": "descriptions[].kind",
+          "type": "string",
+          "description": "Structured note heading",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice get --include descriptions"
+          ],
+          "source_section": "Uwagi na fakturze (descriptions)"
+        },
+        {
+          "path": "descriptions[].content",
+          "type": "string",
+          "description": "Structured note content",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice get --include descriptions"
+          ],
+          "source_section": "Uwagi na fakturze (descriptions)"
+        },
+        {
+          "path": "descriptions[].position_index",
+          "type": "integer|null",
+          "description": "Structured note position index",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice get --include descriptions"
+          ],
+          "source_section": "Uwagi na fakturze (descriptions)"
+        },
+        {
+          "path": "descriptions[].row_number",
+          "type": "integer",
+          "description": "Structured note row number",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice get --include descriptions"
+          ],
+          "source_section": "Uwagi na fakturze (descriptions)"
+        },
+        {
+          "path": "recipients[]",
+          "type": "array<object>",
+          "description": "Invoice recipients array",
+          "projectable": true,
+          "selectable": false,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes recipients"
+          ],
+          "source_section": "Odbiorcy/Wystawcy na fakturze"
+        },
+        {
+          "path": "recipients[].id",
+          "type": "integer",
+          "description": "Recipient ID",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes recipients"
+          ],
+          "source_section": "Odbiorcy/Wystawcy na fakturze"
+        },
+        {
+          "path": "recipients[].name",
+          "type": "string",
+          "description": "Recipient name",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes recipients"
+          ],
+          "source_section": "Odbiorcy/Wystawcy na fakturze"
+        },
+        {
+          "path": "recipients[].first_name",
+          "type": "string",
+          "description": "Recipient first name",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes recipients"
+          ],
+          "source_section": "Odbiorcy/Wystawcy na fakturze"
+        },
+        {
+          "path": "recipients[].last_name",
+          "type": "string",
+          "description": "Recipient last name",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes recipients"
+          ],
+          "source_section": "Odbiorcy/Wystawcy na fakturze"
+        },
+        {
+          "path": "recipients[].company",
+          "type": "boolean",
+          "description": "Recipient company flag",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes recipients"
+          ],
+          "source_section": "Odbiorcy/Wystawcy na fakturze"
+        },
+        {
+          "path": "recipients[].country",
+          "type": "string",
+          "description": "Recipient country",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes recipients"
+          ],
+          "source_section": "Odbiorcy/Wystawcy na fakturze"
+        },
+        {
+          "path": "recipients[].city",
+          "type": "string",
+          "description": "Recipient city",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes recipients"
+          ],
+          "source_section": "Odbiorcy/Wystawcy na fakturze"
+        },
+        {
+          "path": "recipients[].post_code",
+          "type": "string",
+          "description": "Recipient postal code",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes recipients"
+          ],
+          "source_section": "Odbiorcy/Wystawcy na fakturze"
+        },
+        {
+          "path": "recipients[].street",
+          "type": "string",
+          "description": "Recipient street",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes recipients"
+          ],
+          "source_section": "Odbiorcy/Wystawcy na fakturze"
+        },
+        {
+          "path": "recipients[].phone",
+          "type": "string",
+          "description": "Recipient phone number",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes recipients"
+          ],
+          "source_section": "Odbiorcy/Wystawcy na fakturze"
+        },
+        {
+          "path": "recipients[].email",
+          "type": "string",
+          "description": "Recipient email address",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes recipients"
+          ],
+          "source_section": "Odbiorcy/Wystawcy na fakturze"
+        },
+        {
+          "path": "recipients[].note",
+          "type": "string",
+          "description": "Recipient note",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes recipients"
+          ],
+          "source_section": "Odbiorcy/Wystawcy na fakturze"
+        },
+        {
+          "path": "recipients[].role",
+          "type": "string",
+          "description": "Recipient role",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes recipients"
+          ],
+          "source_section": "Odbiorcy/Wystawcy na fakturze"
+        },
+        {
+          "path": "issuers[]",
+          "type": "array<object>",
+          "description": "Invoice issuers array",
+          "projectable": true,
+          "selectable": false,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes issuers"
+          ],
+          "source_section": "Odbiorcy/Wystawcy na fakturze"
+        },
+        {
+          "path": "issuers[].id",
+          "type": "integer",
+          "description": "Issuer ID",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes issuers"
+          ],
+          "source_section": "Odbiorcy/Wystawcy na fakturze"
+        },
+        {
+          "path": "issuers[].name",
+          "type": "string",
+          "description": "Issuer name",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes issuers"
+          ],
+          "source_section": "Odbiorcy/Wystawcy na fakturze"
+        },
+        {
+          "path": "issuers[].email",
+          "type": "string",
+          "description": "Issuer email address",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes issuers"
+          ],
+          "source_section": "Odbiorcy/Wystawcy na fakturze"
+        },
+        {
+          "path": "settlement_positions[]",
+          "type": "array<object>",
+          "description": "Invoice settlement positions",
+          "projectable": true,
+          "selectable": false,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes settlement_positions"
+          ],
+          "source_section": "Rozliczenia na fakturze (settlement_positions)"
+        },
+        {
+          "path": "settlement_positions[].id",
+          "type": "integer",
+          "description": "Settlement position ID",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes settlement_positions"
+          ],
+          "source_section": "Rozliczenia na fakturze (settlement_positions)"
+        },
+        {
+          "path": "settlement_positions[].kind",
+          "type": "string",
+          "description": "Settlement position kind",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes settlement_positions"
+          ],
+          "source_section": "Rozliczenia na fakturze (settlement_positions)"
+        },
+        {
+          "path": "settlement_positions[].amount",
+          "type": "number",
+          "description": "Settlement position amount",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes settlement_positions"
+          ],
+          "source_section": "Rozliczenia na fakturze (settlement_positions)"
+        },
+        {
+          "path": "settlement_positions[].reason",
+          "type": "string",
+          "description": "Settlement position reason",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice create"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes settlement_positions"
+          ],
+          "source_section": "Rozliczenia na fakturze (settlement_positions)"
+        }
+      ],
+      "default_columns": [
+        "id",
+        "number",
+        "issue_date",
+        "buyer_name",
+        "price_gross",
+        "status"
+      ],
+      "notes": [
+        "known_fields is curated from the upstream README and is not exhaustive",
+        "unknown upstream fields may still appear in data and can still be selected when the path syntax is valid"
+      ]
+    }
+  },
+  "errors": [],
+  "warnings": null,
+  "meta": {
+    "command": "schema invoice create",
+    "duration_ms": 0
+  }
+}

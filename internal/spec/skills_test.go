@@ -39,6 +39,9 @@ func TestGeneratedSkillFilesMatchGolden(t *testing.T) {
 		filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "clients", "SKILL.md")),
 		filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "products", "SKILL.md")),
 		filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "invoices", "SKILL.md")),
+		filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "recurrings", "SKILL.md")),
+		recipeIndexPath(),
+		recipePath(Recipes()[0]),
 		docsSkillsPath(),
 	}
 
@@ -89,6 +92,9 @@ func TestRootSkillReferencesIndexAndShared(t *testing.T) {
 	if !strings.Contains(root, "subskills/shared/SKILL.md") {
 		t.Fatalf("expected root skill to reference shared skill: %s", root)
 	}
+	if !strings.Contains(root, "recipes/index.md") {
+		t.Fatalf("expected root skill to reference recipes index: %s", root)
+	}
 }
 
 func TestInvoicesSkillIncludesOutputDiscovery(t *testing.T) {
@@ -137,6 +143,29 @@ func TestClientsSkillIncludesRequestDiscovery(t *testing.T) {
 	}
 }
 
+func TestRecurringsSkillIncludesRequestDiscovery(t *testing.T) {
+	t.Parallel()
+
+	files, err := RenderSkillFiles()
+	if err != nil {
+		t.Fatalf("RenderSkillFiles() error = %v", err)
+	}
+	byPath := generatedFileMap(files)
+
+	recurrings := byPath[filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "recurrings", "SKILL.md"))]
+	want := []string{
+		"fakturownia schema recurring list --json",
+		"fakturownia schema recurring create --json",
+		"request_body_schema",
+		"`--input` accepts inline JSON, `@file`, or `-` for stdin",
+	}
+	for _, needle := range want {
+		if !strings.Contains(recurrings, needle) {
+			t.Fatalf("expected recurrings skill to include %q: %s", needle, recurrings)
+		}
+	}
+}
+
 func TestProductsSkillIncludesRequestDiscovery(t *testing.T) {
 	t.Parallel()
 
@@ -178,6 +207,29 @@ func TestSharedSkillIncludesSelfUpdateGuidance(t *testing.T) {
 	for _, needle := range want {
 		if !strings.Contains(shared, needle) {
 			t.Fatalf("expected shared skill to include %q: %s", needle, shared)
+		}
+	}
+}
+
+func TestRecipeIndexIncludesInvoiceAndRecurringRecipes(t *testing.T) {
+	t.Parallel()
+
+	files, err := RenderSkillFiles()
+	if err != nil {
+		t.Fatalf("RenderSkillFiles() error = %v", err)
+	}
+	byPath := generatedFileMap(files)
+
+	index := byPath[recipeIndexPath()]
+	want := []string{
+		"fakturownia-invoice-minimal",
+		"fakturownia-recurring-definition",
+		"Create a minimal invoice when you already know the client and product IDs.",
+		"Manage recurring invoice definitions through the dedicated recurring noun.",
+	}
+	for _, needle := range want {
+		if !strings.Contains(index, needle) {
+			t.Fatalf("expected recipe index to include %q: %s", needle, index)
 		}
 	}
 }

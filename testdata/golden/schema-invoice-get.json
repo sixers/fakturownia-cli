@@ -98,6 +98,26 @@
         "type": "string",
         "description": "Invoice ID",
         "required": true
+      },
+      {
+        "name": "include",
+        "type": "string[]",
+        "description": "Request upstream invoice includes such as descriptions",
+        "required": false,
+        "repeatable": true
+      },
+      {
+        "name": "additional-field",
+        "type": "string[]",
+        "description": "Request additional upstream invoice fields such as cancel_reason, corrected_content_before, corrected_content_after, or connected_payments",
+        "required": false,
+        "repeatable": true
+      },
+      {
+        "name": "correction-positions",
+        "type": "string",
+        "description": "Request correction position details such as full",
+        "required": false
       }
     ],
     "env_vars": [
@@ -159,6 +179,9 @@
     "raw_supported": true,
     "examples": [
       "fakturownia invoice get --id 123",
+      "fakturownia invoice get --id 123 --additional-field cancel_reason --json",
+      "fakturownia invoice get --id 123 --include descriptions --fields descriptions[].content --json",
+      "fakturownia invoice get --id 123 --correction-positions full --json",
       "fakturownia invoice get --id 123 --fields id,number,status --json",
       "fakturownia invoice get --id 123 --fields number,positions[].name --json",
       "fakturownia invoice get --id 123 --raw"
@@ -173,6 +196,26 @@
           "type": "string"
         },
         "buyer_tax_no": {
+          "type": "string"
+        },
+        "cancel_reason": {
+          "type": "string"
+        },
+        "connected_payments": {
+          "items": {
+            "additionalProperties": true,
+            "properties": {},
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "corrected_content_after": {
+          "type": "string"
+        },
+        "corrected_content_before": {
+          "type": "string"
+        },
+        "correction_reason": {
           "type": "string"
         },
         "currency": {
@@ -208,6 +251,9 @@
           },
           "type": "array"
         },
+        "from_invoice_id": {
+          "type": "integer"
+        },
         "id": {
           "type": "integer"
         },
@@ -218,6 +264,9 @@
           ],
           "type": "string"
         },
+        "invoice_id": {
+          "type": "integer"
+        },
         "issue_date": {
           "type": "string"
         },
@@ -227,6 +276,9 @@
             "properties": {
               "email": {
                 "type": "string"
+              },
+              "id": {
+                "type": "integer"
               },
               "name": {
                 "type": "string"
@@ -287,11 +339,38 @@
               "code": {
                 "type": "string"
               },
+              "correction_after_attributes": {
+                "additionalProperties": true,
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "quantity": {
+                    "type": "number"
+                  }
+                },
+                "type": "object"
+              },
+              "correction_before_attributes": {
+                "additionalProperties": true,
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "quantity": {
+                    "type": "number"
+                  }
+                },
+                "type": "object"
+              },
               "description": {
                 "type": "string"
               },
               "gtu_code": {
                 "type": "string"
+              },
+              "id": {
+                "type": "integer"
               },
               "name": {
                 "type": "string"
@@ -301,6 +380,9 @@
               },
               "price_net": {
                 "type": "number"
+              },
+              "product_id": {
+                "type": "integer"
               },
               "quantity": {
                 "type": "number"
@@ -329,13 +411,43 @@
           "items": {
             "additionalProperties": true,
             "properties": {
+              "city": {
+                "type": "string"
+              },
+              "company": {
+                "type": "boolean"
+              },
+              "country": {
+                "type": "string"
+              },
               "email": {
+                "type": "string"
+              },
+              "first_name": {
+                "type": "string"
+              },
+              "id": {
+                "type": "integer"
+              },
+              "last_name": {
                 "type": "string"
               },
               "name": {
                 "type": "string"
               },
+              "note": {
+                "type": "string"
+              },
               "phone": {
+                "type": "string"
+              },
+              "post_code": {
+                "type": "string"
+              },
+              "role": {
+                "type": "string"
+              },
+              "street": {
                 "type": "string"
               }
             },
@@ -359,10 +471,13 @@
               "amount": {
                 "type": "number"
               },
-              "description": {
-                "type": "string"
+              "id": {
+                "type": "integer"
               },
               "kind": {
+                "type": "string"
+              },
+              "reason": {
                 "type": "string"
               }
             },
@@ -378,6 +493,9 @@
             "partial",
             "rejected"
           ],
+          "type": "string"
+        },
+        "token": {
           "type": "string"
         }
       },
@@ -395,6 +513,26 @@
               "type": "string"
             },
             "buyer_tax_no": {
+              "type": "string"
+            },
+            "cancel_reason": {
+              "type": "string"
+            },
+            "connected_payments": {
+              "items": {
+                "additionalProperties": true,
+                "properties": {},
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "corrected_content_after": {
+              "type": "string"
+            },
+            "corrected_content_before": {
+              "type": "string"
+            },
+            "correction_reason": {
               "type": "string"
             },
             "currency": {
@@ -430,6 +568,9 @@
               },
               "type": "array"
             },
+            "from_invoice_id": {
+              "type": "integer"
+            },
             "id": {
               "type": "integer"
             },
@@ -440,6 +581,9 @@
               ],
               "type": "string"
             },
+            "invoice_id": {
+              "type": "integer"
+            },
             "issue_date": {
               "type": "string"
             },
@@ -449,6 +593,9 @@
                 "properties": {
                   "email": {
                     "type": "string"
+                  },
+                  "id": {
+                    "type": "integer"
                   },
                   "name": {
                     "type": "string"
@@ -509,11 +656,38 @@
                   "code": {
                     "type": "string"
                   },
+                  "correction_after_attributes": {
+                    "additionalProperties": true,
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "quantity": {
+                        "type": "number"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "correction_before_attributes": {
+                    "additionalProperties": true,
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "quantity": {
+                        "type": "number"
+                      }
+                    },
+                    "type": "object"
+                  },
                   "description": {
                     "type": "string"
                   },
                   "gtu_code": {
                     "type": "string"
+                  },
+                  "id": {
+                    "type": "integer"
                   },
                   "name": {
                     "type": "string"
@@ -523,6 +697,9 @@
                   },
                   "price_net": {
                     "type": "number"
+                  },
+                  "product_id": {
+                    "type": "integer"
                   },
                   "quantity": {
                     "type": "number"
@@ -551,13 +728,43 @@
               "items": {
                 "additionalProperties": true,
                 "properties": {
+                  "city": {
+                    "type": "string"
+                  },
+                  "company": {
+                    "type": "boolean"
+                  },
+                  "country": {
+                    "type": "string"
+                  },
                   "email": {
+                    "type": "string"
+                  },
+                  "first_name": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "integer"
+                  },
+                  "last_name": {
                     "type": "string"
                   },
                   "name": {
                     "type": "string"
                   },
+                  "note": {
+                    "type": "string"
+                  },
                   "phone": {
+                    "type": "string"
+                  },
+                  "post_code": {
+                    "type": "string"
+                  },
+                  "role": {
+                    "type": "string"
+                  },
+                  "street": {
                     "type": "string"
                   }
                 },
@@ -581,10 +788,13 @@
                   "amount": {
                     "type": "number"
                   },
-                  "description": {
-                    "type": "string"
+                  "id": {
+                    "type": "integer"
                   },
                   "kind": {
+                    "type": "string"
+                  },
+                  "reason": {
                     "type": "string"
                   }
                 },
@@ -600,6 +810,9 @@
                 "partial",
                 "rejected"
               ],
+              "type": "string"
+            },
+            "token": {
               "type": "string"
             }
           },
@@ -758,7 +971,6 @@
           "selectable": true,
           "default_column": true,
           "commands": [
-            "invoice list",
             "invoice get"
           ],
           "presence": "common",
@@ -772,11 +984,22 @@
           "selectable": true,
           "default_column": true,
           "commands": [
-            "invoice list",
             "invoice get"
           ],
           "presence": "common",
           "source_section": "Faktury - przykłady wywołania"
+        },
+        {
+          "path": "token",
+          "type": "string",
+          "description": "Public invoice token used to derive view and PDF links",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "source_section": "Link do podglądu faktury i pobieranie do PDF"
         },
         {
           "path": "kind",
@@ -785,7 +1008,6 @@
           "projectable": true,
           "selectable": true,
           "commands": [
-            "invoice list",
             "invoice get"
           ],
           "presence": "common",
@@ -817,7 +1039,6 @@
           "selectable": true,
           "default_column": true,
           "commands": [
-            "invoice list",
             "invoice get"
           ],
           "presence": "common",
@@ -838,7 +1059,6 @@
           "selectable": true,
           "default_column": true,
           "commands": [
-            "invoice list",
             "invoice get"
           ],
           "presence": "common",
@@ -901,7 +1121,6 @@
           "projectable": true,
           "selectable": true,
           "commands": [
-            "invoice list",
             "invoice get"
           ],
           "presence": "common",
@@ -914,7 +1133,6 @@
           "projectable": true,
           "selectable": true,
           "commands": [
-            "invoice list",
             "invoice get"
           ],
           "presence": "common",
@@ -928,7 +1146,6 @@
           "selectable": true,
           "default_column": true,
           "commands": [
-            "invoice list",
             "invoice get"
           ],
           "presence": "common",
@@ -958,7 +1175,6 @@
           "selectable": true,
           "default_column": true,
           "commands": [
-            "invoice list",
             "invoice get"
           ],
           "presence": "common",
@@ -1013,6 +1229,102 @@
           "source_section": "Faktury - specyfikacja, rodzaje pól, kody GTU"
         },
         {
+          "path": "invoice_id",
+          "type": "integer",
+          "description": "Linked source invoice ID",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "source_section": "Dodanie nowej faktury korygującej"
+        },
+        {
+          "path": "from_invoice_id",
+          "type": "integer",
+          "description": "Source invoice or receipt ID",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "source_section": "Dodawanie faktury do istniejącego paragonu"
+        },
+        {
+          "path": "correction_reason",
+          "type": "string",
+          "description": "Correction or cancellation reason",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "source_section": "Dodanie nowej faktury korygującej"
+        },
+        {
+          "path": "cancel_reason",
+          "type": "string",
+          "description": "Cancellation reason returned when requested through additional_fields",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice get --additional-field cancel_reason"
+          ],
+          "source_section": "Anulowanie faktury"
+        },
+        {
+          "path": "corrected_content_before",
+          "type": "string",
+          "description": "Correction content before change",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice get --additional-field corrected_content_before"
+          ],
+          "source_section": "Faktura korekta"
+        },
+        {
+          "path": "corrected_content_after",
+          "type": "string",
+          "description": "Correction content after change",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice get --additional-field corrected_content_after"
+          ],
+          "source_section": "Faktura korekta"
+        },
+        {
+          "path": "connected_payments[]",
+          "type": "array<object>",
+          "description": "Payments connected to the invoice",
+          "projectable": true,
+          "selectable": false,
+          "commands": [
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice get --additional-field connected_payments"
+          ],
+          "source_section": "Pobranie faktury razem z połączonymi płatnościami"
+        },
+        {
           "path": "description",
           "type": "string",
           "description": "First invoice note content",
@@ -1031,7 +1343,6 @@
           "projectable": true,
           "selectable": false,
           "commands": [
-            "invoice list",
             "invoice get"
           ],
           "presence": "conditional",
@@ -1041,13 +1352,42 @@
           "source_section": "Pobranie listy faktur wraz z ich pozycjami"
         },
         {
+          "path": "positions[].id",
+          "type": "integer",
+          "description": "Invoice position ID",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes positions"
+          ],
+          "source_section": "Aktualizacja pozycji na fakturze"
+        },
+        {
+          "path": "positions[].product_id",
+          "type": "integer",
+          "description": "Referenced product ID",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes positions"
+          ],
+          "source_section": "Dodanie nowej faktury - minimalna wersja"
+        },
+        {
           "path": "positions[].name",
           "type": "string",
           "description": "Invoice position name",
           "projectable": true,
           "selectable": true,
           "commands": [
-            "invoice list",
             "invoice get"
           ],
           "presence": "conditional",
@@ -1063,7 +1403,6 @@
           "projectable": true,
           "selectable": true,
           "commands": [
-            "invoice list",
             "invoice get"
           ],
           "presence": "conditional",
@@ -1079,7 +1418,6 @@
           "projectable": true,
           "selectable": true,
           "commands": [
-            "invoice list",
             "invoice get"
           ],
           "presence": "conditional",
@@ -1099,7 +1437,7 @@
           ],
           "presence": "conditional",
           "requires": [
-            "invoice list --include-positions"
+            "invoice includes positions"
           ],
           "source_section": "Faktury - specyfikacja, rodzaje pól, kody GTU"
         },
@@ -1114,7 +1452,7 @@
           ],
           "presence": "conditional",
           "requires": [
-            "invoice list --include-positions"
+            "invoice includes positions"
           ],
           "source_section": "Faktury - specyfikacja, rodzaje pól, kody GTU"
         },
@@ -1129,7 +1467,7 @@
           ],
           "presence": "conditional",
           "requires": [
-            "invoice list --include-positions"
+            "invoice includes positions"
           ],
           "source_section": "Faktury - specyfikacja, rodzaje pól, kody GTU"
         },
@@ -1140,7 +1478,6 @@
           "projectable": true,
           "selectable": true,
           "commands": [
-            "invoice list",
             "invoice get"
           ],
           "presence": "conditional",
@@ -1160,7 +1497,7 @@
           ],
           "presence": "conditional",
           "requires": [
-            "invoice list --include-positions"
+            "invoice includes positions"
           ],
           "source_section": "Faktury - specyfikacja, rodzaje pól, kody GTU"
         },
@@ -1175,7 +1512,7 @@
           ],
           "presence": "conditional",
           "requires": [
-            "invoice list --include-positions"
+            "invoice includes positions"
           ],
           "source_section": "Faktury - specyfikacja, rodzaje pól, kody GTU"
         },
@@ -1190,9 +1527,99 @@
           ],
           "presence": "conditional",
           "requires": [
-            "invoice list --include-positions"
+            "invoice includes positions"
           ],
           "source_section": "Faktury - kody GTU"
+        },
+        {
+          "path": "positions[].correction_before_attributes",
+          "type": "object",
+          "description": "Correction values before the change",
+          "projectable": true,
+          "selectable": false,
+          "commands": [
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice correction positions"
+          ],
+          "source_section": "Dodanie nowej faktury korygującej"
+        },
+        {
+          "path": "positions[].correction_before_attributes.name",
+          "type": "string",
+          "description": "Corrected item name before change",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice correction positions"
+          ],
+          "source_section": "Dodanie nowej faktury korygującej"
+        },
+        {
+          "path": "positions[].correction_before_attributes.quantity",
+          "type": "number",
+          "description": "Corrected item quantity before change",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice correction positions"
+          ],
+          "source_section": "Dodanie nowej faktury korygującej"
+        },
+        {
+          "path": "positions[].correction_after_attributes",
+          "type": "object",
+          "description": "Correction values after the change",
+          "projectable": true,
+          "selectable": false,
+          "commands": [
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice correction positions"
+          ],
+          "source_section": "Dodanie nowej faktury korygującej"
+        },
+        {
+          "path": "positions[].correction_after_attributes.name",
+          "type": "string",
+          "description": "Corrected item name after change",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice correction positions"
+          ],
+          "source_section": "Dodanie nowej faktury korygującej"
+        },
+        {
+          "path": "positions[].correction_after_attributes.quantity",
+          "type": "number",
+          "description": "Corrected item quantity after change",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice correction positions"
+          ],
+          "source_section": "Dodanie nowej faktury korygującej"
         },
         {
           "path": "descriptions[]",
@@ -1205,7 +1632,7 @@
           ],
           "presence": "conditional",
           "requires": [
-            "invoice get response includes descriptions"
+            "invoice get --include descriptions"
           ],
           "source_section": "Uwagi na fakturze (descriptions)"
         },
@@ -1220,7 +1647,7 @@
           ],
           "presence": "conditional",
           "requires": [
-            "invoice get response includes descriptions"
+            "invoice get --include descriptions"
           ],
           "source_section": "Uwagi na fakturze (descriptions)"
         },
@@ -1235,7 +1662,7 @@
           ],
           "presence": "conditional",
           "requires": [
-            "invoice get response includes descriptions"
+            "invoice get --include descriptions"
           ],
           "source_section": "Uwagi na fakturze (descriptions)"
         },
@@ -1250,7 +1677,7 @@
           ],
           "presence": "conditional",
           "requires": [
-            "invoice get response includes descriptions"
+            "invoice get --include descriptions"
           ],
           "source_section": "Uwagi na fakturze (descriptions)"
         },
@@ -1265,7 +1692,7 @@
           ],
           "presence": "conditional",
           "requires": [
-            "invoice get response includes descriptions"
+            "invoice get --include descriptions"
           ],
           "source_section": "Uwagi na fakturze (descriptions)"
         },
@@ -1280,7 +1707,7 @@
           ],
           "presence": "conditional",
           "requires": [
-            "invoice get response includes descriptions"
+            "invoice get --include descriptions"
           ],
           "source_section": "Uwagi na fakturze (descriptions)"
         },
@@ -1290,6 +1717,21 @@
           "description": "Invoice recipients array",
           "projectable": true,
           "selectable": false,
+          "commands": [
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes recipients"
+          ],
+          "source_section": "Odbiorcy/Wystawcy na fakturze"
+        },
+        {
+          "path": "recipients[].id",
+          "type": "integer",
+          "description": "Recipient ID",
+          "projectable": true,
+          "selectable": true,
           "commands": [
             "invoice get"
           ],
@@ -1315,9 +1757,99 @@
           "source_section": "Odbiorcy/Wystawcy na fakturze"
         },
         {
-          "path": "recipients[].email",
+          "path": "recipients[].first_name",
           "type": "string",
-          "description": "Recipient email address",
+          "description": "Recipient first name",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes recipients"
+          ],
+          "source_section": "Odbiorcy/Wystawcy na fakturze"
+        },
+        {
+          "path": "recipients[].last_name",
+          "type": "string",
+          "description": "Recipient last name",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes recipients"
+          ],
+          "source_section": "Odbiorcy/Wystawcy na fakturze"
+        },
+        {
+          "path": "recipients[].company",
+          "type": "boolean",
+          "description": "Recipient company flag",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes recipients"
+          ],
+          "source_section": "Odbiorcy/Wystawcy na fakturze"
+        },
+        {
+          "path": "recipients[].country",
+          "type": "string",
+          "description": "Recipient country",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes recipients"
+          ],
+          "source_section": "Odbiorcy/Wystawcy na fakturze"
+        },
+        {
+          "path": "recipients[].city",
+          "type": "string",
+          "description": "Recipient city",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes recipients"
+          ],
+          "source_section": "Odbiorcy/Wystawcy na fakturze"
+        },
+        {
+          "path": "recipients[].post_code",
+          "type": "string",
+          "description": "Recipient postal code",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes recipients"
+          ],
+          "source_section": "Odbiorcy/Wystawcy na fakturze"
+        },
+        {
+          "path": "recipients[].street",
+          "type": "string",
+          "description": "Recipient street",
           "projectable": true,
           "selectable": true,
           "commands": [
@@ -1345,11 +1877,71 @@
           "source_section": "Odbiorcy/Wystawcy na fakturze"
         },
         {
+          "path": "recipients[].email",
+          "type": "string",
+          "description": "Recipient email address",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes recipients"
+          ],
+          "source_section": "Odbiorcy/Wystawcy na fakturze"
+        },
+        {
+          "path": "recipients[].note",
+          "type": "string",
+          "description": "Recipient note",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes recipients"
+          ],
+          "source_section": "Odbiorcy/Wystawcy na fakturze"
+        },
+        {
+          "path": "recipients[].role",
+          "type": "string",
+          "description": "Recipient role",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes recipients"
+          ],
+          "source_section": "Odbiorcy/Wystawcy na fakturze"
+        },
+        {
           "path": "issuers[]",
           "type": "array<object>",
           "description": "Invoice issuers array",
           "projectable": true,
           "selectable": false,
+          "commands": [
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes issuers"
+          ],
+          "source_section": "Odbiorcy/Wystawcy na fakturze"
+        },
+        {
+          "path": "issuers[].id",
+          "type": "integer",
+          "description": "Issuer ID",
+          "projectable": true,
+          "selectable": true,
           "commands": [
             "invoice get"
           ],
@@ -1405,6 +1997,21 @@
           "source_section": "Rozliczenia na fakturze (settlement_positions)"
         },
         {
+          "path": "settlement_positions[].id",
+          "type": "integer",
+          "description": "Settlement position ID",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "invoice get"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "invoice includes settlement_positions"
+          ],
+          "source_section": "Rozliczenia na fakturze (settlement_positions)"
+        },
+        {
           "path": "settlement_positions[].kind",
           "type": "string",
           "description": "Settlement position kind",
@@ -1435,9 +2042,9 @@
           "source_section": "Rozliczenia na fakturze (settlement_positions)"
         },
         {
-          "path": "settlement_positions[].description",
+          "path": "settlement_positions[].reason",
           "type": "string",
-          "description": "Settlement position description",
+          "description": "Settlement position reason",
           "projectable": true,
           "selectable": true,
           "commands": [

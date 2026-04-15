@@ -85,5 +85,8 @@ fakturownia invoice list --json
 fakturownia invoice list --period this_month --columns id,number,buyer_name,price_gross
 fakturownia invoice list --include-positions --fields number,positions[].name --json
 fakturownia invoice list --page 2 --per-page 25 --raw
+fakturownia recurring list --json
+fakturownia recurring list --columns id,name,every,next_invoice_date,send_email
+fakturownia recurring list --raw
 ```
 

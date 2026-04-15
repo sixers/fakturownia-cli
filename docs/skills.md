@@ -8,7 +8,7 @@ Generated skill docs for the installable `fakturownia` bundle.
 
 | Skill | Description |
 | --- | --- |
-| [fakturownia](../skills/fakturownia/SKILL.md) | Fakturownia CLI bundle: shared guidance, auth, clients, products, invoices, self-update, schema discovery, and diagnostics for the `fakturownia` command. Use when an agent needs to work with Fakturownia through this CLI. |
+| [fakturownia](../skills/fakturownia/SKILL.md) | Fakturownia CLI bundle: shared guidance, auth, clients, products, invoices, recurrings, self-update, schema discovery, diagnostics, and generated invoice recipes for the `fakturownia` command. Use when an agent needs to work with Fakturownia through this CLI. |
 
 ## Core
 
@@ -29,5 +29,24 @@ Task-focused API area skills.
 | --- | --- |
 | [fakturownia-clients](../skills/fakturownia/subskills/clients/SKILL.md) | Fakturownia CLI clients: list, fetch, create, update, and delete clients, and inspect README-backed client fields and request schemas. |
 | [fakturownia-products](../skills/fakturownia/subskills/products/SKILL.md) | Fakturownia CLI products: list, fetch, create, and update products, including warehouse-aware reads and README-backed request schemas. |
-| [fakturownia-invoices](../skills/fakturownia/subskills/invoices/SKILL.md) | Fakturownia CLI invoices: list invoices, fetch a single invoice, download invoice PDFs, and discover invoice fields through schema output. |
+| [fakturownia-invoices](../skills/fakturownia/subskills/invoices/SKILL.md) | Fakturownia CLI invoices: list, fetch, create, update, delete, email, cancel, print, attach files, derive public links, and discover invoice fields and payloads through schema output. |
+| [fakturownia-recurrings](../skills/fakturownia/subskills/recurrings/SKILL.md) | Fakturownia CLI recurrings: list, create, and update recurring invoice definitions with README-backed request and output discovery. |
+
+## Recipes
+
+Generated workflow recipes for common invoice and recurring tasks.
+
+| Recipe | Description |
+| --- | --- |
+| [fakturownia-invoice-minimal](../skills/fakturownia/recipes/invoice-minimal/SKILL.md) | Create a minimal invoice when you already know the client and product IDs. |
+| [fakturownia-invoice-copy](../skills/fakturownia/recipes/invoice-copy/SKILL.md) | Create a new invoice by copying another invoice, order, or proforma with `copy_invoice_from`. |
+| [fakturownia-invoice-correction](../skills/fakturownia/recipes/invoice-correction/SKILL.md) | Create and inspect correction invoices, including before/after correction fields. |
+| [fakturownia-invoice-oss](../skills/fakturownia/recipes/invoice-oss/SKILL.md) | Create an OSS invoice and ask the API to validate the OSS conditions before marking it. |
+| [fakturownia-invoice-send-email](../skills/fakturownia/recipes/invoice-send-email/SKILL.md) | Send an invoice email, optionally overriding recipients and attaching the PDF. |
+| [fakturownia-invoice-cancel](../skills/fakturownia/recipes/invoice-cancel/SKILL.md) | Cancel an invoice and optionally store a cancellation reason. |
+| [fakturownia-invoice-recipients-issuers](../skills/fakturownia/recipes/invoice-recipients-issuers/SKILL.md) | Create or update invoice recipients and issuers through the generic invoice payload. |
+| [fakturownia-invoice-attachment](../skills/fakturownia/recipes/invoice-attachment/SKILL.md) | Upload a file through the attachment credentials flow and bind it to an invoice. |
+| [fakturownia-invoice-fiscal-print](../skills/fakturownia/recipes/invoice-fiscal-print/SKILL.md) | Submit one or more invoices to the fiscal print endpoint, optionally targeting a printer by name. |
+| [fakturownia-recurring-definition](../skills/fakturownia/recipes/recurring-definition/SKILL.md) | Manage recurring invoice definitions through the dedicated recurring noun. |
+| [fakturownia-invoice-receipt-link](../skills/fakturownia/recipes/invoice-receipt-link/SKILL.md) | Link a receipt to an existing invoice or create a new invoice from a receipt using the README-backed payload fields. |
 

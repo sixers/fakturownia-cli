@@ -46,7 +46,7 @@ Keep the semantic exit code scheme stable:
 
 ### 3. Preserve the noun -> verb command grammar
 
-Top-level command groups are nouns such as `auth`, `client`, `invoice`, `schema`, `doctor`, and `self`.
+Top-level command groups are nouns such as `auth`, `client`, `product`, `invoice`, `recurring`, `schema`, `doctor`, and `self`.
 
 When adding a new API area, prefer a singular noun for CLI consistency unless there is a very strong reason not to.
 
@@ -76,7 +76,7 @@ When adding a new API area, prefer a singular noun for CLI consistency unless th
 - `internal/config/`: config resolution and env/profile precedence
 - `internal/transport/`: HTTP transport, retries, request planning, raw body capture
 - `internal/output/`: envelopes, errors, projection, nested path parsing, table rendering
-- `internal/<resource>/`: resource services such as `client`, `invoice`, `doctor`, `selfupdate`
+- `internal/<resource>/`: resource services such as `client`, `product`, `invoice`, `recurring`, `doctor`, `selfupdate`
 - `internal/spec/`: command registry, schema generation, output catalogs, request body specs, skill metadata
 - `docs/skills.md`: generated repo browsing index
 - `skills/fakturownia/`: generated installable skill bundle
@@ -92,6 +92,8 @@ These are generated from code:
 
 - `docs/skills.md`
 - `skills/fakturownia/SKILL.md`
+- `skills/fakturownia/recipes/index.md`
+- `skills/fakturownia/recipes/**`
 - `skills/fakturownia/references/skills-index.md`
 - `skills/fakturownia/subskills/**`
 

@@ -9,6 +9,7 @@ metadata:
     - "fakturownia-shared"
     - "fakturownia-products"
     - "fakturownia-invoices"
+    - "fakturownia-recurrings"
   command_refs:
     - "schema list"
     - "schema <noun> <verb>"
@@ -27,7 +28,7 @@ metadata:
 ## Use This Skill When
 
 - You need machine-readable command discovery instead of scraping `--help` text.
-- You need to inspect flags, env vars, examples, exit codes, or output catalogs before executing a command.
+- You need to inspect flags, env vars, examples, exit codes, output catalogs, or request-body schemas before executing a command.
 
 ## Covered Commands
 
@@ -46,8 +47,8 @@ metadata:
 
 - `schema list` enumerates supported commands.
 - `schema <noun> <verb>` returns flags, env vars, examples, exit codes, output modes, and output schema details.
-- For product, client, and invoice commands, inspect `output.known_fields`, `path_syntax`, and the generated `data_schema` before building `--fields` selectors.
-- For product and client write commands, inspect `request_body_schema` before constructing `--input` payloads.
+- For product, client, invoice, and recurring commands, inspect `output.known_fields`, `path_syntax`, and the generated `data_schema` before building `--fields` selectors.
+- For product, client, invoice, and recurring write commands, inspect `request_body_schema` before constructing `--input` payloads.
 
 ## Examples
 
@@ -63,3 +64,4 @@ fakturownia schema auth login --json
 - [fakturownia-shared](../shared/SKILL.md)
 - [fakturownia-products](../products/SKILL.md)
 - [fakturownia-invoices](../invoices/SKILL.md)
+- [fakturownia-recurrings](../recurrings/SKILL.md)
