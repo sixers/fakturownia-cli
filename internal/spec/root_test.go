@@ -14,6 +14,7 @@ import (
 	"github.com/sixers/fakturownia-cli/internal/doctor"
 	"github.com/sixers/fakturownia-cli/internal/invoice"
 	"github.com/sixers/fakturownia-cli/internal/output"
+	"github.com/sixers/fakturownia-cli/internal/product"
 	"github.com/sixers/fakturownia-cli/internal/selfupdate"
 	"github.com/sixers/fakturownia-cli/internal/transport"
 )
@@ -206,6 +207,87 @@ func (f *fakeDoctorService) Run(_ context.Context, req doctor.RunRequest) (*doct
 	}, nil
 }
 
+type fakeProductService struct {
+	listReq   product.ListRequest
+	getReq    product.GetRequest
+	createReq product.CreateRequest
+	updateReq product.UpdateRequest
+}
+
+func (f *fakeProductService) List(_ context.Context, req product.ListRequest) (*product.ListResponse, error) {
+	f.listReq = req
+	return &product.ListResponse{
+		Products: []map[string]any{
+			{
+				"id":          21,
+				"name":        "Widget",
+				"code":        "W-001",
+				"price_gross": "123.00",
+				"tax":         "23",
+				"stock_level": "9.0",
+				"tag_list":    []any{"core", "retail"},
+				"gtu_codes":   []any{"GTU_01"},
+			},
+		},
+		RawBody:    []byte(`[{"id":21,"name":"Widget"}]`),
+		Profile:    req.Profile,
+		RequestID:  "req-product-list",
+		Pagination: output.Pagination{Page: req.Page, PerPage: req.PerPage, Returned: 1, HasNext: false},
+	}, nil
+}
+
+func (f *fakeProductService) Get(_ context.Context, req product.GetRequest) (*product.GetResponse, error) {
+	f.getReq = req
+	return &product.GetResponse{
+		Product: map[string]any{
+			"id":           21,
+			"name":         "Widget",
+			"warehouse_id": req.WarehouseID,
+			"stock_level":  "9.0",
+			"gtu_codes":    []any{"GTU_01"},
+		},
+		RawBody:   []byte(`{"id":21,"name":"Widget","stock_level":"9.0"}`),
+		Profile:   req.Profile,
+		RequestID: "req-product-get",
+	}, nil
+}
+
+func (f *fakeProductService) Create(_ context.Context, req product.CreateRequest) (*product.CreateResponse, error) {
+	f.createReq = req
+	if req.DryRun {
+		plan := transport.PlanJSONRequest("POST", "/products.json", nil, map[string]any{"product": req.Input})
+		return &product.CreateResponse{Profile: req.Profile, DryRun: &plan}, nil
+	}
+	return &product.CreateResponse{
+		Product: map[string]any{
+			"id":   22,
+			"name": req.Input["name"],
+			"code": req.Input["code"],
+			"tax":  req.Input["tax"],
+		},
+		RawBody:   []byte(`{"id":22,"name":"New Product"}`),
+		Profile:   req.Profile,
+		RequestID: "req-product-create",
+	}, nil
+}
+
+func (f *fakeProductService) Update(_ context.Context, req product.UpdateRequest) (*product.UpdateResponse, error) {
+	f.updateReq = req
+	if req.DryRun {
+		plan := transport.PlanJSONRequest("PUT", "/products/"+req.ID+".json", nil, map[string]any{"product": req.Input})
+		return &product.UpdateResponse{Profile: req.Profile, DryRun: &plan}, nil
+	}
+	return &product.UpdateResponse{
+		Product: map[string]any{
+			"id":          req.ID,
+			"price_gross": req.Input["price_gross"],
+		},
+		RawBody:   []byte(`{"id":22,"price_gross":"102"}`),
+		Profile:   req.Profile,
+		RequestID: "req-product-update",
+	}, nil
+}
+
 type fakeSelfUpdateService struct {
 	updateReq selfupdate.UpdateRequest
 }
@@ -240,6 +322,7 @@ func TestCommandIntegration(t *testing.T) {
 	authSvc := &fakeAuthService{}
 	clientSvc := &fakeClientService{}
 	invoiceSvc := &fakeInvoiceService{}
+	productSvc := &fakeProductService{}
 	doctorSvc := &fakeDoctorService{}
 	selfSvc := &fakeSelfUpdateService{}
 
@@ -249,6 +332,7 @@ func TestCommandIntegration(t *testing.T) {
 			Auth:    authSvc,
 			Client:  clientSvc,
 			Invoice: invoiceSvc,
+			Product: productSvc,
 			Doctor:  doctorSvc,
 			Self:    selfSvc,
 			Stdout:  &stdout,
@@ -333,6 +417,50 @@ func TestCommandIntegration(t *testing.T) {
 		t.Fatalf("unexpected client delete dry-run output: %s", stdout)
 	}
 
+	stdout, _, err = run("product", "list", "--date-from", "2025-11-01", "--warehouse-id", "7", "--json")
+	if err != nil {
+		t.Fatalf("product list error = %v", err)
+	}
+	if productSvc.listReq.DateFrom != "2025-11-01" || productSvc.listReq.WarehouseID != "7" {
+		t.Fatalf("expected product list filters to be forwarded, got %#v", productSvc.listReq)
+	}
+	if !jsonContains(stdout, `"name": "Widget"`) {
+		t.Fatalf("unexpected product list output: %s", stdout)
+	}
+
+	stdout, _, err = run("product", "get", "--id", "21", "--warehouse-id", "3", "--json")
+	if err != nil {
+		t.Fatalf("product get error = %v", err)
+	}
+	if productSvc.getReq.WarehouseID != "3" {
+		t.Fatalf("expected product get warehouse ID to be forwarded, got %q", productSvc.getReq.WarehouseID)
+	}
+	if !jsonContains(stdout, `"stock_level": "9.0"`) {
+		t.Fatalf("unexpected product get output: %s", stdout)
+	}
+
+	stdout, _, err = run("product", "create", "--input", `{"name":"Widget","code":"W-001","tax":"23"}`, "--json")
+	if err != nil {
+		t.Fatalf("product create error = %v", err)
+	}
+	if productSvc.createReq.Input["name"] != "Widget" {
+		t.Fatalf("expected product create input to be parsed, got %#v", productSvc.createReq.Input)
+	}
+	if !jsonContains(stdout, `"id": 22`) {
+		t.Fatalf("unexpected product create output: %s", stdout)
+	}
+
+	stdout, _, err = runWithInput(`{"price_gross":"102"}`, "product", "update", "--id", "22", "--input", "-", "--json")
+	if err != nil {
+		t.Fatalf("product update error = %v", err)
+	}
+	if productSvc.updateReq.Input["price_gross"] != "102" {
+		t.Fatalf("expected product update stdin input, got %#v", productSvc.updateReq.Input)
+	}
+	if !jsonContains(stdout, `"price_gross": "102"`) {
+		t.Fatalf("unexpected product update output: %s", stdout)
+	}
+
 	stdout, _, err = run("invoice", "get", "--id", "1", "--fields", "id,number", "--json")
 	if err != nil {
 		t.Fatalf("invoice get error = %v", err)
@@ -413,6 +541,11 @@ func TestGolden(t *testing.T) {
 		{name: "schema-client-create-json", args: []string{"schema", "client", "create", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-client-create.json")},
 		{name: "schema-client-update-json", args: []string{"schema", "client", "update", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-client-update.json")},
 		{name: "schema-client-delete-json", args: []string{"schema", "client", "delete", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-client-delete.json")},
+		{name: "product-list-help", args: []string{"product", "list", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "product-list-help.txt")},
+		{name: "schema-product-list-json", args: []string{"schema", "product", "list", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-product-list.json")},
+		{name: "schema-product-get-json", args: []string{"schema", "product", "get", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-product-get.json")},
+		{name: "schema-product-create-json", args: []string{"schema", "product", "create", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-product-create.json")},
+		{name: "schema-product-update-json", args: []string{"schema", "product", "update", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-product-update.json")},
 		{name: "self-update-help", args: []string{"self", "update", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "self-update-help.txt")},
 		{name: "schema-self-update-json", args: []string{"schema", "self", "update", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-self-update.json")},
 		{name: "invoice-list-help", args: []string{"invoice", "list", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "invoice-list-help.txt")},
@@ -429,6 +562,7 @@ func TestGolden(t *testing.T) {
 				Auth:    &fakeAuthService{},
 				Client:  &fakeClientService{},
 				Invoice: &fakeInvoiceService{},
+				Product: &fakeProductService{},
 				Doctor:  &fakeDoctorService{},
 				Self:    &fakeSelfUpdateService{},
 				Stdout:  &stdout,
@@ -485,6 +619,7 @@ func TestSchemaListUsesRows(t *testing.T) {
 		Auth:    &fakeAuthService{},
 		Client:  &fakeClientService{},
 		Invoice: &fakeInvoiceService{},
+		Product: &fakeProductService{},
 		Doctor:  &fakeDoctorService{},
 		Self:    &fakeSelfUpdateService{},
 		Stdout:  &stdout,
@@ -517,6 +652,7 @@ func TestSchemaInvoiceListExposesKnownFields(t *testing.T) {
 		Auth:    &fakeAuthService{},
 		Client:  &fakeClientService{},
 		Invoice: &fakeInvoiceService{},
+		Product: &fakeProductService{},
 		Doctor:  &fakeDoctorService{},
 		Self:    &fakeSelfUpdateService{},
 		Stdout:  &stdout,
@@ -532,6 +668,56 @@ func TestSchemaInvoiceListExposesKnownFields(t *testing.T) {
 	}
 }
 
+func TestSchemaProductCreateExposesRequestBodySchema(t *testing.T) {
+	t.Parallel()
+
+	var stdout bytes.Buffer
+	cmd := NewRootCommand(Dependencies{
+		Auth:    &fakeAuthService{},
+		Client:  &fakeClientService{},
+		Invoice: &fakeInvoiceService{},
+		Product: &fakeProductService{},
+		Doctor:  &fakeDoctorService{},
+		Self:    &fakeSelfUpdateService{},
+		Stdout:  &stdout,
+		Stderr:  &bytes.Buffer{},
+	})
+	cmd.SetArgs([]string{"schema", "product", "create", "--json"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("Execute() error = %v", err)
+	}
+
+	body := stdout.String()
+	if !jsonContains(body, `"path": "gtu_codes[]"`) || !jsonContains(body, `"package_products_details"`) {
+		t.Fatalf("expected schema product create to advertise request-body fields: %s", body)
+	}
+}
+
+func TestSchemaProductListExposesKnownFields(t *testing.T) {
+	t.Parallel()
+
+	var stdout bytes.Buffer
+	cmd := NewRootCommand(Dependencies{
+		Auth:    &fakeAuthService{},
+		Client:  &fakeClientService{},
+		Invoice: &fakeInvoiceService{},
+		Product: &fakeProductService{},
+		Doctor:  &fakeDoctorService{},
+		Self:    &fakeSelfUpdateService{},
+		Stdout:  &stdout,
+		Stderr:  &bytes.Buffer{},
+	})
+	cmd.SetArgs([]string{"schema", "product", "list", "--json"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("Execute() error = %v", err)
+	}
+
+	body := stdout.String()
+	if !jsonContains(body, `"path": "tag_list[]"`) || !jsonContains(body, `"path": "gtu_codes[]"`) {
+		t.Fatalf("expected schema product list to advertise array known fields: %s", body)
+	}
+}
+
 func TestConfigFlagPassThrough(t *testing.T) {
 	t.Parallel()
 
@@ -541,6 +727,7 @@ func TestConfigFlagPassThrough(t *testing.T) {
 		Auth:    authSvc,
 		Client:  &fakeClientService{},
 		Invoice: &fakeInvoiceService{},
+		Product: &fakeProductService{},
 		Doctor:  &fakeDoctorService{},
 		Self:    &fakeSelfUpdateService{},
 		Stdout:  &stdout,

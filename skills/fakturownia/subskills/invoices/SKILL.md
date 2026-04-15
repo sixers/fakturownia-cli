@@ -7,6 +7,7 @@ metadata:
   prerequisite: "fakturownia-shared"
   related_skills:
     - "fakturownia-shared"
+    - "fakturownia-products"
     - "fakturownia-schema"
     - "fakturownia-doctor"
   command_refs:
@@ -87,5 +88,6 @@ fakturownia invoice download --id 123 --path ./invoice-123.pdf --json
 ## Related Skills
 
 - [fakturownia-shared](../shared/SKILL.md)
+- [fakturownia-products](../products/SKILL.md)
 - [fakturownia-schema](../schema/SKILL.md)
 - [fakturownia-doctor](../doctor/SKILL.md)

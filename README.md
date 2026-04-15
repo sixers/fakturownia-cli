@@ -25,6 +25,13 @@ The current implementation covers these command groups:
 - `client update`
 - `client delete`
 
+### Products
+
+- `product list`
+- `product get`
+- `product create`
+- `product update`
+
 ### Invoices
 
 - `invoice list`
@@ -224,8 +231,8 @@ Envelope shape:
 
 `schema` describes both the command contract and the README-backed output and request catalogs for supported resources.
 
-- `fakturownia schema invoice list --json` and `fakturownia schema client list --json` expose `output.known_fields`
-- `fakturownia schema client create --json` and `fakturownia schema client update --json` expose `request_body_schema`
+- `fakturownia schema invoice list --json`, `fakturownia schema client list --json`, and `fakturownia schema product list --json` expose `output.known_fields`
+- `fakturownia schema client create --json`, `fakturownia schema client update --json`, `fakturownia schema product create --json`, and `fakturownia schema product update --json` expose `request_body_schema`
 - `known_fields` and request body catalogs are curated from the upstream [Fakturownia README](https://github.com/fakturownia/API/blob/master/README.md)
 - nested paths use `dot_bracket` syntax such as `positions[].name`
 - the catalog is intentionally not exhaustive; syntactically valid paths outside the catalog are still allowed and produce warnings instead of hard failures
@@ -235,7 +242,10 @@ Examples:
 ```bash
 fakturownia schema invoice list --json
 fakturownia schema client create --json
+fakturownia schema product create --json
 fakturownia client list --fields name,email --json
+fakturownia product list --fields name,code,stock_level --json
+fakturownia product create --input '{"name":"Widget","code":"W001","tax":"23"}' --json
 fakturownia client create --input '{"name":"Acme","email":"billing@example.com"}' --json
 fakturownia invoice list --include-positions --fields number,positions[].name --json
 fakturownia invoice list --columns number,positions[].name
@@ -257,6 +267,15 @@ fakturownia auth logout --yes
 fakturownia client list --json
 fakturownia client get --external-id ext-123 --json
 fakturownia client create --input '{"name":"Acme"}' --dry-run --json
+```
+
+### Products
+
+```bash
+fakturownia product list --json
+fakturownia product get --id 100 --warehouse-id 7 --json
+fakturownia product create --input '{"name":"Widget","code":"W001","price_net":"100","tax":"23"}' --dry-run --json
+fakturownia product update --id 333 --input '{"price_gross":"102","tax":"23"}' --json
 ```
 
 ### Invoices

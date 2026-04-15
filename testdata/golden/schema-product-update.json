@@ -1,0 +1,1576 @@
+{
+  "schema_version": "fakturownia-cli/v1alpha1",
+  "status": "success",
+  "data": {
+    "schema_version": "fakturownia-cli/v1alpha1",
+    "command": "product update",
+    "use": "update --id ID --input -|@file|JSON",
+    "summary": "Update a product",
+    "flags": [
+      {
+        "name": "profile",
+        "type": "string",
+        "description": "Select a named profile",
+        "required": false
+      },
+      {
+        "name": "json",
+        "type": "bool",
+        "description": "Alias for --output json",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "output",
+        "type": "string",
+        "description": "Output format",
+        "required": false,
+        "default": "human",
+        "enum": [
+          "human",
+          "json"
+        ]
+      },
+      {
+        "name": "quiet",
+        "type": "bool",
+        "description": "Emit bare values when exactly one field or column remains",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "fields",
+        "type": "string[]",
+        "description": "Project JSON envelope data fields using dot/bracket paths like number or positions[].name",
+        "required": false,
+        "repeatable": true
+      },
+      {
+        "name": "columns",
+        "type": "string[]",
+        "description": "Select human table columns using dot/bracket paths like number or positions[].name",
+        "required": false,
+        "repeatable": true
+      },
+      {
+        "name": "raw",
+        "type": "bool",
+        "description": "Emit the upstream JSON response body directly when supported",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "dry-run",
+        "type": "bool",
+        "description": "Accepted on read-only commands and reserved for future mutating request previews",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "timeout-ms",
+        "type": "int",
+        "description": "HTTP timeout in milliseconds",
+        "required": false,
+        "default": "30000"
+      },
+      {
+        "name": "max-retries",
+        "type": "int",
+        "description": "Maximum retry attempts for idempotent reads on network or 5xx failures",
+        "required": false,
+        "default": "2"
+      },
+      {
+        "name": "non-interactive",
+        "type": "bool",
+        "description": "Disable interactive behavior",
+        "required": false,
+        "default": "true"
+      },
+      {
+        "name": "config",
+        "type": "string",
+        "description": "Override the config file path",
+        "required": false
+      },
+      {
+        "name": "id",
+        "type": "string",
+        "description": "Product ID",
+        "required": true
+      },
+      {
+        "name": "input",
+        "type": "string",
+        "description": "Product JSON input as inline JSON, @file, or - for stdin",
+        "required": true
+      }
+    ],
+    "env_vars": [
+      {
+        "name": "FAKTUROWNIA_PROFILE",
+        "description": "Select a profile unless --profile is provided"
+      },
+      {
+        "name": "FAKTUROWNIA_URL",
+        "description": "Override the base account URL from any profile"
+      },
+      {
+        "name": "FAKTUROWNIA_API_TOKEN",
+        "description": "Override the API token from any profile"
+      }
+    ],
+    "output_modes": [
+      "human",
+      "json"
+    ],
+    "exit_codes": [
+      {
+        "code": 0,
+        "description": "success"
+      },
+      {
+        "code": 2,
+        "description": "usage or validation error"
+      },
+      {
+        "code": 3,
+        "description": "not found"
+      },
+      {
+        "code": 4,
+        "description": "authentication or permission failure"
+      },
+      {
+        "code": 5,
+        "description": "conflict"
+      },
+      {
+        "code": 6,
+        "description": "network or timeout failure"
+      },
+      {
+        "code": 7,
+        "description": "reserved for throttling or retry budget exhaustion"
+      },
+      {
+        "code": 8,
+        "description": "remote API rejected the request"
+      },
+      {
+        "code": 9,
+        "description": "internal CLI failure"
+      }
+    ],
+    "raw_supported": true,
+    "examples": [
+      "fakturownia product update --id 333 --input '{\"price_gross\":\"102\",\"tax\":\"23\"}' --json",
+      "fakturownia product update --id 333 --input @product-update.json",
+      "printf '%s\\n' '{\"name\":\"Widget 2\"}' | fakturownia product update --id 333 --input - --json",
+      "fakturownia product update --id 333 --input '{\"price_gross\":\"102\"}' --dry-run --json"
+    ],
+    "data_schema": {
+      "additionalProperties": true,
+      "properties": {
+        "accounting_id": {
+          "type": "string"
+        },
+        "additional_info": {
+          "type": "string"
+        },
+        "category_id": {
+          "type": "integer"
+        },
+        "code": {
+          "type": "string"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "disabled": {
+          "enum": [
+            "1",
+            "0"
+          ],
+          "type": "string"
+        },
+        "ean_code": {
+          "type": "string"
+        },
+        "electronic_service": {
+          "enum": [
+            "1",
+            "0"
+          ],
+          "type": "string"
+        },
+        "gtu_codes": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "id": {
+          "type": "integer"
+        },
+        "limited": {
+          "enum": [
+            "1",
+            "0"
+          ],
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "package": {
+          "enum": [
+            "1",
+            "0",
+            "true",
+            "false"
+          ],
+          "type": "string"
+        },
+        "price_gross": {
+          "type": "number"
+        },
+        "price_net": {
+          "type": "number"
+        },
+        "purchase_price_gross": {
+          "type": "number"
+        },
+        "purchase_price_net": {
+          "type": "number"
+        },
+        "purchase_tax": {
+          "type": "string"
+        },
+        "quantity": {
+          "type": "number"
+        },
+        "quantity_unit": {
+          "type": "string"
+        },
+        "service": {
+          "enum": [
+            "1",
+            "0",
+            "true",
+            "false"
+          ],
+          "type": "string"
+        },
+        "size": {
+          "type": "string"
+        },
+        "size_height": {
+          "type": "string"
+        },
+        "size_unit": {
+          "enum": [
+            "m",
+            "cm"
+          ],
+          "type": "string"
+        },
+        "size_width": {
+          "type": "string"
+        },
+        "stock_level": {
+          "type": "number"
+        },
+        "supplier_code": {
+          "type": "string"
+        },
+        "tag_list": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "tax": {
+          "enum": [
+            "np",
+            "zw",
+            "disabled"
+          ],
+          "type": "string"
+        },
+        "use_moss": {
+          "enum": [
+            "1",
+            "0"
+          ],
+          "type": "string"
+        },
+        "use_product_warehouses": {
+          "enum": [
+            "1",
+            "0"
+          ],
+          "type": "string"
+        },
+        "weight": {
+          "type": "string"
+        },
+        "weight_unit": {
+          "enum": [
+            "kg",
+            "g"
+          ],
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "request_body": {
+      "input_flag": "input",
+      "input_modes": [
+        "inline_json",
+        "@file",
+        "stdin"
+      ],
+      "wrapper_key": "product",
+      "open_ended": true,
+      "catalog_basis": {
+        "source": "readme",
+        "url": "https://github.com/fakturownia/API/blob/master/README.md"
+      },
+      "path_syntax": "dot_bracket",
+      "known_fields": [
+        {
+          "path": "id",
+          "type": "integer",
+          "description": "Product ID",
+          "source_section": "Pobranie wybranego produktu po ID"
+        },
+        {
+          "path": "name",
+          "type": "string",
+          "description": "Product name",
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "code",
+          "type": "string",
+          "description": "Product code",
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "ean_code",
+          "type": "string",
+          "description": "EAN code",
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "description",
+          "type": "string",
+          "description": "Product description",
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "price_net",
+          "type": "number",
+          "description": "Net sales price",
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "tax",
+          "type": "string",
+          "description": "Tax rate or tax status",
+          "enum_values": [
+            "np",
+            "zw",
+            "disabled"
+          ],
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "price_gross",
+          "type": "number",
+          "description": "Gross sales price",
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "currency",
+          "type": "string",
+          "description": "Currency",
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "category_id",
+          "type": "integer",
+          "description": "Category ID",
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "tag_list[]",
+          "type": "string",
+          "description": "Product tags",
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "service",
+          "type": "string",
+          "description": "Service flag",
+          "enum_values": [
+            "1",
+            "0",
+            "true",
+            "false"
+          ],
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "electronic_service",
+          "type": "string",
+          "description": "Electronic service flag",
+          "enum_values": [
+            "1",
+            "0"
+          ],
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "gtu_codes[]",
+          "type": "string",
+          "description": "GTU codes",
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "limited",
+          "type": "string",
+          "description": "Quantity-limited flag",
+          "enum_values": [
+            "1",
+            "0"
+          ],
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "stock_level",
+          "type": "number",
+          "description": "Available stock quantity",
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "purchase_price_net",
+          "type": "number",
+          "description": "Net purchase price",
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "purchase_tax",
+          "type": "string",
+          "description": "Purchase tax rate",
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "purchase_price_gross",
+          "type": "number",
+          "description": "Gross purchase price",
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "package",
+          "type": "string",
+          "description": "Package-product flag",
+          "enum_values": [
+            "1",
+            "0",
+            "true",
+            "false"
+          ],
+          "source_section": "Dodanie produktu, który jest zestawem"
+        },
+        {
+          "path": "quantity_unit",
+          "type": "string",
+          "description": "Quantity unit",
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "quantity",
+          "type": "number",
+          "description": "Default sold quantity",
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "additional_info",
+          "type": "string",
+          "description": "Additional classification info",
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "supplier_code",
+          "type": "string",
+          "description": "Supplier code",
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "accounting_id",
+          "type": "string",
+          "description": "Accounting code",
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "disabled",
+          "type": "string",
+          "description": "Disabled flag",
+          "enum_values": [
+            "1",
+            "0"
+          ],
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "use_moss",
+          "type": "string",
+          "description": "OSS/MOSS flag",
+          "enum_values": [
+            "1",
+            "0"
+          ],
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "use_product_warehouses",
+          "type": "string",
+          "description": "Separate warehouse pricing flag",
+          "enum_values": [
+            "1",
+            "0"
+          ],
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "size",
+          "type": "string",
+          "description": "Size",
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "size_width",
+          "type": "string",
+          "description": "Width",
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "size_height",
+          "type": "string",
+          "description": "Height",
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "size_unit",
+          "type": "string",
+          "description": "Size unit",
+          "enum_values": [
+            "m",
+            "cm"
+          ],
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "weight",
+          "type": "string",
+          "description": "Weight",
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "weight_unit",
+          "type": "string",
+          "description": "Weight unit",
+          "enum_values": [
+            "kg",
+            "g"
+          ],
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "package_products_details",
+          "type": "object",
+          "description": "Open object keyed by arbitrary indexes, where each value contains package product id and quantity",
+          "source_section": "Dodanie produktu, który jest zestawem"
+        }
+      ],
+      "notes": [
+        "the CLI accepts the inner product object, then wraps it in the upstream {\"product\": ...} envelope",
+        "known_fields is curated from the upstream README and is not exhaustive",
+        "package_products_details is an open object keyed by arbitrary indexes, where each value contains at least id and quantity",
+        "the upstream README states that price_net is computed from price_gross and tax during product updates; the CLI documents this but does not rewrite or reject the field client-side"
+      ]
+    },
+    "request_body_schema": {
+      "additionalProperties": true,
+      "properties": {
+        "accounting_id": {
+          "type": "string"
+        },
+        "additional_info": {
+          "type": "string"
+        },
+        "category_id": {
+          "type": "integer"
+        },
+        "code": {
+          "type": "string"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "disabled": {
+          "enum": [
+            "1",
+            "0"
+          ],
+          "type": "string"
+        },
+        "ean_code": {
+          "type": "string"
+        },
+        "electronic_service": {
+          "enum": [
+            "1",
+            "0"
+          ],
+          "type": "string"
+        },
+        "gtu_codes": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "id": {
+          "type": "integer"
+        },
+        "limited": {
+          "enum": [
+            "1",
+            "0"
+          ],
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "package": {
+          "enum": [
+            "1",
+            "0",
+            "true",
+            "false"
+          ],
+          "type": "string"
+        },
+        "package_products_details": {
+          "additionalProperties": {
+            "additionalProperties": true,
+            "properties": {
+              "id": {
+                "description": "Referenced product ID",
+                "type": "integer"
+              },
+              "quantity": {
+                "description": "Quantity of the referenced product in the package",
+                "type": "number"
+              }
+            },
+            "required": [
+              "id",
+              "quantity"
+            ],
+            "type": "object"
+          },
+          "description": "Open object keyed by arbitrary indexes, where each value contains package product id and quantity",
+          "type": "object"
+        },
+        "price_gross": {
+          "type": "number"
+        },
+        "price_net": {
+          "type": "number"
+        },
+        "purchase_price_gross": {
+          "type": "number"
+        },
+        "purchase_price_net": {
+          "type": "number"
+        },
+        "purchase_tax": {
+          "type": "string"
+        },
+        "quantity": {
+          "type": "number"
+        },
+        "quantity_unit": {
+          "type": "string"
+        },
+        "service": {
+          "enum": [
+            "1",
+            "0",
+            "true",
+            "false"
+          ],
+          "type": "string"
+        },
+        "size": {
+          "type": "string"
+        },
+        "size_height": {
+          "type": "string"
+        },
+        "size_unit": {
+          "enum": [
+            "m",
+            "cm"
+          ],
+          "type": "string"
+        },
+        "size_width": {
+          "type": "string"
+        },
+        "stock_level": {
+          "type": "number"
+        },
+        "supplier_code": {
+          "type": "string"
+        },
+        "tag_list": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "tax": {
+          "enum": [
+            "np",
+            "zw",
+            "disabled"
+          ],
+          "type": "string"
+        },
+        "use_moss": {
+          "enum": [
+            "1",
+            "0"
+          ],
+          "type": "string"
+        },
+        "use_product_warehouses": {
+          "enum": [
+            "1",
+            "0"
+          ],
+          "type": "string"
+        },
+        "weight": {
+          "type": "string"
+        },
+        "weight_unit": {
+          "enum": [
+            "kg",
+            "g"
+          ],
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "envelope_schema": {
+      "properties": {
+        "data": {
+          "additionalProperties": true,
+          "properties": {
+            "accounting_id": {
+              "type": "string"
+            },
+            "additional_info": {
+              "type": "string"
+            },
+            "category_id": {
+              "type": "integer"
+            },
+            "code": {
+              "type": "string"
+            },
+            "currency": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            },
+            "disabled": {
+              "enum": [
+                "1",
+                "0"
+              ],
+              "type": "string"
+            },
+            "ean_code": {
+              "type": "string"
+            },
+            "electronic_service": {
+              "enum": [
+                "1",
+                "0"
+              ],
+              "type": "string"
+            },
+            "gtu_codes": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "id": {
+              "type": "integer"
+            },
+            "limited": {
+              "enum": [
+                "1",
+                "0"
+              ],
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "package": {
+              "enum": [
+                "1",
+                "0",
+                "true",
+                "false"
+              ],
+              "type": "string"
+            },
+            "price_gross": {
+              "type": "number"
+            },
+            "price_net": {
+              "type": "number"
+            },
+            "purchase_price_gross": {
+              "type": "number"
+            },
+            "purchase_price_net": {
+              "type": "number"
+            },
+            "purchase_tax": {
+              "type": "string"
+            },
+            "quantity": {
+              "type": "number"
+            },
+            "quantity_unit": {
+              "type": "string"
+            },
+            "service": {
+              "enum": [
+                "1",
+                "0",
+                "true",
+                "false"
+              ],
+              "type": "string"
+            },
+            "size": {
+              "type": "string"
+            },
+            "size_height": {
+              "type": "string"
+            },
+            "size_unit": {
+              "enum": [
+                "m",
+                "cm"
+              ],
+              "type": "string"
+            },
+            "size_width": {
+              "type": "string"
+            },
+            "stock_level": {
+              "type": "number"
+            },
+            "supplier_code": {
+              "type": "string"
+            },
+            "tag_list": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "tax": {
+              "enum": [
+                "np",
+                "zw",
+                "disabled"
+              ],
+              "type": "string"
+            },
+            "use_moss": {
+              "enum": [
+                "1",
+                "0"
+              ],
+              "type": "string"
+            },
+            "use_product_warehouses": {
+              "enum": [
+                "1",
+                "0"
+              ],
+              "type": "string"
+            },
+            "weight": {
+              "type": "string"
+            },
+            "weight_unit": {
+              "enum": [
+                "kg",
+                "g"
+              ],
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "errors": {
+          "items": {
+            "$defs": {
+              "ErrorDetail": {
+                "properties": {
+                  "class": {
+                    "type": "string"
+                  },
+                  "code": {
+                    "type": "string"
+                  },
+                  "hint": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "retryable": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "class",
+                  "code",
+                  "message",
+                  "retryable"
+                ],
+                "type": "object"
+              }
+            },
+            "$id": "https://github.com/sixers/fakturownia-cli/internal/output/error-detail",
+            "$ref": "#/$defs/ErrorDetail",
+            "$schema": "https://json-schema.org/draft/2020-12/schema"
+          },
+          "type": "array"
+        },
+        "meta": {
+          "$defs": {
+            "Meta": {
+              "properties": {
+                "command": {
+                  "type": "string"
+                },
+                "duration_ms": {
+                  "type": "integer"
+                },
+                "pagination": {
+                  "$ref": "#/$defs/Pagination"
+                },
+                "profile": {
+                  "type": "string"
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "command",
+                "duration_ms"
+              ],
+              "type": "object"
+            },
+            "Pagination": {
+              "properties": {
+                "has_next": {
+                  "type": "boolean"
+                },
+                "page": {
+                  "type": "integer"
+                },
+                "per_page": {
+                  "type": "integer"
+                },
+                "returned": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "page",
+                "per_page",
+                "returned",
+                "has_next"
+              ],
+              "type": "object"
+            }
+          },
+          "$id": "https://github.com/sixers/fakturownia-cli/internal/output/meta",
+          "$ref": "#/$defs/Meta",
+          "$schema": "https://json-schema.org/draft/2020-12/schema"
+        },
+        "schema_version": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "success",
+            "error"
+          ],
+          "type": "string"
+        },
+        "warnings": {
+          "items": {
+            "$defs": {
+              "WarningDetail": {
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "message"
+                ],
+                "type": "object"
+              }
+            },
+            "$id": "https://github.com/sixers/fakturownia-cli/internal/output/warning-detail",
+            "$ref": "#/$defs/WarningDetail",
+            "$schema": "https://json-schema.org/draft/2020-12/schema"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "schema_version",
+        "status",
+        "data",
+        "errors",
+        "warnings",
+        "meta"
+      ],
+      "type": "object"
+    },
+    "output": {
+      "shape": "object",
+      "open_ended": true,
+      "catalog_basis": {
+        "source": "readme",
+        "url": "https://github.com/fakturownia/API/blob/master/README.md"
+      },
+      "path_syntax": "dot_bracket",
+      "known_fields": [
+        {
+          "path": "id",
+          "type": "integer",
+          "description": "Product ID",
+          "projectable": true,
+          "selectable": true,
+          "default_column": true,
+          "commands": [
+            "product update"
+          ],
+          "presence": "common",
+          "source_section": "Pobranie wybranego produktu po ID"
+        },
+        {
+          "path": "name",
+          "type": "string",
+          "description": "Product name",
+          "projectable": true,
+          "selectable": true,
+          "default_column": true,
+          "commands": [
+            "product update"
+          ],
+          "presence": "common",
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "code",
+          "type": "string",
+          "description": "Product code",
+          "projectable": true,
+          "selectable": true,
+          "default_column": true,
+          "commands": [
+            "product update"
+          ],
+          "presence": "common",
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "ean_code",
+          "type": "string",
+          "description": "EAN code",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "product update"
+          ],
+          "presence": "conditional",
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "description",
+          "type": "string",
+          "description": "Product description",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "product update"
+          ],
+          "presence": "conditional",
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "price_net",
+          "type": "number",
+          "description": "Net sales price",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "product update"
+          ],
+          "presence": "common",
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "tax",
+          "type": "string",
+          "description": "Tax rate or tax status",
+          "projectable": true,
+          "selectable": true,
+          "default_column": true,
+          "commands": [
+            "product update"
+          ],
+          "presence": "common",
+          "source_section": "Pola produktu",
+          "enum_values": [
+            "np",
+            "zw",
+            "disabled"
+          ]
+        },
+        {
+          "path": "price_gross",
+          "type": "number",
+          "description": "Gross sales price",
+          "projectable": true,
+          "selectable": true,
+          "default_column": true,
+          "commands": [
+            "product update"
+          ],
+          "presence": "common",
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "currency",
+          "type": "string",
+          "description": "Currency",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "product update"
+          ],
+          "presence": "common",
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "category_id",
+          "type": "integer",
+          "description": "Category ID",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "product update"
+          ],
+          "presence": "conditional",
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "tag_list[]",
+          "type": "string",
+          "description": "Product tags",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "product update"
+          ],
+          "presence": "conditional",
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "service",
+          "type": "string",
+          "description": "Service flag",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "product update"
+          ],
+          "presence": "common",
+          "source_section": "Pola produktu",
+          "enum_values": [
+            "1",
+            "0",
+            "true",
+            "false"
+          ]
+        },
+        {
+          "path": "electronic_service",
+          "type": "string",
+          "description": "Electronic service flag",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "product update"
+          ],
+          "presence": "conditional",
+          "source_section": "Pola produktu",
+          "enum_values": [
+            "1",
+            "0"
+          ]
+        },
+        {
+          "path": "gtu_codes[]",
+          "type": "string",
+          "description": "GTU codes",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "product update"
+          ],
+          "presence": "conditional",
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "limited",
+          "type": "string",
+          "description": "Quantity-limited flag",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "product update"
+          ],
+          "presence": "conditional",
+          "source_section": "Pola produktu",
+          "enum_values": [
+            "1",
+            "0"
+          ]
+        },
+        {
+          "path": "stock_level",
+          "type": "number",
+          "description": "Available stock quantity",
+          "projectable": true,
+          "selectable": true,
+          "default_column": true,
+          "commands": [
+            "product update"
+          ],
+          "presence": "conditional",
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "purchase_price_net",
+          "type": "number",
+          "description": "Net purchase price",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "product update"
+          ],
+          "presence": "conditional",
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "purchase_tax",
+          "type": "string",
+          "description": "Purchase tax rate",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "product update"
+          ],
+          "presence": "conditional",
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "purchase_price_gross",
+          "type": "number",
+          "description": "Gross purchase price",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "product update"
+          ],
+          "presence": "conditional",
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "package",
+          "type": "string",
+          "description": "Package-product flag",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "product update"
+          ],
+          "presence": "conditional",
+          "source_section": "Dodanie produktu, który jest zestawem",
+          "enum_values": [
+            "1",
+            "0",
+            "true",
+            "false"
+          ]
+        },
+        {
+          "path": "quantity_unit",
+          "type": "string",
+          "description": "Quantity unit",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "product update"
+          ],
+          "presence": "conditional",
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "quantity",
+          "type": "number",
+          "description": "Default sold quantity",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "product update"
+          ],
+          "presence": "conditional",
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "additional_info",
+          "type": "string",
+          "description": "Additional classification info",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "product update"
+          ],
+          "presence": "conditional",
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "supplier_code",
+          "type": "string",
+          "description": "Supplier code",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "product update"
+          ],
+          "presence": "conditional",
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "accounting_id",
+          "type": "string",
+          "description": "Accounting code",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "product update"
+          ],
+          "presence": "conditional",
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "disabled",
+          "type": "string",
+          "description": "Disabled flag",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "product update"
+          ],
+          "presence": "conditional",
+          "source_section": "Pola produktu",
+          "enum_values": [
+            "1",
+            "0"
+          ]
+        },
+        {
+          "path": "use_moss",
+          "type": "string",
+          "description": "OSS/MOSS flag",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "product update"
+          ],
+          "presence": "conditional",
+          "source_section": "Pola produktu",
+          "enum_values": [
+            "1",
+            "0"
+          ]
+        },
+        {
+          "path": "use_product_warehouses",
+          "type": "string",
+          "description": "Separate warehouse pricing flag",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "product update"
+          ],
+          "presence": "conditional",
+          "source_section": "Pola produktu",
+          "enum_values": [
+            "1",
+            "0"
+          ]
+        },
+        {
+          "path": "size",
+          "type": "string",
+          "description": "Size",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "product update"
+          ],
+          "presence": "conditional",
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "size_width",
+          "type": "string",
+          "description": "Width",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "product update"
+          ],
+          "presence": "conditional",
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "size_height",
+          "type": "string",
+          "description": "Height",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "product update"
+          ],
+          "presence": "conditional",
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "size_unit",
+          "type": "string",
+          "description": "Size unit",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "product update"
+          ],
+          "presence": "conditional",
+          "source_section": "Pola produktu",
+          "enum_values": [
+            "m",
+            "cm"
+          ]
+        },
+        {
+          "path": "weight",
+          "type": "string",
+          "description": "Weight",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "product update"
+          ],
+          "presence": "conditional",
+          "source_section": "Pola produktu"
+        },
+        {
+          "path": "weight_unit",
+          "type": "string",
+          "description": "Weight unit",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "product update"
+          ],
+          "presence": "conditional",
+          "source_section": "Pola produktu",
+          "enum_values": [
+            "kg",
+            "g"
+          ]
+        }
+      ],
+      "default_columns": [
+        "id",
+        "name",
+        "code",
+        "price_gross",
+        "tax",
+        "stock_level"
+      ],
+      "notes": [
+        "known_fields is curated from the upstream README and is not exhaustive",
+        "unknown upstream fields may still appear in data and can still be selected when the path syntax is valid"
+      ]
+    }
+  },
+  "errors": [],
+  "warnings": null,
+  "meta": {
+    "command": "schema product update",
+    "duration_ms": 0
+  }
+}

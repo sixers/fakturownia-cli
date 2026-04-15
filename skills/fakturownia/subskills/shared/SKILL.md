@@ -77,6 +77,10 @@ fakturownia client list --json
 fakturownia client list --name Acme --columns id,name,email,country
 fakturownia client list --external-id ext-123 --json
 fakturownia client list --page 2 --per-page 25 --raw
+fakturownia product list --json
+fakturownia product list --date-from 2025-11-01 --json
+fakturownia product list --warehouse-id 7 --columns id,name,code,stock_level
+fakturownia product list --page 2 --per-page 25 --raw
 fakturownia invoice list --json
 fakturownia invoice list --period this_month --columns id,number,buyer_name,price_gross
 fakturownia invoice list --include-positions --fields number,positions[].name --json

@@ -7,6 +7,7 @@ metadata:
   prerequisite: "fakturownia-shared"
   related_skills:
     - "fakturownia-shared"
+    - "fakturownia-products"
     - "fakturownia-invoices"
   command_refs:
     - "schema list"
@@ -45,7 +46,8 @@ metadata:
 
 - `schema list` enumerates supported commands.
 - `schema <noun> <verb>` returns flags, env vars, examples, exit codes, output modes, and output schema details.
-- For invoice commands, inspect `output.known_fields`, `path_syntax`, and the generated `data_schema` before building `--fields` selectors.
+- For product, client, and invoice commands, inspect `output.known_fields`, `path_syntax`, and the generated `data_schema` before building `--fields` selectors.
+- For product and client write commands, inspect `request_body_schema` before constructing `--input` payloads.
 
 ## Examples
 
@@ -59,4 +61,5 @@ fakturownia schema auth login --json
 ## Related Skills
 
 - [fakturownia-shared](../shared/SKILL.md)
+- [fakturownia-products](../products/SKILL.md)
 - [fakturownia-invoices](../invoices/SKILL.md)

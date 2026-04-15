@@ -228,11 +228,16 @@ func renderAreaSkill(bundle SkillBundleSpec, area SkillAreaSpec) (string, error)
 		writeClientsDiscoverySection(&b)
 	}
 
+	if area.Key == "products" {
+		writeProductsDiscoverySection(&b)
+	}
+
 	if area.Key == "schema" {
 		b.WriteString("## Schema Output\n\n")
 		b.WriteString("- `schema list` enumerates supported commands.\n")
 		b.WriteString("- `schema <noun> <verb>` returns flags, env vars, examples, exit codes, output modes, and output schema details.\n")
-		b.WriteString("- For invoice commands, inspect `output.known_fields`, `path_syntax`, and the generated `data_schema` before building `--fields` selectors.\n\n")
+		b.WriteString("- For product, client, and invoice commands, inspect `output.known_fields`, `path_syntax`, and the generated `data_schema` before building `--fields` selectors.\n")
+		b.WriteString("- For product and client write commands, inspect `request_body_schema` before constructing `--input` payloads.\n\n")
 	}
 
 	if area.Key == "doctor" {
@@ -276,6 +281,15 @@ func writeClientsDiscoverySection(b *strings.Builder) {
 	b.WriteString("- Read `output.known_fields` to discover README-backed client output fields such as `name`, `tax_no`, or `tag_list[]`.\n")
 	b.WriteString("- Use `fakturownia schema client create --json` and `fakturownia schema client update --json` to inspect `request_body_schema` and accepted `--input` modes.\n")
 	b.WriteString("- `--input` accepts inline JSON, `@file`, or `-` for stdin, and the CLI wraps the inner object into the upstream `client` envelope.\n\n")
+}
+
+func writeProductsDiscoverySection(b *strings.Builder) {
+	b.WriteString("## Output and Request Discovery\n\n")
+	b.WriteString("- Use `fakturownia schema product list --json` and `fakturownia schema product get --json` before building selectors.\n")
+	b.WriteString("- Read `output.known_fields` to discover README-backed product output fields such as `name`, `code`, `tag_list[]`, `gtu_codes[]`, or `stock_level`.\n")
+	b.WriteString("- Use `fakturownia schema product create --json` and `fakturownia schema product update --json` to inspect `request_body_schema` and accepted `--input` modes.\n")
+	b.WriteString("- `--input` accepts inline JSON, `@file`, or `-` for stdin, and the CLI wraps the inner object into the upstream `product` envelope.\n")
+	b.WriteString("- Package-product payloads use `package_products_details` as an open object whose values contain `id` and `quantity`.\n\n")
 }
 
 func writeGeneratedHeader(b *strings.Builder) {

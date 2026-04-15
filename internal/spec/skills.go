@@ -47,7 +47,7 @@ func SkillBundle() SkillBundleSpec {
 	return SkillBundleSpec{
 		Name:        "fakturownia",
 		Title:       "fakturownia",
-		Description: "Fakturownia CLI bundle: shared guidance, auth, clients, invoices, self-update, schema discovery, and diagnostics for the `fakturownia` command. Use when an agent needs to work with Fakturownia through this CLI.",
+		Description: "Fakturownia CLI bundle: shared guidance, auth, clients, products, invoices, self-update, schema discovery, and diagnostics for the `fakturownia` command. Use when an agent needs to work with Fakturownia through this CLI.",
 		CLIHelp:     "fakturownia --help",
 		RequiresBins: []string{
 			"fakturownia",
@@ -68,6 +68,7 @@ func SkillBundle() SkillBundleSpec {
 					{Noun: "schema", Verb: "list"},
 					{Noun: "self", Verb: "update"},
 					{Noun: "client", Verb: "list"},
+					{Noun: "product", Verb: "list"},
 					{Noun: "invoice", Verb: "list"},
 				},
 				CLIHelp: "fakturownia --help",
@@ -137,6 +138,34 @@ func SkillBundle() SkillBundleSpec {
 				},
 			},
 			{
+				Key:          "products",
+				Name:         "fakturownia-products",
+				Title:        "Products",
+				Description:  "Fakturownia CLI products: list, fetch, create, and update products, including warehouse-aware reads and README-backed request schemas.",
+				Category:     "api-area",
+				Prerequisite: "shared",
+				RelatedSkills: []string{
+					"shared",
+					"schema",
+					"doctor",
+				},
+				CommandRefs: []SkillCommandRef{
+					{Noun: "product", Verb: "list"},
+					{Noun: "product", Verb: "get"},
+					{Noun: "product", Verb: "create"},
+					{Noun: "product", Verb: "update"},
+				},
+				CLIHelp: "fakturownia product --help",
+				RequiresBins: []string{
+					"fakturownia",
+				},
+				DiscoveryHint: "Use `fakturownia schema product list --json` for output fields and `fakturownia schema product create --json` or `product update --json` for request-body discovery before building selectors or payloads.",
+				WhenToUse: []string{
+					"The task is about reading or mutating products, including warehouse-aware stock views.",
+					"You need to inspect README-backed product fields or package-product payload requirements before create or update calls.",
+				},
+			},
+			{
 				Key:          "invoices",
 				Name:         "fakturownia-invoices",
 				Title:        "Invoices",
@@ -145,6 +174,7 @@ func SkillBundle() SkillBundleSpec {
 				Prerequisite: "shared",
 				RelatedSkills: []string{
 					"shared",
+					"products",
 					"schema",
 					"doctor",
 				},
@@ -172,6 +202,7 @@ func SkillBundle() SkillBundleSpec {
 				Prerequisite: "shared",
 				RelatedSkills: []string{
 					"shared",
+					"products",
 					"invoices",
 				},
 				CommandRefs: []SkillCommandRef{

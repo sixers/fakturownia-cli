@@ -15,7 +15,9 @@ import (
 	"github.com/sixers/fakturownia-cli/internal/config"
 	"github.com/sixers/fakturownia-cli/internal/doctor"
 	"github.com/sixers/fakturownia-cli/internal/invoice"
+	"github.com/sixers/fakturownia-cli/internal/jsoninput"
 	"github.com/sixers/fakturownia-cli/internal/output"
+	"github.com/sixers/fakturownia-cli/internal/product"
 	"github.com/sixers/fakturownia-cli/internal/selfupdate"
 )
 
@@ -39,6 +41,13 @@ type ClientService interface {
 	Delete(context.Context, client.DeleteRequest) (*client.DeleteResponse, error)
 }
 
+type ProductService interface {
+	List(context.Context, product.ListRequest) (*product.ListResponse, error)
+	Get(context.Context, product.GetRequest) (*product.GetResponse, error)
+	Create(context.Context, product.CreateRequest) (*product.CreateResponse, error)
+	Update(context.Context, product.UpdateRequest) (*product.UpdateResponse, error)
+}
+
 type DoctorService interface {
 	Run(context.Context, doctor.RunRequest) (*doctor.RunResult, error)
 }
@@ -51,6 +60,7 @@ type Dependencies struct {
 	Auth    AuthService
 	Client  ClientService
 	Invoice InvoiceService
+	Product ProductService
 	Doctor  DoctorService
 	Self    SelfUpdateService
 	Stdout  io.Writer
@@ -105,6 +115,7 @@ func NewRootCommand(deps Dependencies) *cobra.Command {
 	root.AddCommand(newAuthCommand(deps, &globals))
 	root.AddCommand(newClientCommand(deps, &globals))
 	root.AddCommand(newInvoiceCommand(deps, &globals))
+	root.AddCommand(newProductCommand(deps, &globals))
 	root.AddCommand(newDoctorCommand(deps, &globals))
 	root.AddCommand(newSelfCommand(deps, &globals))
 	root.AddCommand(newSchemaCommand(deps, &globals))
@@ -680,6 +691,210 @@ func newInvoiceCommand(deps Dependencies, globals *globalOptions) *cobra.Command
 	return invoiceCmd
 }
 
+func newProductCommand(deps Dependencies, globals *globalOptions) *cobra.Command {
+	productCmd := &cobra.Command{
+		Use:   "product",
+		Short: "Read and manage products",
+	}
+
+	listSpec, _ := FindCommand("product", "list")
+	listReq := product.ListRequest{Page: 1, PerPage: 25}
+	listCmd := &cobra.Command{
+		Use:   listSpec.Use,
+		Short: listSpec.Short,
+		Long:  BuildLongDescription(listSpec),
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			opts, warnings, appErr := prepareOutputOptions(cmd, listSpec, globals)
+			if appErr != nil {
+				return writeCommandError(cmd, opts, output.Meta{Command: "product list"}, appErr)
+			}
+			listReq.ConfigPath = globals.Config
+			listReq.Profile = globals.Profile
+			listReq.Env = config.LookupEnv()
+			listReq.Timeout = timeoutFromGlobals(globals)
+			listReq.MaxRetries = globals.MaxRetries
+
+			start := time.Now()
+			result, err := deps.Product.List(cmd.Context(), listReq)
+			meta := output.Meta{
+				Command:    "product list",
+				Profile:    resultProfile(result),
+				DurationMS: time.Since(start).Milliseconds(),
+			}
+			if result != nil {
+				meta.RequestID = result.RequestID
+				meta.Pagination = &result.Pagination
+			}
+			if err != nil {
+				return writeCommandError(cmd, opts, meta, err)
+			}
+			writeWarnings(cmd.ErrOrStderr(), opts, warnings)
+			return output.RenderSuccess(cmd.OutOrStdout(), opts, output.Result{
+				Data:           result.Products,
+				RawBody:        result.RawBody,
+				Warnings:       warnings,
+				Meta:           meta,
+				HumanRenderer:  output.TableRenderer{},
+				DefaultColumns: defaultColumns(listSpec, []string{"id", "name", "code", "price_gross", "tax", "stock_level"}),
+			})
+		},
+	}
+	listCmd.Flags().IntVar(&listReq.Page, "page", 1, "requested result page")
+	listCmd.Flags().IntVar(&listReq.PerPage, "per-page", 25, "requested result count per page")
+	listCmd.Flags().StringVar(&listReq.DateFrom, "date-from", "", "filter products added or changed since a date such as 2025-11-01")
+	listCmd.Flags().StringVar(&listReq.WarehouseID, "warehouse-id", "", "show stock levels for a specific warehouse")
+
+	getSpec, _ := FindCommand("product", "get")
+	var getReq product.GetRequest
+	getCmd := &cobra.Command{
+		Use:   getSpec.Use,
+		Short: getSpec.Short,
+		Long:  BuildLongDescription(getSpec),
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			opts, warnings, appErr := prepareOutputOptions(cmd, getSpec, globals)
+			if appErr != nil {
+				return writeCommandError(cmd, opts, output.Meta{Command: "product get"}, appErr)
+			}
+			getReq.ConfigPath = globals.Config
+			getReq.Profile = globals.Profile
+			getReq.Env = config.LookupEnv()
+			getReq.Timeout = timeoutFromGlobals(globals)
+			getReq.MaxRetries = globals.MaxRetries
+
+			start := time.Now()
+			result, err := deps.Product.Get(cmd.Context(), getReq)
+			meta := output.Meta{
+				Command:    "product get",
+				Profile:    resultProfile(result),
+				DurationMS: time.Since(start).Milliseconds(),
+			}
+			if result != nil {
+				meta.RequestID = result.RequestID
+			}
+			if err != nil {
+				return writeCommandError(cmd, opts, meta, err)
+			}
+			writeWarnings(cmd.ErrOrStderr(), opts, warnings)
+			return output.RenderSuccess(cmd.OutOrStdout(), opts, output.Result{
+				Data:          result.Product,
+				RawBody:       result.RawBody,
+				Warnings:      warnings,
+				Meta:          meta,
+				HumanRenderer: output.JSONRenderer{},
+			})
+		},
+	}
+	getCmd.Flags().StringVar(&getReq.ID, "id", "", "product ID")
+	getCmd.Flags().StringVar(&getReq.WarehouseID, "warehouse-id", "", "show stock level for a specific warehouse")
+	_ = getCmd.MarkFlagRequired("id")
+
+	createSpec, _ := FindCommand("product", "create")
+	var createInput string
+	createCmd := &cobra.Command{
+		Use:   createSpec.Use,
+		Short: createSpec.Short,
+		Long:  BuildLongDescription(createSpec),
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			opts, warnings, appErr := prepareOutputOptions(cmd, createSpec, globals)
+			if appErr != nil {
+				return writeCommandError(cmd, opts, output.Meta{Command: "product create"}, appErr)
+			}
+			input, err := jsoninput.ParseObject(createInput, cmd.InOrStdin(), "product")
+			if err != nil {
+				return writeCommandError(cmd, opts, output.Meta{Command: "product create"}, err)
+			}
+
+			start := time.Now()
+			result, err := deps.Product.Create(cmd.Context(), product.CreateRequest{
+				ConfigPath: globals.Config,
+				Profile:    globals.Profile,
+				Env:        config.LookupEnv(),
+				Timeout:    timeoutFromGlobals(globals),
+				MaxRetries: globals.MaxRetries,
+				Input:      input,
+				DryRun:     globals.DryRun,
+			})
+			meta := output.Meta{
+				Command:    "product create",
+				Profile:    resultProfile(result),
+				DurationMS: time.Since(start).Milliseconds(),
+			}
+			if result != nil {
+				meta.RequestID = result.RequestID
+			}
+			if err != nil {
+				return writeCommandError(cmd, opts, meta, err)
+			}
+			writeWarnings(cmd.ErrOrStderr(), opts, warnings)
+			return output.RenderSuccess(cmd.OutOrStdout(), opts, output.Result{
+				Data:          productCreateData(result),
+				RawBody:       result.RawBody,
+				Warnings:      warnings,
+				Meta:          meta,
+				HumanRenderer: output.JSONRenderer{},
+			})
+		},
+	}
+	createCmd.Flags().StringVar(&createInput, "input", "", "product JSON input as inline JSON, @file, or - for stdin")
+	_ = createCmd.MarkFlagRequired("input")
+
+	updateSpec, _ := FindCommand("product", "update")
+	var updateReq product.UpdateRequest
+	var updateInput string
+	updateCmd := &cobra.Command{
+		Use:   updateSpec.Use,
+		Short: updateSpec.Short,
+		Long:  BuildLongDescription(updateSpec),
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			opts, warnings, appErr := prepareOutputOptions(cmd, updateSpec, globals)
+			if appErr != nil {
+				return writeCommandError(cmd, opts, output.Meta{Command: "product update"}, appErr)
+			}
+			input, err := jsoninput.ParseObject(updateInput, cmd.InOrStdin(), "product")
+			if err != nil {
+				return writeCommandError(cmd, opts, output.Meta{Command: "product update"}, err)
+			}
+
+			updateReq.ConfigPath = globals.Config
+			updateReq.Profile = globals.Profile
+			updateReq.Env = config.LookupEnv()
+			updateReq.Timeout = timeoutFromGlobals(globals)
+			updateReq.MaxRetries = globals.MaxRetries
+			updateReq.Input = input
+			updateReq.DryRun = globals.DryRun
+
+			start := time.Now()
+			result, err := deps.Product.Update(cmd.Context(), updateReq)
+			meta := output.Meta{
+				Command:    "product update",
+				Profile:    resultProfile(result),
+				DurationMS: time.Since(start).Milliseconds(),
+			}
+			if result != nil {
+				meta.RequestID = result.RequestID
+			}
+			if err != nil {
+				return writeCommandError(cmd, opts, meta, err)
+			}
+			writeWarnings(cmd.ErrOrStderr(), opts, warnings)
+			return output.RenderSuccess(cmd.OutOrStdout(), opts, output.Result{
+				Data:          productUpdateData(result),
+				RawBody:       result.RawBody,
+				Warnings:      warnings,
+				Meta:          meta,
+				HumanRenderer: output.JSONRenderer{},
+			})
+		},
+	}
+	updateCmd.Flags().StringVar(&updateReq.ID, "id", "", "product ID")
+	updateCmd.Flags().StringVar(&updateInput, "input", "", "product JSON input as inline JSON, @file, or - for stdin")
+	_ = updateCmd.MarkFlagRequired("id")
+	_ = updateCmd.MarkFlagRequired("input")
+
+	productCmd.AddCommand(listCmd, getCmd, createCmd, updateCmd)
+	return productCmd
+}
+
 func newDoctorCommand(deps Dependencies, globals *globalOptions) *cobra.Command {
 	doctorSpec, _ := FindCommand("doctor", "run")
 	var checkReleaseIntegrity bool
@@ -993,6 +1208,26 @@ func clientDeleteData(result *client.DeleteResponse) any {
 		return result.DryRun
 	}
 	return result
+}
+
+func productCreateData(result *product.CreateResponse) any {
+	if result == nil {
+		return nil
+	}
+	if result.DryRun != nil {
+		return result.DryRun
+	}
+	return result.Product
+}
+
+func productUpdateData(result *product.UpdateResponse) any {
+	if result == nil {
+		return nil
+	}
+	if result.DryRun != nil {
+		return result.DryRun
+	}
+	return result.Product
 }
 
 func resultProfile(result any) string {

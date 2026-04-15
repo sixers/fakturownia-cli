@@ -69,6 +69,30 @@
       "verb": "delete"
     },
     {
+      "noun": "product",
+      "summary": "List products",
+      "use": "list",
+      "verb": "list"
+    },
+    {
+      "noun": "product",
+      "summary": "Fetch a single product by ID",
+      "use": "get --id ID",
+      "verb": "get"
+    },
+    {
+      "noun": "product",
+      "summary": "Create a product",
+      "use": "create --input -|@file|JSON",
+      "verb": "create"
+    },
+    {
+      "noun": "product",
+      "summary": "Update a product",
+      "use": "update --id ID --input -|@file|JSON",
+      "verb": "update"
+    },
+    {
       "noun": "doctor",
       "summary": "Validate local auth and API reachability",
       "use": "run",
