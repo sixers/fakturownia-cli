@@ -39,6 +39,36 @@
       "verb": "download"
     },
     {
+      "noun": "client",
+      "summary": "List clients",
+      "use": "list",
+      "verb": "list"
+    },
+    {
+      "noun": "client",
+      "summary": "Fetch a single client by ID or external ID",
+      "use": "get --id ID | --external-id X",
+      "verb": "get"
+    },
+    {
+      "noun": "client",
+      "summary": "Create a client",
+      "use": "create --input -|@file|JSON",
+      "verb": "create"
+    },
+    {
+      "noun": "client",
+      "summary": "Update a client",
+      "use": "update --id ID --input -|@file|JSON",
+      "verb": "update"
+    },
+    {
+      "noun": "client",
+      "summary": "Delete a client",
+      "use": "delete --id ID --yes",
+      "verb": "delete"
+    },
+    {
       "noun": "doctor",
       "summary": "Validate local auth and API reachability",
       "use": "run",

@@ -21,5 +21,6 @@ Task-focused API area skills.
 
 | Skill | Description |
 | --- | --- |
+| [fakturownia-clients](../subskills/clients/SKILL.md) | Fakturownia CLI clients: list, fetch, create, update, and delete clients, and inspect README-backed client fields and request schemas. |
 | [fakturownia-invoices](../subskills/invoices/SKILL.md) | Fakturownia CLI invoices: list invoices, fetch a single invoice, download invoice PDFs, and discover invoice fields through schema output. |
 

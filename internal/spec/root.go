@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/sixers/fakturownia-cli/internal/auth"
+	"github.com/sixers/fakturownia-cli/internal/client"
 	"github.com/sixers/fakturownia-cli/internal/config"
 	"github.com/sixers/fakturownia-cli/internal/doctor"
 	"github.com/sixers/fakturownia-cli/internal/invoice"
@@ -29,12 +30,21 @@ type InvoiceService interface {
 	Download(context.Context, invoice.DownloadRequest) (*invoice.DownloadResponse, error)
 }
 
+type ClientService interface {
+	List(context.Context, client.ListRequest) (*client.ListResponse, error)
+	Get(context.Context, client.GetRequest) (*client.GetResponse, error)
+	Create(context.Context, client.CreateRequest) (*client.CreateResponse, error)
+	Update(context.Context, client.UpdateRequest) (*client.UpdateResponse, error)
+	Delete(context.Context, client.DeleteRequest) (*client.DeleteResponse, error)
+}
+
 type DoctorService interface {
 	Run(context.Context, doctor.RunRequest) (*doctor.RunResult, error)
 }
 
 type Dependencies struct {
 	Auth    AuthService
+	Client  ClientService
 	Invoice InvoiceService
 	Doctor  DoctorService
 	Stdout  io.Writer
@@ -87,6 +97,7 @@ func NewRootCommand(deps Dependencies) *cobra.Command {
 	root.PersistentFlags().StringVar(&globals.Config, "config", "", "override the config file path")
 
 	root.AddCommand(newAuthCommand(deps, &globals))
+	root.AddCommand(newClientCommand(deps, &globals))
 	root.AddCommand(newInvoiceCommand(deps, &globals))
 	root.AddCommand(newDoctorCommand(deps, &globals))
 	root.AddCommand(newSchemaCommand(deps, &globals))
@@ -234,6 +245,273 @@ func newAuthCommand(deps Dependencies, globals *globalOptions) *cobra.Command {
 
 	authCmd.AddCommand(loginCmd, statusCmd, logoutCmd)
 	return authCmd
+}
+
+func newClientCommand(deps Dependencies, globals *globalOptions) *cobra.Command {
+	clientCmd := &cobra.Command{
+		Use:   "client",
+		Short: "Read and manage clients",
+	}
+
+	listSpec, _ := FindCommand("client", "list")
+	listReq := client.ListRequest{Page: 1, PerPage: 25}
+	listCmd := &cobra.Command{
+		Use:   listSpec.Use,
+		Short: listSpec.Short,
+		Long:  BuildLongDescription(listSpec),
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			opts, warnings, appErr := prepareOutputOptions(cmd, listSpec, globals)
+			if appErr != nil {
+				return writeCommandError(cmd, opts, output.Meta{Command: "client list"}, appErr)
+			}
+			listReq.ConfigPath = globals.Config
+			listReq.Profile = globals.Profile
+			listReq.Env = config.LookupEnv()
+			listReq.Timeout = timeoutFromGlobals(globals)
+			listReq.MaxRetries = globals.MaxRetries
+
+			start := time.Now()
+			result, err := deps.Client.List(cmd.Context(), listReq)
+			meta := output.Meta{
+				Command:    "client list",
+				Profile:    resultProfile(result),
+				DurationMS: time.Since(start).Milliseconds(),
+			}
+			if result != nil {
+				meta.RequestID = result.RequestID
+				meta.Pagination = &result.Pagination
+			}
+			if err != nil {
+				return writeCommandError(cmd, opts, meta, err)
+			}
+			writeWarnings(cmd.ErrOrStderr(), opts, warnings)
+			return output.RenderSuccess(cmd.OutOrStdout(), opts, output.Result{
+				Data:           result.Clients,
+				RawBody:        result.RawBody,
+				Warnings:       warnings,
+				Meta:           meta,
+				HumanRenderer:  output.TableRenderer{},
+				DefaultColumns: defaultColumns(listSpec, []string{"id", "name", "tax_no", "email", "city", "country"}),
+			})
+		},
+	}
+	listCmd.Flags().IntVar(&listReq.Page, "page", 1, "requested result page")
+	listCmd.Flags().IntVar(&listReq.PerPage, "per-page", 25, "requested result count per page")
+	listCmd.Flags().StringVar(&listReq.Name, "name", "", "filter by client name")
+	listCmd.Flags().StringVar(&listReq.Email, "email", "", "filter by client email")
+	listCmd.Flags().StringVar(&listReq.Shortcut, "shortcut", "", "filter by client shortcut")
+	listCmd.Flags().StringVar(&listReq.TaxNo, "tax-no", "", "filter by client tax number")
+	listCmd.Flags().StringVar(&listReq.ExternalID, "external-id", "", "filter by external client ID")
+
+	getSpec, _ := FindCommand("client", "get")
+	var getReq client.GetRequest
+	getCmd := &cobra.Command{
+		Use:   getSpec.Use,
+		Short: getSpec.Short,
+		Long:  BuildLongDescription(getSpec),
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			opts, warnings, appErr := prepareOutputOptions(cmd, getSpec, globals)
+			if appErr != nil {
+				return writeCommandError(cmd, opts, output.Meta{Command: "client get"}, appErr)
+			}
+			getReq.ConfigPath = globals.Config
+			getReq.Profile = globals.Profile
+			getReq.Env = config.LookupEnv()
+			getReq.Timeout = timeoutFromGlobals(globals)
+			getReq.MaxRetries = globals.MaxRetries
+
+			start := time.Now()
+			result, err := deps.Client.Get(cmd.Context(), getReq)
+			meta := output.Meta{
+				Command:    "client get",
+				Profile:    resultProfile(result),
+				DurationMS: time.Since(start).Milliseconds(),
+			}
+			if result != nil {
+				meta.RequestID = result.RequestID
+			}
+			if err != nil {
+				return writeCommandError(cmd, opts, meta, err)
+			}
+			writeWarnings(cmd.ErrOrStderr(), opts, warnings)
+			return output.RenderSuccess(cmd.OutOrStdout(), opts, output.Result{
+				Data:          result.Client,
+				RawBody:       result.RawBody,
+				Warnings:      warnings,
+				Meta:          meta,
+				HumanRenderer: output.JSONRenderer{},
+			})
+		},
+	}
+	getCmd.Flags().StringVar(&getReq.ID, "id", "", "client ID")
+	getCmd.Flags().StringVar(&getReq.ExternalID, "external-id", "", "external client ID")
+
+	createSpec, _ := FindCommand("client", "create")
+	var createInput string
+	createCmd := &cobra.Command{
+		Use:   createSpec.Use,
+		Short: createSpec.Short,
+		Long:  BuildLongDescription(createSpec),
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			opts, warnings, appErr := prepareOutputOptions(cmd, createSpec, globals)
+			if appErr != nil {
+				return writeCommandError(cmd, opts, output.Meta{Command: "client create"}, appErr)
+			}
+			input, err := client.ParseInput(createInput, cmd.InOrStdin())
+			if err != nil {
+				return writeCommandError(cmd, opts, output.Meta{Command: "client create"}, err)
+			}
+
+			start := time.Now()
+			result, err := deps.Client.Create(cmd.Context(), client.CreateRequest{
+				ConfigPath: globals.Config,
+				Profile:    globals.Profile,
+				Env:        config.LookupEnv(),
+				Timeout:    timeoutFromGlobals(globals),
+				MaxRetries: globals.MaxRetries,
+				Input:      input,
+				DryRun:     globals.DryRun,
+			})
+			meta := output.Meta{
+				Command:    "client create",
+				Profile:    resultProfile(result),
+				DurationMS: time.Since(start).Milliseconds(),
+			}
+			if result != nil {
+				meta.RequestID = result.RequestID
+			}
+			if err != nil {
+				return writeCommandError(cmd, opts, meta, err)
+			}
+			writeWarnings(cmd.ErrOrStderr(), opts, warnings)
+			return output.RenderSuccess(cmd.OutOrStdout(), opts, output.Result{
+				Data:          clientCreateData(result),
+				RawBody:       result.RawBody,
+				Warnings:      warnings,
+				Meta:          meta,
+				HumanRenderer: output.JSONRenderer{},
+			})
+		},
+	}
+	createCmd.Flags().StringVar(&createInput, "input", "", "client JSON input as inline JSON, @file, or - for stdin")
+	_ = createCmd.MarkFlagRequired("input")
+
+	updateSpec, _ := FindCommand("client", "update")
+	var updateReq client.UpdateRequest
+	var updateInput string
+	updateCmd := &cobra.Command{
+		Use:   updateSpec.Use,
+		Short: updateSpec.Short,
+		Long:  BuildLongDescription(updateSpec),
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			opts, warnings, appErr := prepareOutputOptions(cmd, updateSpec, globals)
+			if appErr != nil {
+				return writeCommandError(cmd, opts, output.Meta{Command: "client update"}, appErr)
+			}
+			input, err := client.ParseInput(updateInput, cmd.InOrStdin())
+			if err != nil {
+				return writeCommandError(cmd, opts, output.Meta{Command: "client update"}, err)
+			}
+
+			updateReq.ConfigPath = globals.Config
+			updateReq.Profile = globals.Profile
+			updateReq.Env = config.LookupEnv()
+			updateReq.Timeout = timeoutFromGlobals(globals)
+			updateReq.MaxRetries = globals.MaxRetries
+			updateReq.Input = input
+			updateReq.DryRun = globals.DryRun
+
+			start := time.Now()
+			result, err := deps.Client.Update(cmd.Context(), updateReq)
+			meta := output.Meta{
+				Command:    "client update",
+				Profile:    resultProfile(result),
+				DurationMS: time.Since(start).Milliseconds(),
+			}
+			if result != nil {
+				meta.RequestID = result.RequestID
+			}
+			if err != nil {
+				return writeCommandError(cmd, opts, meta, err)
+			}
+			writeWarnings(cmd.ErrOrStderr(), opts, warnings)
+			return output.RenderSuccess(cmd.OutOrStdout(), opts, output.Result{
+				Data:          clientUpdateData(result),
+				RawBody:       result.RawBody,
+				Warnings:      warnings,
+				Meta:          meta,
+				HumanRenderer: output.JSONRenderer{},
+			})
+		},
+	}
+	updateCmd.Flags().StringVar(&updateReq.ID, "id", "", "client ID")
+	updateCmd.Flags().StringVar(&updateInput, "input", "", "client JSON input as inline JSON, @file, or - for stdin")
+	_ = updateCmd.MarkFlagRequired("id")
+	_ = updateCmd.MarkFlagRequired("input")
+
+	deleteSpec, _ := FindCommand("client", "delete")
+	var deleteReq client.DeleteRequest
+	var deleteYes bool
+	deleteCmd := &cobra.Command{
+		Use:   deleteSpec.Use,
+		Short: deleteSpec.Short,
+		Long:  BuildLongDescription(deleteSpec),
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			opts, warnings, appErr := prepareOutputOptions(cmd, deleteSpec, globals)
+			if appErr != nil {
+				return writeCommandError(cmd, opts, output.Meta{Command: "client delete"}, appErr)
+			}
+			if !deleteYes {
+				return writeCommandError(cmd, opts, output.Meta{Command: "client delete"}, output.Usage("confirmation_required", "--yes is required for client delete", "rerun with --yes to delete the client"))
+			}
+
+			deleteReq.ConfigPath = globals.Config
+			deleteReq.Profile = globals.Profile
+			deleteReq.Env = config.LookupEnv()
+			deleteReq.Timeout = timeoutFromGlobals(globals)
+			deleteReq.MaxRetries = globals.MaxRetries
+			deleteReq.DryRun = globals.DryRun
+
+			start := time.Now()
+			result, err := deps.Client.Delete(cmd.Context(), deleteReq)
+			meta := output.Meta{
+				Command:    "client delete",
+				Profile:    resultProfile(result),
+				DurationMS: time.Since(start).Milliseconds(),
+			}
+			if result != nil {
+				meta.RequestID = result.RequestID
+			}
+			if err != nil {
+				return writeCommandError(cmd, opts, meta, err)
+			}
+			writeWarnings(cmd.ErrOrStderr(), opts, warnings)
+
+			humanRenderer := output.HumanRenderer(output.LinesRenderer{
+				Lines: func(data any) ([]string, error) {
+					res := data.(*client.DeleteResponse)
+					return []string{fmt.Sprintf("deleted client %s", res.ID)}, nil
+				},
+			})
+			data := clientDeleteData(result)
+			if result.DryRun != nil {
+				humanRenderer = output.JSONRenderer{}
+			}
+			return output.RenderSuccess(cmd.OutOrStdout(), opts, output.Result{
+				Data:          data,
+				RawBody:       result.RawBody,
+				Warnings:      warnings,
+				Meta:          meta,
+				HumanRenderer: humanRenderer,
+			})
+		},
+	}
+	deleteCmd.Flags().StringVar(&deleteReq.ID, "id", "", "client ID")
+	deleteCmd.Flags().BoolVar(&deleteYes, "yes", false, "confirm client deletion")
+	_ = deleteCmd.MarkFlagRequired("id")
+
+	clientCmd.AddCommand(listCmd, getCmd, createCmd, updateCmd, deleteCmd)
+	return clientCmd
 }
 
 func newInvoiceCommand(deps Dependencies, globals *globalOptions) *cobra.Command {
@@ -549,6 +827,14 @@ func prepareOutputOptions(cmd *cobra.Command, spec CommandSpec, globals *globalO
 			return output.Options{}, nil, output.Usage("raw_conflict", "--raw cannot be combined with --json, --output, --fields, --columns, or --quiet", "drop the other output flags when using --raw")
 		}
 	}
+	if globals.DryRun && spec.Mutating {
+		if globals.Raw {
+			return output.Options{}, nil, output.Usage("dry_run_raw_conflict", "--dry-run cannot be combined with --raw for mutating commands", "use --json or human output to inspect the planned request")
+		}
+		if len(opts.Fields) > 0 || len(opts.Columns) > 0 || opts.Quiet {
+			return output.Options{}, nil, output.Usage("dry_run_output_conflict", "--dry-run for mutating commands cannot be combined with --fields, --columns, or --quiet", "inspect the full planned request instead")
+		}
+	}
 	if opts.Format == "json" && opts.Quiet {
 		return output.Options{}, nil, output.Usage("quiet_json_conflict", "--quiet cannot be combined with JSON output", "use --fields with --json or use --quiet with human output")
 	}
@@ -604,6 +890,36 @@ func defaultColumns(spec CommandSpec, fallback []string) []string {
 		return append([]string{}, spec.Output.DefaultColumns...)
 	}
 	return fallback
+}
+
+func clientCreateData(result *client.CreateResponse) any {
+	if result == nil {
+		return nil
+	}
+	if result.DryRun != nil {
+		return result.DryRun
+	}
+	return result.Client
+}
+
+func clientUpdateData(result *client.UpdateResponse) any {
+	if result == nil {
+		return nil
+	}
+	if result.DryRun != nil {
+		return result.DryRun
+	}
+	return result.Client
+}
+
+func clientDeleteData(result *client.DeleteResponse) any {
+	if result == nil {
+		return nil
+	}
+	if result.DryRun != nil {
+		return result.DryRun
+	}
+	return result
 }
 
 func resultProfile(result any) string {

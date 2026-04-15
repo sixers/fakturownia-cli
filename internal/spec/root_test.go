@@ -10,9 +10,11 @@ import (
 	"testing"
 
 	"github.com/sixers/fakturownia-cli/internal/auth"
+	"github.com/sixers/fakturownia-cli/internal/client"
 	"github.com/sixers/fakturownia-cli/internal/doctor"
 	"github.com/sixers/fakturownia-cli/internal/invoice"
 	"github.com/sixers/fakturownia-cli/internal/output"
+	"github.com/sixers/fakturownia-cli/internal/transport"
 )
 
 type fakeAuthService struct {
@@ -87,6 +89,104 @@ func (f *fakeInvoiceService) Download(_ context.Context, req invoice.DownloadReq
 	return &invoice.DownloadResponse{ID: req.ID, Path: filepath.Join(".", "invoice-"+req.ID+".pdf"), Bytes: 12, Profile: req.Profile}, nil
 }
 
+type fakeClientService struct {
+	listReq   client.ListRequest
+	getReq    client.GetRequest
+	createReq client.CreateRequest
+	updateReq client.UpdateRequest
+	deleteReq client.DeleteRequest
+}
+
+func (f *fakeClientService) List(_ context.Context, req client.ListRequest) (*client.ListResponse, error) {
+	f.listReq = req
+	return &client.ListResponse{
+		Clients: []map[string]any{
+			{
+				"id":       11,
+				"name":     "Acme Sp. z o.o.",
+				"tax_no":   "1234567890",
+				"email":    "billing@acme.test",
+				"city":     "Warsaw",
+				"country":  "PL",
+				"tag_list": []any{"vip", "b2b"},
+			},
+		},
+		RawBody:    []byte(`[{"id":11,"name":"Acme Sp. z o.o."}]`),
+		Profile:    req.Profile,
+		RequestID:  "req-client-list",
+		Pagination: output.Pagination{Page: req.Page, PerPage: req.PerPage, Returned: 1, HasNext: false},
+	}, nil
+}
+
+func (f *fakeClientService) Get(_ context.Context, req client.GetRequest) (*client.GetResponse, error) {
+	f.getReq = req
+	value := req.ID
+	if value == "" {
+		value = req.ExternalID
+	}
+	return &client.GetResponse{
+		Client: map[string]any{
+			"id":          11,
+			"name":        "Acme Sp. z o.o.",
+			"email":       "billing@acme.test",
+			"external_id": value,
+			"tag_list":    []any{"vip", "b2b"},
+		},
+		RawBody:   []byte(`{"id":11,"name":"Acme Sp. z o.o.","email":"billing@acme.test"}`),
+		Profile:   req.Profile,
+		RequestID: "req-client-get",
+	}, nil
+}
+
+func (f *fakeClientService) Create(_ context.Context, req client.CreateRequest) (*client.CreateResponse, error) {
+	f.createReq = req
+	if req.DryRun {
+		plan := transport.PlanJSONRequest("POST", "/clients.json", nil, map[string]any{"client": req.Input})
+		return &client.CreateResponse{Profile: req.Profile, DryRun: &plan}, nil
+	}
+	return &client.CreateResponse{
+		Client: map[string]any{
+			"id":    12,
+			"name":  req.Input["name"],
+			"email": req.Input["email"],
+		},
+		RawBody:   []byte(`{"id":12,"name":"New Client"}`),
+		Profile:   req.Profile,
+		RequestID: "req-client-create",
+	}, nil
+}
+
+func (f *fakeClientService) Update(_ context.Context, req client.UpdateRequest) (*client.UpdateResponse, error) {
+	f.updateReq = req
+	if req.DryRun {
+		plan := transport.PlanJSONRequest("PUT", "/clients/"+req.ID+".json", nil, map[string]any{"client": req.Input})
+		return &client.UpdateResponse{Profile: req.Profile, DryRun: &plan}, nil
+	}
+	return &client.UpdateResponse{
+		Client: map[string]any{
+			"id":    req.ID,
+			"email": req.Input["email"],
+		},
+		RawBody:   []byte(`{"id":12,"email":"updated@example.com"}`),
+		Profile:   req.Profile,
+		RequestID: "req-client-update",
+	}, nil
+}
+
+func (f *fakeClientService) Delete(_ context.Context, req client.DeleteRequest) (*client.DeleteResponse, error) {
+	f.deleteReq = req
+	if req.DryRun {
+		plan := transport.PlanJSONRequest("DELETE", "/clients/"+req.ID+".json", nil, nil)
+		return &client.DeleteResponse{ID: req.ID, Profile: req.Profile, DryRun: &plan}, nil
+	}
+	return &client.DeleteResponse{
+		ID:        req.ID,
+		Deleted:   true,
+		Profile:   req.Profile,
+		RequestID: "req-client-delete",
+	}, nil
+}
+
 type fakeDoctorService struct {
 	runReq doctor.RunRequest
 }
@@ -107,21 +207,29 @@ func (f *fakeDoctorService) Run(_ context.Context, req doctor.RunRequest) (*doct
 
 func TestCommandIntegration(t *testing.T) {
 	authSvc := &fakeAuthService{}
+	clientSvc := &fakeClientService{}
 	invoiceSvc := &fakeInvoiceService{}
 	doctorSvc := &fakeDoctorService{}
 
-	run := func(args ...string) (string, string, error) {
+	runWithInput := func(input string, args ...string) (string, string, error) {
 		var stdout, stderr bytes.Buffer
 		cmd := NewRootCommand(Dependencies{
 			Auth:    authSvc,
+			Client:  clientSvc,
 			Invoice: invoiceSvc,
 			Doctor:  doctorSvc,
 			Stdout:  &stdout,
 			Stderr:  &stderr,
 		})
+		if input != "" {
+			cmd.SetIn(strings.NewReader(input))
+		}
 		cmd.SetArgs(args)
 		err := cmd.Execute()
 		return stdout.String(), stderr.String(), err
+	}
+	run := func(args ...string) (string, string, error) {
+		return runWithInput("", args...)
 	}
 
 	_, _, err := run("auth", "login", "--profile", "work", "--prefix", "acme", "--api-token", "token", "--json")
@@ -138,6 +246,58 @@ func TestCommandIntegration(t *testing.T) {
 	}
 	if !jsonContains(stdout, `"status": "success"`) {
 		t.Fatalf("unexpected invoice list output: %s", stdout)
+	}
+
+	stdout, _, err = run("client", "list", "--json")
+	if err != nil {
+		t.Fatalf("client list error = %v", err)
+	}
+	if !jsonContains(stdout, `"name": "Acme Sp. z o.o."`) {
+		t.Fatalf("unexpected client list output: %s", stdout)
+	}
+
+	stdout, _, err = run("client", "get", "--external-id", "ext-123", "--json")
+	if err != nil {
+		t.Fatalf("client get by external-id error = %v", err)
+	}
+	if clientSvc.getReq.ExternalID != "ext-123" {
+		t.Fatalf("expected client get to receive external ID, got %q", clientSvc.getReq.ExternalID)
+	}
+	if !jsonContains(stdout, `"external_id": "ext-123"`) {
+		t.Fatalf("unexpected client get output: %s", stdout)
+	}
+
+	stdout, _, err = run("client", "create", "--input", `{"name":"New Client","email":"new@example.com"}`, "--json")
+	if err != nil {
+		t.Fatalf("client create error = %v", err)
+	}
+	if clientSvc.createReq.Input["name"] != "New Client" {
+		t.Fatalf("expected client create input to be parsed, got %#v", clientSvc.createReq.Input)
+	}
+	if !jsonContains(stdout, `"id": 12`) {
+		t.Fatalf("unexpected client create output: %s", stdout)
+	}
+
+	stdout, _, err = runWithInput(`{"email":"stdin@example.com"}`, "client", "update", "--id", "12", "--input", "-", "--json")
+	if err != nil {
+		t.Fatalf("client update error = %v", err)
+	}
+	if clientSvc.updateReq.Input["email"] != "stdin@example.com" {
+		t.Fatalf("expected client update stdin input, got %#v", clientSvc.updateReq.Input)
+	}
+	if !jsonContains(stdout, `"email": "stdin@example.com"`) {
+		t.Fatalf("unexpected client update output: %s", stdout)
+	}
+
+	stdout, _, err = run("client", "delete", "--id", "12", "--yes", "--dry-run", "--json")
+	if err != nil {
+		t.Fatalf("client delete dry-run error = %v", err)
+	}
+	if !clientSvc.deleteReq.DryRun {
+		t.Fatal("expected client delete dry-run flag to be forwarded")
+	}
+	if !jsonContains(stdout, `"method": "DELETE"`) || !jsonContains(stdout, `"[redacted]"`) {
+		t.Fatalf("unexpected client delete dry-run output: %s", stdout)
 	}
 
 	stdout, _, err = run("invoice", "get", "--id", "1", "--fields", "id,number", "--json")
@@ -203,6 +363,12 @@ func TestGolden(t *testing.T) {
 		args []string
 		file string
 	}{
+		{name: "client-list-help", args: []string{"client", "list", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "client-list-help.txt")},
+		{name: "schema-client-list-json", args: []string{"schema", "client", "list", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-client-list.json")},
+		{name: "schema-client-get-json", args: []string{"schema", "client", "get", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-client-get.json")},
+		{name: "schema-client-create-json", args: []string{"schema", "client", "create", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-client-create.json")},
+		{name: "schema-client-update-json", args: []string{"schema", "client", "update", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-client-update.json")},
+		{name: "schema-client-delete-json", args: []string{"schema", "client", "delete", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-client-delete.json")},
 		{name: "invoice-list-help", args: []string{"invoice", "list", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "invoice-list-help.txt")},
 		{name: "schema-list-json", args: []string{"schema", "list", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-list.json")},
 		{name: "schema-invoice-list-json", args: []string{"schema", "invoice", "list", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-invoice-list.json")},
@@ -215,6 +381,7 @@ func TestGolden(t *testing.T) {
 			var stdout, stderr bytes.Buffer
 			cmd := NewRootCommand(Dependencies{
 				Auth:    &fakeAuthService{},
+				Client:  &fakeClientService{},
 				Invoice: &fakeInvoiceService{},
 				Doctor:  &fakeDoctorService{},
 				Stdout:  &stdout,

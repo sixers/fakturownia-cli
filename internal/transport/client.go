@@ -33,6 +33,13 @@ type Response struct {
 	Header     http.Header
 }
 
+type RequestPlan struct {
+	Method string              `json:"method"`
+	Path   string              `json:"path"`
+	Query  map[string][]string `json:"query,omitempty"`
+	Body   any                 `json:"body,omitempty"`
+}
+
 func NewClient(baseURL, token string, timeout time.Duration, maxRetries int, httpClient *http.Client) (*Client, error) {
 	parsed, err := url.Parse(baseURL)
 	if err != nil {
@@ -53,7 +60,13 @@ func NewClient(baseURL, token string, timeout time.Duration, maxRetries int, htt
 }
 
 func (c *Client) GetJSON(ctx context.Context, path string, query url.Values, dest any) (*Response, error) {
-	resp, err := c.do(ctx, http.MethodGet, path, query, "application/json")
+	resp, err := c.do(ctx, requestOptions{
+		Method:    http.MethodGet,
+		Path:      path,
+		Query:     query,
+		Accept:    "application/json",
+		Retryable: true,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -68,28 +81,123 @@ func (c *Client) GetJSON(ctx context.Context, path string, query url.Values, des
 }
 
 func (c *Client) GetBinary(ctx context.Context, path string, query url.Values) (*Response, error) {
-	return c.do(ctx, http.MethodGet, path, query, "application/pdf")
+	return c.do(ctx, requestOptions{
+		Method:    http.MethodGet,
+		Path:      path,
+		Query:     query,
+		Accept:    "application/pdf",
+		Retryable: true,
+	})
 }
 
-func (c *Client) do(ctx context.Context, method, path string, query url.Values, accept string) (*Response, error) {
+func (c *Client) PostJSON(ctx context.Context, path string, payload map[string]any, dest any) (*Response, error) {
+	return c.doJSON(ctx, http.MethodPost, path, payload, dest)
+}
+
+func (c *Client) PutJSON(ctx context.Context, path string, payload map[string]any, dest any) (*Response, error) {
+	return c.doJSON(ctx, http.MethodPut, path, payload, dest)
+}
+
+func (c *Client) DeleteJSON(ctx context.Context, path string, payload map[string]any, dest any) (*Response, error) {
+	return c.doJSON(ctx, http.MethodDelete, path, payload, dest)
+}
+
+func PlanJSONRequest(method, path string, query url.Values, payload map[string]any) RequestPlan {
+	plannedQuery := cloneQuery(query)
+	plannedBody := cloneMap(payload)
+
+	if plannedBody != nil {
+		plannedBody["api_token"] = "[redacted]"
+	}
+	if plannedQuery != nil || method == http.MethodDelete {
+		if plannedQuery == nil {
+			plannedQuery = url.Values{}
+		}
+		plannedQuery.Set("api_token", "[redacted]")
+	}
+
+	return RequestPlan{
+		Method: method,
+		Path:   path,
+		Query:  valuesToMap(plannedQuery),
+		Body:   plannedBody,
+	}
+}
+
+type requestOptions struct {
+	Method      string
+	Path        string
+	Query       url.Values
+	Accept      string
+	ContentType string
+	Body        []byte
+	Retryable   bool
+}
+
+func (c *Client) doJSON(ctx context.Context, method, path string, payload map[string]any, dest any) (*Response, error) {
+	body := cloneMap(payload)
+	if body != nil {
+		body["api_token"] = c.token
+	}
+
+	opts := requestOptions{
+		Method:    method,
+		Path:      path,
+		Accept:    "application/json",
+		Retryable: method == http.MethodGet,
+	}
+	if len(body) > 0 {
+		raw, err := json.Marshal(body)
+		if err != nil {
+			return nil, output.Internal(err, "encode upstream JSON request body")
+		}
+		opts.Body = raw
+		opts.ContentType = "application/json"
+	} else if method == http.MethodDelete {
+		opts.Query = url.Values{}
+		opts.Query.Set("api_token", c.token)
+	}
+
+	resp, err := c.do(ctx, opts)
+	if err != nil {
+		return nil, err
+	}
+	if dest == nil || len(resp.RawBody) == 0 {
+		return resp, nil
+	}
+	dec := json.NewDecoder(bytes.NewReader(resp.RawBody))
+	dec.UseNumber()
+	if err := dec.Decode(dest); err != nil {
+		return nil, output.Internal(err, "decode upstream JSON response")
+	}
+	return resp, nil
+}
+
+func (c *Client) do(ctx context.Context, opts requestOptions) (*Response, error) {
+	query := cloneQuery(opts.Query)
 	if query == nil {
 		query = url.Values{}
 	}
-	query.Set("api_token", c.token)
+	if opts.Method == http.MethodGet || len(opts.Body) == 0 {
+		query.Set("api_token", c.token)
+	}
 
 	requestURL := *c.baseURL
-	requestURL.Path = strings.TrimRight(c.baseURL.Path, "/") + path
+	requestURL.Path = strings.TrimRight(c.baseURL.Path, "/") + opts.Path
 	requestURL.RawQuery = query.Encode()
 
 	requestID := newRequestID()
 	var lastErr error
 
 	for attempt := 0; attempt <= c.maxRetries; attempt++ {
-		req, err := http.NewRequestWithContext(ctx, method, requestURL.String(), nil)
+		req, err := http.NewRequestWithContext(ctx, opts.Method, requestURL.String(), bytes.NewReader(opts.Body))
 		if err != nil {
 			return nil, output.Internal(err, "build upstream request")
 		}
-		req.Header.Set("Accept", accept)
+		req.Header.Set("Accept", opts.Accept)
+		if opts.ContentType != "" {
+			req.Header.Set("Content-Type", opts.ContentType)
+		}
 		req.Header.Set("User-Agent", "fakturownia-cli/dev")
 		req.Header.Set("X-Request-ID", requestID)
 
@@ -126,7 +234,7 @@ func (c *Client) do(ctx context.Context, method, path string, query url.Values, 
 		}
 
 		appErr := mapHTTPError(resp.StatusCode, body)
-		if resp.StatusCode >= 500 && attempt < c.maxRetries {
+		if opts.Retryable && resp.StatusCode >= 500 && attempt < c.maxRetries {
 			lastErr = appErr
 			if waitErr := c.wait(ctx, attempt); waitErr != nil {
 				return nil, waitErr
@@ -209,4 +317,56 @@ func newRequestID() string {
 		return fmt.Sprintf("req-%d", time.Now().UnixNano())
 	}
 	return hex.EncodeToString(buf)
+}
+
+func cloneQuery(query url.Values) url.Values {
+	if query == nil {
+		return nil
+	}
+	cloned := make(url.Values, len(query))
+	for key, values := range query {
+		copied := make([]string, len(values))
+		copy(copied, values)
+		cloned[key] = copied
+	}
+	return cloned
+}
+
+func valuesToMap(values url.Values) map[string][]string {
+	if len(values) == 0 {
+		return nil
+	}
+	out := make(map[string][]string, len(values))
+	for key, raw := range values {
+		copied := make([]string, len(raw))
+		copy(copied, raw)
+		out[key] = copied
+	}
+	return out
+}
+
+func cloneMap(value map[string]any) map[string]any {
+	if value == nil {
+		return nil
+	}
+	out := make(map[string]any, len(value))
+	for key, child := range value {
+		out[key] = cloneValue(child)
+	}
+	return out
+}
+
+func cloneValue(value any) any {
+	switch typed := value.(type) {
+	case map[string]any:
+		return cloneMap(typed)
+	case []any:
+		out := make([]any, len(typed))
+		for idx, child := range typed {
+			out[idx] = cloneValue(child)
+		}
+		return out
+	default:
+		return typed
+	}
 }

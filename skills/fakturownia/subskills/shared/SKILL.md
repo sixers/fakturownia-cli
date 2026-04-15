@@ -61,6 +61,10 @@ fakturownia auth login --prefix acme --api-token $FAKTUROWNIA_API_TOKEN
 fakturownia auth login --url https://acme.fakturownia.pl --api-token TOKEN --profile work --set-default
 fakturownia schema list
 fakturownia schema list --json
+fakturownia client list --json
+fakturownia client list --name Acme --columns id,name,email,country
+fakturownia client list --external-id ext-123 --json
+fakturownia client list --page 2 --per-page 25 --raw
 fakturownia invoice list --json
 fakturownia invoice list --period this_month --columns id,number,buyer_name,price_gross
 fakturownia invoice list --include-positions --fields number,positions[].name --json

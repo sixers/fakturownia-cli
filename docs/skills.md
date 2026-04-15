@@ -8,7 +8,7 @@ Generated skill docs for the installable `fakturownia` bundle.
 
 | Skill | Description |
 | --- | --- |
-| [fakturownia](../skills/fakturownia/SKILL.md) | Fakturownia CLI bundle: shared guidance, auth, invoices, schema discovery, and diagnostics for the `fakturownia` command. Use when an agent needs to work with Fakturownia through this CLI. |
+| [fakturownia](../skills/fakturownia/SKILL.md) | Fakturownia CLI bundle: shared guidance, auth, clients, invoices, schema discovery, and diagnostics for the `fakturownia` command. Use when an agent needs to work with Fakturownia through this CLI. |
 
 ## Core
 
@@ -27,5 +27,6 @@ Task-focused API area skills.
 
 | Skill | Description |
 | --- | --- |
+| [fakturownia-clients](../skills/fakturownia/subskills/clients/SKILL.md) | Fakturownia CLI clients: list, fetch, create, update, and delete clients, and inspect README-backed client fields and request schemas. |
 | [fakturownia-invoices](../skills/fakturownia/subskills/invoices/SKILL.md) | Fakturownia CLI invoices: list invoices, fetch a single invoice, download invoice PDFs, and discover invoice fields through schema output. |
 

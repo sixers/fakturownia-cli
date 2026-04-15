@@ -9,6 +9,7 @@ import (
 	"github.com/invopop/jsonschema"
 
 	"github.com/sixers/fakturownia-cli/internal/auth"
+	"github.com/sixers/fakturownia-cli/internal/client"
 	"github.com/sixers/fakturownia-cli/internal/doctor"
 	"github.com/sixers/fakturownia-cli/internal/invoice"
 	"github.com/sixers/fakturownia-cli/internal/output"
@@ -45,8 +46,10 @@ type CommandSpec struct {
 	OutputModes   []string
 	ExitCodes     []ExitCodeSpec
 	RawSupported  bool
+	Mutating      bool
 	DataPrototype any
 	Output        *OutputSpec
+	RequestBody   *RequestBodySpec
 }
 
 type SchemaSummary struct {
@@ -68,6 +71,8 @@ type CommandSchema struct {
 	RawSupported   bool           `json:"raw_supported"`
 	Examples       []string       `json:"examples"`
 	DataSchema     map[string]any `json:"data_schema"`
+	RequestBody    *RequestBodySpec `json:"request_body,omitempty"`
+	RequestBodySchema map[string]any `json:"request_body_schema,omitempty"`
 	EnvelopeSchema map[string]any `json:"envelope_schema"`
 	Output         *OutputSpec    `json:"output,omitempty"`
 }
@@ -242,6 +247,123 @@ func Registry() []CommandSpec {
 			},
 		},
 		{
+			Noun:  "client",
+			Verb:  "list",
+			Use:   "list",
+			Short: "List clients",
+			Examples: []string{
+				"fakturownia client list --json",
+				"fakturownia client list --name Acme --columns id,name,email,country",
+				"fakturownia client list --external-id ext-123 --json",
+				"fakturownia client list --page 2 --per-page 25 --raw",
+			},
+			EnvVars:      env,
+			OutputModes:  []string{"human", "json"},
+			ExitCodes:    exitCodes,
+			RawSupported: true,
+			LocalFlags: []FlagSpec{
+				{Name: "page", Type: "int", Description: "Requested result page", Default: "1"},
+				{Name: "per-page", Type: "int", Description: "Requested result count per page", Default: "25"},
+				{Name: "name", Type: "string", Description: "Filter by client name"},
+				{Name: "email", Type: "string", Description: "Filter by client email"},
+				{Name: "shortcut", Type: "string", Description: "Filter by client shortcut"},
+				{Name: "tax-no", Type: "string", Description: "Filter by client tax number"},
+				{Name: "external-id", Type: "string", Description: "Filter by external client ID"},
+			},
+			DataPrototype: []map[string]any{},
+			Output:        clientListOutputSpec(),
+		},
+		{
+			Noun:  "client",
+			Verb:  "get",
+			Use:   "get --id ID | --external-id X",
+			Short: "Fetch a single client by ID or external ID",
+			Examples: []string{
+				"fakturownia client get --id 123",
+				"fakturownia client get --external-id ext-123 --json",
+				"fakturownia client get --id 123 --fields id,name,email --json",
+				"fakturownia client get --id 123 --raw",
+			},
+			EnvVars:      env,
+			OutputModes:  []string{"human", "json"},
+			ExitCodes:    exitCodes,
+			RawSupported: true,
+			LocalFlags: []FlagSpec{
+				{Name: "id", Type: "string", Description: "Client ID"},
+				{Name: "external-id", Type: "string", Description: "External client ID"},
+			},
+			DataPrototype: map[string]any{},
+			Output:        clientGetOutputSpec("client get"),
+		},
+		{
+			Noun:  "client",
+			Verb:  "create",
+			Use:   "create --input -|@file|JSON",
+			Short: "Create a client",
+			Examples: []string{
+				`fakturownia client create --input '{"name":"Acme","email":"billing@example.com"}' --json`,
+				"fakturownia client create --input @client.json",
+				`printf '%s\n' '{"name":"Acme","company":"1"}' | fakturownia client create --input - --json`,
+				`fakturownia client create --input '{"name":"Acme"}' --dry-run --json`,
+			},
+			EnvVars:      env,
+			OutputModes:  []string{"human", "json"},
+			ExitCodes:    exitCodes,
+			RawSupported: true,
+			Mutating:     true,
+			LocalFlags: []FlagSpec{
+				{Name: "input", Type: "string", Description: "Client JSON input as inline JSON, @file, or - for stdin", Required: true},
+			},
+			DataPrototype: map[string]any{},
+			Output:        clientGetOutputSpec("client create"),
+			RequestBody:   clientRequestBodySpec(),
+		},
+		{
+			Noun:  "client",
+			Verb:  "update",
+			Use:   "update --id ID --input -|@file|JSON",
+			Short: "Update a client",
+			Examples: []string{
+				`fakturownia client update --id 123 --input '{"email":"billing@example.com"}' --json`,
+				"fakturownia client update --id 123 --input @client-update.json",
+				`printf '%s\n' '{"phone":"123456789"}' | fakturownia client update --id 123 --input - --json`,
+				`fakturownia client update --id 123 --input '{"city":"Warsaw"}' --dry-run --json`,
+			},
+			EnvVars:      env,
+			OutputModes:  []string{"human", "json"},
+			ExitCodes:    exitCodes,
+			RawSupported: true,
+			Mutating:     true,
+			LocalFlags: []FlagSpec{
+				{Name: "id", Type: "string", Description: "Client ID", Required: true},
+				{Name: "input", Type: "string", Description: "Client JSON input as inline JSON, @file, or - for stdin", Required: true},
+			},
+			DataPrototype: map[string]any{},
+			Output:        clientGetOutputSpec("client update"),
+			RequestBody:   clientRequestBodySpec(),
+		},
+		{
+			Noun:  "client",
+			Verb:  "delete",
+			Use:   "delete --id ID --yes",
+			Short: "Delete a client",
+			Examples: []string{
+				"fakturownia client delete --id 123 --yes --json",
+				"fakturownia client delete --id 123 --yes",
+				"fakturownia client delete --id 123 --yes --dry-run --json",
+			},
+			EnvVars:      env,
+			OutputModes:  []string{"human", "json"},
+			ExitCodes:    exitCodes,
+			RawSupported: true,
+			Mutating:     true,
+			LocalFlags: []FlagSpec{
+				{Name: "id", Type: "string", Description: "Client ID", Required: true},
+				{Name: "yes", Type: "bool", Description: "Confirm client deletion", Required: true, Default: "false"},
+			},
+			DataPrototype: client.DeleteResponse{},
+		},
+		{
 			Noun:  "doctor",
 			Verb:  "run",
 			Use:   "run",
@@ -320,6 +442,10 @@ func BuildCommandSchema(spec CommandSpec) (CommandSchema, error) {
 	if err != nil {
 		return CommandSchema{}, err
 	}
+	requestBodySchema, err := buildRequestBodySchema(spec.RequestBody)
+	if err != nil {
+		return CommandSchema{}, err
+	}
 	errorSchema, err := reflectSchema(output.ErrorDetail{})
 	if err != nil {
 		return CommandSchema{}, err
@@ -347,6 +473,8 @@ func BuildCommandSchema(spec CommandSpec) (CommandSchema, error) {
 		RawSupported:   spec.RawSupported,
 		Examples:       spec.Examples,
 		DataSchema:     dataSchema,
+		RequestBody:    cloneRequestBodySpec(spec.RequestBody),
+		RequestBodySchema: requestBodySchema,
 		EnvelopeSchema: envelopeSchema(dataSchema, errorSchema, warningSchema, metaSchema),
 		Output:         spec.Output,
 	}, nil

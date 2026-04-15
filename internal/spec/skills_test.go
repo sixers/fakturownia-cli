@@ -36,6 +36,7 @@ func TestGeneratedSkillFilesMatchGolden(t *testing.T) {
 		bundleRootSkillPath(),
 		bundleIndexPath(),
 		skillAreaPath(sharedSkillArea(SkillBundle())),
+		filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "clients", "SKILL.md")),
 		filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "invoices", "SKILL.md")),
 		docsSkillsPath(),
 	}
@@ -108,6 +109,29 @@ func TestInvoicesSkillIncludesOutputDiscovery(t *testing.T) {
 	for _, needle := range want {
 		if !strings.Contains(invoices, needle) {
 			t.Fatalf("expected invoices skill to include %q: %s", needle, invoices)
+		}
+	}
+}
+
+func TestClientsSkillIncludesRequestDiscovery(t *testing.T) {
+	t.Parallel()
+
+	files, err := RenderSkillFiles()
+	if err != nil {
+		t.Fatalf("RenderSkillFiles() error = %v", err)
+	}
+	byPath := generatedFileMap(files)
+
+	clients := byPath[filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "clients", "SKILL.md"))]
+	want := []string{
+		"fakturownia schema client list --json",
+		"fakturownia schema client create --json",
+		"request_body_schema",
+		"`--input` accepts inline JSON, `@file`, or `-` for stdin",
+	}
+	for _, needle := range want {
+		if !strings.Contains(clients, needle) {
+			t.Fatalf("expected clients skill to include %q: %s", needle, clients)
 		}
 	}
 }

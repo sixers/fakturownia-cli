@@ -1,0 +1,1153 @@
+{
+  "schema_version": "fakturownia-cli/v1alpha1",
+  "status": "success",
+  "data": {
+    "schema_version": "fakturownia-cli/v1alpha1",
+    "command": "client get",
+    "use": "get --id ID | --external-id X",
+    "summary": "Fetch a single client by ID or external ID",
+    "flags": [
+      {
+        "name": "profile",
+        "type": "string",
+        "description": "Select a named profile",
+        "required": false
+      },
+      {
+        "name": "json",
+        "type": "bool",
+        "description": "Alias for --output json",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "output",
+        "type": "string",
+        "description": "Output format",
+        "required": false,
+        "default": "human",
+        "enum": [
+          "human",
+          "json"
+        ]
+      },
+      {
+        "name": "quiet",
+        "type": "bool",
+        "description": "Emit bare values when exactly one field or column remains",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "fields",
+        "type": "string[]",
+        "description": "Project JSON envelope data fields using dot/bracket paths like number or positions[].name",
+        "required": false,
+        "repeatable": true
+      },
+      {
+        "name": "columns",
+        "type": "string[]",
+        "description": "Select human table columns using dot/bracket paths like number or positions[].name",
+        "required": false,
+        "repeatable": true
+      },
+      {
+        "name": "raw",
+        "type": "bool",
+        "description": "Emit the upstream JSON response body directly when supported",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "dry-run",
+        "type": "bool",
+        "description": "Accepted on read-only commands and reserved for future mutating request previews",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "timeout-ms",
+        "type": "int",
+        "description": "HTTP timeout in milliseconds",
+        "required": false,
+        "default": "30000"
+      },
+      {
+        "name": "max-retries",
+        "type": "int",
+        "description": "Maximum retry attempts for idempotent reads on network or 5xx failures",
+        "required": false,
+        "default": "2"
+      },
+      {
+        "name": "non-interactive",
+        "type": "bool",
+        "description": "Disable interactive behavior",
+        "required": false,
+        "default": "true"
+      },
+      {
+        "name": "config",
+        "type": "string",
+        "description": "Override the config file path",
+        "required": false
+      },
+      {
+        "name": "id",
+        "type": "string",
+        "description": "Client ID",
+        "required": false
+      },
+      {
+        "name": "external-id",
+        "type": "string",
+        "description": "External client ID",
+        "required": false
+      }
+    ],
+    "env_vars": [
+      {
+        "name": "FAKTUROWNIA_PROFILE",
+        "description": "Select a profile unless --profile is provided"
+      },
+      {
+        "name": "FAKTUROWNIA_URL",
+        "description": "Override the base account URL from any profile"
+      },
+      {
+        "name": "FAKTUROWNIA_API_TOKEN",
+        "description": "Override the API token from any profile"
+      }
+    ],
+    "output_modes": [
+      "human",
+      "json"
+    ],
+    "exit_codes": [
+      {
+        "code": 0,
+        "description": "success"
+      },
+      {
+        "code": 2,
+        "description": "usage or validation error"
+      },
+      {
+        "code": 3,
+        "description": "not found"
+      },
+      {
+        "code": 4,
+        "description": "authentication or permission failure"
+      },
+      {
+        "code": 5,
+        "description": "conflict"
+      },
+      {
+        "code": 6,
+        "description": "network or timeout failure"
+      },
+      {
+        "code": 7,
+        "description": "reserved for throttling or retry budget exhaustion"
+      },
+      {
+        "code": 8,
+        "description": "remote API rejected the request"
+      },
+      {
+        "code": 9,
+        "description": "internal CLI failure"
+      }
+    ],
+    "raw_supported": true,
+    "examples": [
+      "fakturownia client get --id 123",
+      "fakturownia client get --external-id ext-123 --json",
+      "fakturownia client get --id 123 --fields id,name,email --json",
+      "fakturownia client get --id 123 --raw"
+    ],
+    "data_schema": {
+      "additionalProperties": true,
+      "properties": {
+        "accounting_id": {
+          "type": "string"
+        },
+        "bank": {
+          "type": "string"
+        },
+        "bank_account": {
+          "type": "string"
+        },
+        "buyer_id": {
+          "type": "integer"
+        },
+        "category_id": {
+          "type": "integer"
+        },
+        "city": {
+          "type": "string"
+        },
+        "company": {
+          "enum": [
+            "1",
+            "0"
+          ],
+          "type": "string"
+        },
+        "country": {
+          "type": "string"
+        },
+        "default_payment_type": {
+          "enum": [
+            "transfer",
+            "card",
+            "cash",
+            "barter",
+            "cheque",
+            "bill_of_exchange",
+            "cash_on_delivery",
+            "compensation",
+            "letter_of_credit",
+            "payu",
+            "paypal",
+            "off"
+          ],
+          "type": "string"
+        },
+        "default_tax": {
+          "type": "number"
+        },
+        "delivery_address": {
+          "type": "string"
+        },
+        "disable_auto_reminders": {
+          "enum": [
+            "1",
+            "0"
+          ],
+          "type": "string"
+        },
+        "discount": {
+          "type": "number"
+        },
+        "email": {
+          "type": "string"
+        },
+        "external_id": {
+          "type": "string"
+        },
+        "fax": {
+          "type": "string"
+        },
+        "first_name": {
+          "type": "string"
+        },
+        "id": {
+          "type": "integer"
+        },
+        "kind": {
+          "enum": [
+            "buyer",
+            "seller",
+            "both"
+          ],
+          "type": "string"
+        },
+        "last_name": {
+          "type": "string"
+        },
+        "mass_payment_code": {
+          "type": "string"
+        },
+        "mobile_phone": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        },
+        "payment_to_kind": {
+          "type": "string"
+        },
+        "person": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "post_code": {
+          "type": "string"
+        },
+        "price_list_id": {
+          "type": "integer"
+        },
+        "register_number": {
+          "type": "string"
+        },
+        "shortcut": {
+          "type": "string"
+        },
+        "street": {
+          "type": "string"
+        },
+        "tag_list": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "tax_no": {
+          "type": "string"
+        },
+        "tax_no_kind": {
+          "type": "string"
+        },
+        "tp_client_connection": {
+          "enum": [
+            "1",
+            "0"
+          ],
+          "type": "string"
+        },
+        "use_delivery_address": {
+          "enum": [
+            "1",
+            "0"
+          ],
+          "type": "string"
+        },
+        "www": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "envelope_schema": {
+      "properties": {
+        "data": {
+          "additionalProperties": true,
+          "properties": {
+            "accounting_id": {
+              "type": "string"
+            },
+            "bank": {
+              "type": "string"
+            },
+            "bank_account": {
+              "type": "string"
+            },
+            "buyer_id": {
+              "type": "integer"
+            },
+            "category_id": {
+              "type": "integer"
+            },
+            "city": {
+              "type": "string"
+            },
+            "company": {
+              "enum": [
+                "1",
+                "0"
+              ],
+              "type": "string"
+            },
+            "country": {
+              "type": "string"
+            },
+            "default_payment_type": {
+              "enum": [
+                "transfer",
+                "card",
+                "cash",
+                "barter",
+                "cheque",
+                "bill_of_exchange",
+                "cash_on_delivery",
+                "compensation",
+                "letter_of_credit",
+                "payu",
+                "paypal",
+                "off"
+              ],
+              "type": "string"
+            },
+            "default_tax": {
+              "type": "number"
+            },
+            "delivery_address": {
+              "type": "string"
+            },
+            "disable_auto_reminders": {
+              "enum": [
+                "1",
+                "0"
+              ],
+              "type": "string"
+            },
+            "discount": {
+              "type": "number"
+            },
+            "email": {
+              "type": "string"
+            },
+            "external_id": {
+              "type": "string"
+            },
+            "fax": {
+              "type": "string"
+            },
+            "first_name": {
+              "type": "string"
+            },
+            "id": {
+              "type": "integer"
+            },
+            "kind": {
+              "enum": [
+                "buyer",
+                "seller",
+                "both"
+              ],
+              "type": "string"
+            },
+            "last_name": {
+              "type": "string"
+            },
+            "mass_payment_code": {
+              "type": "string"
+            },
+            "mobile_phone": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "note": {
+              "type": "string"
+            },
+            "payment_to_kind": {
+              "type": "string"
+            },
+            "person": {
+              "type": "string"
+            },
+            "phone": {
+              "type": "string"
+            },
+            "post_code": {
+              "type": "string"
+            },
+            "price_list_id": {
+              "type": "integer"
+            },
+            "register_number": {
+              "type": "string"
+            },
+            "shortcut": {
+              "type": "string"
+            },
+            "street": {
+              "type": "string"
+            },
+            "tag_list": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "tax_no": {
+              "type": "string"
+            },
+            "tax_no_kind": {
+              "type": "string"
+            },
+            "tp_client_connection": {
+              "enum": [
+                "1",
+                "0"
+              ],
+              "type": "string"
+            },
+            "use_delivery_address": {
+              "enum": [
+                "1",
+                "0"
+              ],
+              "type": "string"
+            },
+            "www": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "errors": {
+          "items": {
+            "$defs": {
+              "ErrorDetail": {
+                "properties": {
+                  "class": {
+                    "type": "string"
+                  },
+                  "code": {
+                    "type": "string"
+                  },
+                  "hint": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "retryable": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "class",
+                  "code",
+                  "message",
+                  "retryable"
+                ],
+                "type": "object"
+              }
+            },
+            "$id": "https://github.com/sixers/fakturownia-cli/internal/output/error-detail",
+            "$ref": "#/$defs/ErrorDetail",
+            "$schema": "https://json-schema.org/draft/2020-12/schema"
+          },
+          "type": "array"
+        },
+        "meta": {
+          "$defs": {
+            "Meta": {
+              "properties": {
+                "command": {
+                  "type": "string"
+                },
+                "duration_ms": {
+                  "type": "integer"
+                },
+                "pagination": {
+                  "$ref": "#/$defs/Pagination"
+                },
+                "profile": {
+                  "type": "string"
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "command",
+                "duration_ms"
+              ],
+              "type": "object"
+            },
+            "Pagination": {
+              "properties": {
+                "has_next": {
+                  "type": "boolean"
+                },
+                "page": {
+                  "type": "integer"
+                },
+                "per_page": {
+                  "type": "integer"
+                },
+                "returned": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "page",
+                "per_page",
+                "returned",
+                "has_next"
+              ],
+              "type": "object"
+            }
+          },
+          "$id": "https://github.com/sixers/fakturownia-cli/internal/output/meta",
+          "$ref": "#/$defs/Meta",
+          "$schema": "https://json-schema.org/draft/2020-12/schema"
+        },
+        "schema_version": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "success",
+            "error"
+          ],
+          "type": "string"
+        },
+        "warnings": {
+          "items": {
+            "$defs": {
+              "WarningDetail": {
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "message"
+                ],
+                "type": "object"
+              }
+            },
+            "$id": "https://github.com/sixers/fakturownia-cli/internal/output/warning-detail",
+            "$ref": "#/$defs/WarningDetail",
+            "$schema": "https://json-schema.org/draft/2020-12/schema"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "schema_version",
+        "status",
+        "data",
+        "errors",
+        "warnings",
+        "meta"
+      ],
+      "type": "object"
+    },
+    "output": {
+      "shape": "object",
+      "open_ended": true,
+      "catalog_basis": {
+        "source": "readme",
+        "url": "https://github.com/fakturownia/API/blob/master/README.md"
+      },
+      "path_syntax": "dot_bracket",
+      "known_fields": [
+        {
+          "path": "id",
+          "type": "integer",
+          "description": "Client ID",
+          "projectable": true,
+          "selectable": true,
+          "default_column": true,
+          "commands": [
+            "client get"
+          ],
+          "presence": "common",
+          "source_section": "Pobranie wybranego klienta po ID"
+        },
+        {
+          "path": "name",
+          "type": "string",
+          "description": "Client display name",
+          "projectable": true,
+          "selectable": true,
+          "default_column": true,
+          "commands": [
+            "client get"
+          ],
+          "presence": "common",
+          "source_section": "Pola klienta"
+        },
+        {
+          "path": "shortcut",
+          "type": "string",
+          "description": "Short client name",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "client get"
+          ],
+          "presence": "common",
+          "source_section": "Pola klienta"
+        },
+        {
+          "path": "tax_no_kind",
+          "type": "string",
+          "description": "Tax identifier kind",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "client get"
+          ],
+          "presence": "common",
+          "source_section": "Pola klienta"
+        },
+        {
+          "path": "tax_no",
+          "type": "string",
+          "description": "Tax identifier value",
+          "projectable": true,
+          "selectable": true,
+          "default_column": true,
+          "commands": [
+            "client get"
+          ],
+          "presence": "common",
+          "source_section": "Pola klienta"
+        },
+        {
+          "path": "register_number",
+          "type": "string",
+          "description": "REGON or register number",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "client get"
+          ],
+          "presence": "common",
+          "source_section": "Pola klienta"
+        },
+        {
+          "path": "accounting_id",
+          "type": "string",
+          "description": "Accounting-system identifier",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "client get"
+          ],
+          "presence": "conditional",
+          "source_section": "Pola klienta"
+        },
+        {
+          "path": "post_code",
+          "type": "string",
+          "description": "Postal code",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "client get"
+          ],
+          "presence": "common",
+          "source_section": "Pola klienta"
+        },
+        {
+          "path": "city",
+          "type": "string",
+          "description": "City",
+          "projectable": true,
+          "selectable": true,
+          "default_column": true,
+          "commands": [
+            "client get"
+          ],
+          "presence": "common",
+          "source_section": "Pola klienta"
+        },
+        {
+          "path": "street",
+          "type": "string",
+          "description": "Street address",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "client get"
+          ],
+          "presence": "common",
+          "source_section": "Pola klienta"
+        },
+        {
+          "path": "country",
+          "type": "string",
+          "description": "Country code",
+          "projectable": true,
+          "selectable": true,
+          "default_column": true,
+          "commands": [
+            "client get"
+          ],
+          "presence": "common",
+          "source_section": "Pola klienta"
+        },
+        {
+          "path": "use_delivery_address",
+          "type": "string",
+          "description": "Use alternate delivery address flag",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "client get"
+          ],
+          "presence": "conditional",
+          "source_section": "Pola klienta",
+          "enum_values": [
+            "1",
+            "0"
+          ]
+        },
+        {
+          "path": "delivery_address",
+          "type": "string",
+          "description": "Alternate delivery address",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "client get"
+          ],
+          "presence": "conditional",
+          "source_section": "Pola klienta"
+        },
+        {
+          "path": "first_name",
+          "type": "string",
+          "description": "First name",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "client get"
+          ],
+          "presence": "conditional",
+          "source_section": "Pola klienta"
+        },
+        {
+          "path": "last_name",
+          "type": "string",
+          "description": "Last name",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "client get"
+          ],
+          "presence": "conditional",
+          "source_section": "Pola klienta"
+        },
+        {
+          "path": "email",
+          "type": "string",
+          "description": "Email address",
+          "projectable": true,
+          "selectable": true,
+          "default_column": true,
+          "commands": [
+            "client get"
+          ],
+          "presence": "common",
+          "source_section": "Pola klienta"
+        },
+        {
+          "path": "phone",
+          "type": "string",
+          "description": "Phone number",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "client get"
+          ],
+          "presence": "common",
+          "source_section": "Pola klienta"
+        },
+        {
+          "path": "mobile_phone",
+          "type": "string",
+          "description": "Mobile phone number",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "client get"
+          ],
+          "presence": "conditional",
+          "source_section": "Pola klienta"
+        },
+        {
+          "path": "www",
+          "type": "string",
+          "description": "Website URL",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "client get"
+          ],
+          "presence": "conditional",
+          "source_section": "Pola klienta"
+        },
+        {
+          "path": "fax",
+          "type": "string",
+          "description": "Fax number",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "client get"
+          ],
+          "presence": "conditional",
+          "source_section": "Pola klienta"
+        },
+        {
+          "path": "note",
+          "type": "string",
+          "description": "Additional note",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "client get"
+          ],
+          "presence": "conditional",
+          "source_section": "Pola klienta"
+        },
+        {
+          "path": "tag_list[]",
+          "type": "string",
+          "description": "Client tags",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "client get"
+          ],
+          "presence": "conditional",
+          "source_section": "Pola klienta"
+        },
+        {
+          "path": "company",
+          "type": "string",
+          "description": "Company flag",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "client get"
+          ],
+          "presence": "common",
+          "source_section": "Pola klienta",
+          "enum_values": [
+            "1",
+            "0"
+          ]
+        },
+        {
+          "path": "kind",
+          "type": "string",
+          "description": "Client kind",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "client get"
+          ],
+          "presence": "conditional",
+          "source_section": "Pola klienta",
+          "enum_values": [
+            "buyer",
+            "seller",
+            "both"
+          ]
+        },
+        {
+          "path": "category_id",
+          "type": "integer",
+          "description": "Category ID",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "client get"
+          ],
+          "presence": "conditional",
+          "source_section": "Pola klienta"
+        },
+        {
+          "path": "bank",
+          "type": "string",
+          "description": "Bank name",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "client get"
+          ],
+          "presence": "conditional",
+          "source_section": "Pola klienta"
+        },
+        {
+          "path": "bank_account",
+          "type": "string",
+          "description": "Bank account number",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "client get"
+          ],
+          "presence": "conditional",
+          "source_section": "Pola klienta"
+        },
+        {
+          "path": "discount",
+          "type": "number",
+          "description": "Default discount percentage",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "client get"
+          ],
+          "presence": "conditional",
+          "source_section": "Pola klienta"
+        },
+        {
+          "path": "default_tax",
+          "type": "number",
+          "description": "Default tax rate",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "client get"
+          ],
+          "presence": "conditional",
+          "source_section": "Pola klienta"
+        },
+        {
+          "path": "price_list_id",
+          "type": "integer",
+          "description": "Default price list ID",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "client get"
+          ],
+          "presence": "conditional",
+          "source_section": "Pola klienta"
+        },
+        {
+          "path": "payment_to_kind",
+          "type": "string",
+          "description": "Default payment term",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "client get"
+          ],
+          "presence": "conditional",
+          "source_section": "Pola klienta"
+        },
+        {
+          "path": "default_payment_type",
+          "type": "string",
+          "description": "Default payment type",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "client get"
+          ],
+          "presence": "conditional",
+          "source_section": "Pola klienta",
+          "enum_values": [
+            "transfer",
+            "card",
+            "cash",
+            "barter",
+            "cheque",
+            "bill_of_exchange",
+            "cash_on_delivery",
+            "compensation",
+            "letter_of_credit",
+            "payu",
+            "paypal",
+            "off"
+          ]
+        },
+        {
+          "path": "disable_auto_reminders",
+          "type": "string",
+          "description": "Disable automatic reminders flag",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "client get"
+          ],
+          "presence": "conditional",
+          "source_section": "Pola klienta",
+          "enum_values": [
+            "1",
+            "0"
+          ]
+        },
+        {
+          "path": "person",
+          "type": "string",
+          "description": "Contact person",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "client get"
+          ],
+          "presence": "conditional",
+          "source_section": "Pola klienta"
+        },
+        {
+          "path": "buyer_id",
+          "type": "integer",
+          "description": "Linked buyer ID",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "client get"
+          ],
+          "presence": "conditional",
+          "source_section": "Pola klienta"
+        },
+        {
+          "path": "mass_payment_code",
+          "type": "string",
+          "description": "Mass payment code",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "client get"
+          ],
+          "presence": "conditional",
+          "source_section": "Pola klienta"
+        },
+        {
+          "path": "external_id",
+          "type": "string",
+          "description": "External client ID",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "client get"
+          ],
+          "presence": "conditional",
+          "source_section": "Pobranie wybranego klienta po zewnętrznym ID"
+        },
+        {
+          "path": "tp_client_connection",
+          "type": "string",
+          "description": "Related-entity TP flag",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "client get"
+          ],
+          "presence": "conditional",
+          "source_section": "Pola klienta",
+          "enum_values": [
+            "1",
+            "0"
+          ]
+        }
+      ],
+      "default_columns": [
+        "id",
+        "name",
+        "tax_no",
+        "email",
+        "city",
+        "country"
+      ],
+      "notes": [
+        "known_fields is curated from the upstream README and is not exhaustive",
+        "unknown upstream fields may still appear in data and can still be selected when the path syntax is valid"
+      ]
+    }
+  },
+  "errors": [],
+  "warnings": null,
+  "meta": {
+    "command": "schema client get",
+    "duration_ms": 0
+  }
+}

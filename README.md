@@ -14,6 +14,11 @@ The current implementation focuses on the first high-value read flows:
 - `auth login`
 - `auth status`
 - `auth logout`
+- `client list`
+- `client get`
+- `client create`
+- `client update`
+- `client delete`
 - `invoice list`
 - `invoice get`
 - `invoice download`
@@ -189,10 +194,11 @@ Envelope shape:
 
 ## Output Introspection
 
-`schema` describes both the command contract and the README-backed output catalog for invoice resources.
+`schema` describes both the command contract and the README-backed output and request catalogs for supported resources.
 
-- `fakturownia schema invoice list --json` exposes `output.known_fields`
-- `known_fields` is curated from the upstream [Fakturownia README](https://github.com/fakturownia/API/blob/master/README.md)
+- `fakturownia schema invoice list --json` and `fakturownia schema client list --json` expose `output.known_fields`
+- `fakturownia schema client create --json` and `fakturownia schema client update --json` expose `request_body_schema`
+- `known_fields` and request body catalogs are curated from the upstream [Fakturownia README](https://github.com/fakturownia/API/blob/master/README.md)
 - nested paths use `dot_bracket` syntax such as `positions[].name`
 - the catalog is intentionally not exhaustive; syntactically valid paths outside the catalog are still allowed and produce warnings instead of hard failures
 
@@ -200,6 +206,9 @@ Examples:
 
 ```bash
 fakturownia schema invoice list --json
+fakturownia schema client create --json
+fakturownia client list --fields name,email --json
+fakturownia client create --input '{"name":"Acme","email":"billing@example.com"}' --json
 fakturownia invoice list --include-positions --fields number,positions[].name --json
 fakturownia invoice list --columns number,positions[].name
 ```
@@ -208,6 +217,9 @@ fakturownia invoice list --columns number,positions[].name
 
 ```bash
 fakturownia invoice list --json
+fakturownia client list --json
+fakturownia client get --external-id ext-123 --json
+fakturownia client create --input '{"name":"Acme"}' --dry-run --json
 fakturownia invoice list --period this_month --columns id,number,price_gross
 fakturownia invoice get --id 123 --fields id,number,status --json
 fakturownia invoice get --id 123 --fields number,positions[].name --json
