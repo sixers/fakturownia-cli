@@ -8,7 +8,7 @@ Generated skill docs for the installable `fakturownia` bundle.
 
 | Skill | Description |
 | --- | --- |
-| [fakturownia](../skills/fakturownia/SKILL.md) | Fakturownia CLI bundle: shared guidance, auth, clients, invoices, schema discovery, and diagnostics for the `fakturownia` command. Use when an agent needs to work with Fakturownia through this CLI. |
+| [fakturownia](../skills/fakturownia/SKILL.md) | Fakturownia CLI bundle: shared guidance, auth, clients, invoices, self-update, schema discovery, and diagnostics for the `fakturownia` command. Use when an agent needs to work with Fakturownia through this CLI. |
 
 ## Core
 
@@ -16,7 +16,7 @@ Core workflow and support skills.
 
 | Skill | Description |
 | --- | --- |
-| [fakturownia-shared](../skills/fakturownia/subskills/shared/SKILL.md) | Fakturownia CLI shared patterns: authentication prerequisites, global flags, output modes, `--fields` vs `--columns`, `--raw`, and schema discovery. Use before any area-specific fakturownia task. |
+| [fakturownia-shared](../skills/fakturownia/subskills/shared/SKILL.md) | Fakturownia CLI shared patterns: authentication prerequisites, global flags, output modes, `--fields` vs `--columns`, `--raw`, schema discovery, and binary maintenance. Use before any area-specific fakturownia task. |
 | [fakturownia-auth](../skills/fakturownia/subskills/auth/SKILL.md) | Fakturownia CLI auth: persist, inspect, and remove profiles and API tokens with `fakturownia auth ...`. |
 | [fakturownia-schema](../skills/fakturownia/subskills/schema/SKILL.md) | Fakturownia CLI schema discovery: inspect supported commands, flags, examples, exit codes, and output schemas with `fakturownia schema ...`. |
 | [fakturownia-doctor](../skills/fakturownia/subskills/doctor/SKILL.md) | Fakturownia CLI diagnostics: validate config resolution, keychain access, reachability, authenticated API access, and release integrity with `fakturownia doctor run`. |

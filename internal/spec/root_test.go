@@ -14,6 +14,7 @@ import (
 	"github.com/sixers/fakturownia-cli/internal/doctor"
 	"github.com/sixers/fakturownia-cli/internal/invoice"
 	"github.com/sixers/fakturownia-cli/internal/output"
+	"github.com/sixers/fakturownia-cli/internal/selfupdate"
 	"github.com/sixers/fakturownia-cli/internal/transport"
 )
 
@@ -205,11 +206,42 @@ func (f *fakeDoctorService) Run(_ context.Context, req doctor.RunRequest) (*doct
 	}, nil
 }
 
+type fakeSelfUpdateService struct {
+	updateReq selfupdate.UpdateRequest
+}
+
+func (f *fakeSelfUpdateService) Update(_ context.Context, req selfupdate.UpdateRequest) (*selfupdate.UpdateResult, error) {
+	f.updateReq = req
+	return &selfupdate.UpdateResult{
+		RequestedVersion: normalizeRequested(req.TargetVersion),
+		CurrentVersion:   req.CurrentVersion,
+		TargetVersion:    "v9.9.9",
+		ExecutablePath:   "/tmp/fakturownia",
+		OS:               "darwin",
+		Arch:             "arm64",
+		ReleaseURL:       "https://github.com/sixers/fakturownia-cli/releases/tag/v9.9.9",
+		AssetName:        "fakturownia_9.9.9_darwin_arm64.tar.gz",
+		DownloadURL:      "https://example.test/fakturownia_9.9.9_darwin_arm64.tar.gz",
+		ChecksumURL:      "https://example.test/checksums.txt",
+		Updated:          !req.DryRun,
+		DryRun:           req.DryRun,
+		ChecksumVerified: !req.DryRun,
+	}, nil
+}
+
+func normalizeRequested(value string) string {
+	if strings.TrimSpace(value) == "" {
+		return "latest"
+	}
+	return value
+}
+
 func TestCommandIntegration(t *testing.T) {
 	authSvc := &fakeAuthService{}
 	clientSvc := &fakeClientService{}
 	invoiceSvc := &fakeInvoiceService{}
 	doctorSvc := &fakeDoctorService{}
+	selfSvc := &fakeSelfUpdateService{}
 
 	runWithInput := func(input string, args ...string) (string, string, error) {
 		var stdout, stderr bytes.Buffer
@@ -218,6 +250,7 @@ func TestCommandIntegration(t *testing.T) {
 			Client:  clientSvc,
 			Invoice: invoiceSvc,
 			Doctor:  doctorSvc,
+			Self:    selfSvc,
 			Stdout:  &stdout,
 			Stderr:  &stderr,
 		})
@@ -353,6 +386,17 @@ func TestCommandIntegration(t *testing.T) {
 	if !jsonContains(stdout, `"status": "ok"`) {
 		t.Fatalf("unexpected doctor output: %s", stdout)
 	}
+
+	stdout, _, err = run("self", "update", "--version", "v9.9.9", "--dry-run", "--json")
+	if err != nil {
+		t.Fatalf("self update dry-run error = %v", err)
+	}
+	if !selfSvc.updateReq.DryRun || selfSvc.updateReq.TargetVersion != "v9.9.9" {
+		t.Fatalf("expected self update dry-run request, got %#v", selfSvc.updateReq)
+	}
+	if !jsonContains(stdout, `"target_version": "v9.9.9"`) || !jsonContains(stdout, `"dry_run": true`) {
+		t.Fatalf("unexpected self update output: %s", stdout)
+	}
 }
 
 func TestGolden(t *testing.T) {
@@ -369,6 +413,8 @@ func TestGolden(t *testing.T) {
 		{name: "schema-client-create-json", args: []string{"schema", "client", "create", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-client-create.json")},
 		{name: "schema-client-update-json", args: []string{"schema", "client", "update", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-client-update.json")},
 		{name: "schema-client-delete-json", args: []string{"schema", "client", "delete", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-client-delete.json")},
+		{name: "self-update-help", args: []string{"self", "update", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "self-update-help.txt")},
+		{name: "schema-self-update-json", args: []string{"schema", "self", "update", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-self-update.json")},
 		{name: "invoice-list-help", args: []string{"invoice", "list", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "invoice-list-help.txt")},
 		{name: "schema-list-json", args: []string{"schema", "list", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-list.json")},
 		{name: "schema-invoice-list-json", args: []string{"schema", "invoice", "list", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-invoice-list.json")},
@@ -384,6 +430,7 @@ func TestGolden(t *testing.T) {
 				Client:  &fakeClientService{},
 				Invoice: &fakeInvoiceService{},
 				Doctor:  &fakeDoctorService{},
+				Self:    &fakeSelfUpdateService{},
 				Stdout:  &stdout,
 				Stderr:  &stderr,
 			})
@@ -436,8 +483,10 @@ func TestSchemaListUsesRows(t *testing.T) {
 	var stdout bytes.Buffer
 	cmd := NewRootCommand(Dependencies{
 		Auth:    &fakeAuthService{},
+		Client:  &fakeClientService{},
 		Invoice: &fakeInvoiceService{},
 		Doctor:  &fakeDoctorService{},
+		Self:    &fakeSelfUpdateService{},
 		Stdout:  &stdout,
 		Stderr:  &bytes.Buffer{},
 	})
@@ -466,8 +515,10 @@ func TestSchemaInvoiceListExposesKnownFields(t *testing.T) {
 	var stdout bytes.Buffer
 	cmd := NewRootCommand(Dependencies{
 		Auth:    &fakeAuthService{},
+		Client:  &fakeClientService{},
 		Invoice: &fakeInvoiceService{},
 		Doctor:  &fakeDoctorService{},
+		Self:    &fakeSelfUpdateService{},
 		Stdout:  &stdout,
 		Stderr:  &bytes.Buffer{},
 	})
@@ -488,8 +539,10 @@ func TestConfigFlagPassThrough(t *testing.T) {
 	authSvc := &fakeAuthService{}
 	cmd := NewRootCommand(Dependencies{
 		Auth:    authSvc,
+		Client:  &fakeClientService{},
 		Invoice: &fakeInvoiceService{},
 		Doctor:  &fakeDoctorService{},
+		Self:    &fakeSelfUpdateService{},
 		Stdout:  &stdout,
 		Stderr:  &bytes.Buffer{},
 	})

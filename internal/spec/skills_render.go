@@ -214,6 +214,10 @@ func renderAreaSkill(bundle SkillBundleSpec, area SkillAreaSpec) (string, error)
 		b.WriteString("- `--raw` emits the upstream JSON body when the command supports it.\n")
 		b.WriteString("- `--quiet` emits bare values when exactly one field or column remains.\n")
 		b.WriteString("- Use `fakturownia schema list --json` and `fakturownia schema <noun> <verb> --json` before constructing calls programmatically.\n\n")
+		b.WriteString("## Binary Maintenance\n\n")
+		b.WriteString("- Use `fakturownia self update` to replace the running binary with the latest GitHub Release build.\n")
+		b.WriteString("- Add `--version vX.Y.Z` to pin a specific release.\n")
+		b.WriteString("- Add `--dry-run --json` to preview the download URLs and target install path without modifying the binary.\n\n")
 	}
 
 	if area.Key == "invoices" {

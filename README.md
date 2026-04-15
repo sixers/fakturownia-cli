@@ -7,23 +7,41 @@ It is designed for two audiences at once:
 - agents need deterministic behavior, structured output, and stable recovery paths
 - humans still need clear help text, sensible defaults, and a clean local workflow
 
-## Status
+## Supported Commands
 
-The current implementation focuses on the first high-value read flows:
+The current implementation covers these command groups:
+
+### Auth
 
 - `auth login`
 - `auth status`
 - `auth logout`
+
+### Clients
+
 - `client list`
 - `client get`
 - `client create`
 - `client update`
 - `client delete`
+
+### Invoices
+
 - `invoice list`
 - `invoice get`
 - `invoice download`
+
+### Schema
+
 - `schema list`
 - `schema <noun> <verb>`
+
+### Maintenance
+
+- `self update`
+
+### Diagnostics
+
 - `doctor run`
 
 The architecture is intentionally structured so more API resources can be added without changing the CLI contract.
@@ -84,21 +102,31 @@ The `curl ... | bash` path is the recommended install flow for public releases. 
 
 ### Update an existing install
 
-To update to the latest public release, rerun the installer:
+The recommended update path is the built-in self-update command:
+
+```bash
+fakturownia self update
+fakturownia --version
+```
+
+Preview an update without modifying the binary:
+
+```bash
+fakturownia self update --dry-run --json
+```
+
+Pin a specific release:
+
+```bash
+fakturownia self update --version v0.2.0
+fakturownia --version
+```
+
+If you are updating from an older release that does not include `self update` yet, rerun the installer script instead:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/sixers/fakturownia-cli/master/install.sh | bash
-fakturownia --version
 ```
-
-To pin a specific release during an update:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/sixers/fakturownia-cli/master/install.sh | VERSION=v0.1.1 bash
-fakturownia --version
-```
-
-The installer overwrites the existing `fakturownia` binary in `BIN_DIR` and leaves your config and keychain-stored token in place.
 
 ### Build from source
 
@@ -215,16 +243,43 @@ fakturownia invoice list --columns number,positions[].name
 
 ## Examples
 
+### Auth
+
 ```bash
-fakturownia invoice list --json
+fakturownia auth login --prefix acme --api-token "$FAKTUROWNIA_API_TOKEN"
+fakturownia auth status --json
+fakturownia auth logout --yes
+```
+
+### Clients
+
+```bash
 fakturownia client list --json
 fakturownia client get --external-id ext-123 --json
 fakturownia client create --input '{"name":"Acme"}' --dry-run --json
+```
+
+### Invoices
+
+```bash
+fakturownia invoice list --json
 fakturownia invoice list --period this_month --columns id,number,price_gross
 fakturownia invoice get --id 123 --fields id,number,status --json
 fakturownia invoice get --id 123 --fields number,positions[].name --json
 fakturownia invoice download --id 123 --dir ./invoices --json
+```
+
+### Schema
+
+```bash
+fakturownia schema list --json
 fakturownia schema invoice list --json
+fakturownia schema client create --json
+```
+
+### Diagnostics
+
+```bash
 fakturownia doctor run --json
 ```
 

@@ -10,7 +10,7 @@ Core workflow and support skills for auth, schema discovery, and diagnostics.
 
 | Skill | Description |
 | --- | --- |
-| [fakturownia-shared](../subskills/shared/SKILL.md) | Fakturownia CLI shared patterns: authentication prerequisites, global flags, output modes, `--fields` vs `--columns`, `--raw`, and schema discovery. Use before any area-specific fakturownia task. |
+| [fakturownia-shared](../subskills/shared/SKILL.md) | Fakturownia CLI shared patterns: authentication prerequisites, global flags, output modes, `--fields` vs `--columns`, `--raw`, schema discovery, and binary maintenance. Use before any area-specific fakturownia task. |
 | [fakturownia-auth](../subskills/auth/SKILL.md) | Fakturownia CLI auth: persist, inspect, and remove profiles and API tokens with `fakturownia auth ...`. |
 | [fakturownia-schema](../subskills/schema/SKILL.md) | Fakturownia CLI schema discovery: inspect supported commands, flags, examples, exit codes, and output schemas with `fakturownia schema ...`. |
 | [fakturownia-doctor](../subskills/doctor/SKILL.md) | Fakturownia CLI diagnostics: validate config resolution, keychain access, reachability, authenticated API access, and release integrity with `fakturownia doctor run`. |

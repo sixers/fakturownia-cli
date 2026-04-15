@@ -75,6 +75,12 @@
       "verb": "run"
     },
     {
+      "noun": "self",
+      "summary": "Replace the running binary with a GitHub Release build",
+      "use": "update",
+      "verb": "update"
+    },
+    {
       "noun": "schema",
       "summary": "List all supported commands",
       "use": "list",

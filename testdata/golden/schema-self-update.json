@@ -1,0 +1,437 @@
+{
+  "schema_version": "fakturownia-cli/v1alpha1",
+  "status": "success",
+  "data": {
+    "schema_version": "fakturownia-cli/v1alpha1",
+    "command": "self update",
+    "use": "update",
+    "summary": "Replace the running binary with a GitHub Release build",
+    "flags": [
+      {
+        "name": "profile",
+        "type": "string",
+        "description": "Select a named profile",
+        "required": false
+      },
+      {
+        "name": "json",
+        "type": "bool",
+        "description": "Alias for --output json",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "output",
+        "type": "string",
+        "description": "Output format",
+        "required": false,
+        "default": "human",
+        "enum": [
+          "human",
+          "json"
+        ]
+      },
+      {
+        "name": "quiet",
+        "type": "bool",
+        "description": "Emit bare values when exactly one field or column remains",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "fields",
+        "type": "string[]",
+        "description": "Project JSON envelope data fields using dot/bracket paths like number or positions[].name",
+        "required": false,
+        "repeatable": true
+      },
+      {
+        "name": "columns",
+        "type": "string[]",
+        "description": "Select human table columns using dot/bracket paths like number or positions[].name",
+        "required": false,
+        "repeatable": true
+      },
+      {
+        "name": "raw",
+        "type": "bool",
+        "description": "Emit the upstream JSON response body directly when supported",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "dry-run",
+        "type": "bool",
+        "description": "Accepted on read-only commands and reserved for future mutating request previews",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "timeout-ms",
+        "type": "int",
+        "description": "HTTP timeout in milliseconds",
+        "required": false,
+        "default": "30000"
+      },
+      {
+        "name": "max-retries",
+        "type": "int",
+        "description": "Maximum retry attempts for idempotent reads on network or 5xx failures",
+        "required": false,
+        "default": "2"
+      },
+      {
+        "name": "non-interactive",
+        "type": "bool",
+        "description": "Disable interactive behavior",
+        "required": false,
+        "default": "true"
+      },
+      {
+        "name": "config",
+        "type": "string",
+        "description": "Override the config file path",
+        "required": false
+      },
+      {
+        "name": "version",
+        "type": "string",
+        "description": "Release tag to install, or latest when omitted",
+        "required": false
+      }
+    ],
+    "env_vars": null,
+    "output_modes": [
+      "human",
+      "json"
+    ],
+    "exit_codes": [
+      {
+        "code": 0,
+        "description": "success"
+      },
+      {
+        "code": 2,
+        "description": "usage or validation error"
+      },
+      {
+        "code": 3,
+        "description": "not found"
+      },
+      {
+        "code": 4,
+        "description": "authentication or permission failure"
+      },
+      {
+        "code": 5,
+        "description": "conflict"
+      },
+      {
+        "code": 6,
+        "description": "network or timeout failure"
+      },
+      {
+        "code": 7,
+        "description": "reserved for throttling or retry budget exhaustion"
+      },
+      {
+        "code": 8,
+        "description": "remote API rejected the request"
+      },
+      {
+        "code": 9,
+        "description": "internal CLI failure"
+      }
+    ],
+    "raw_supported": false,
+    "examples": [
+      "fakturownia self update",
+      "fakturownia self update --version v0.2.0",
+      "fakturownia self update --dry-run --json"
+    ],
+    "data_schema": {
+      "$defs": {
+        "UpdateResult": {
+          "properties": {
+            "already_current": {
+              "type": "boolean"
+            },
+            "arch": {
+              "type": "string"
+            },
+            "asset_name": {
+              "type": "string"
+            },
+            "checksum_url": {
+              "type": "string"
+            },
+            "checksum_verified": {
+              "type": "boolean"
+            },
+            "current_version": {
+              "type": "string"
+            },
+            "download_url": {
+              "type": "string"
+            },
+            "dry_run": {
+              "type": "boolean"
+            },
+            "executable_path": {
+              "type": "string"
+            },
+            "os": {
+              "type": "string"
+            },
+            "release_url": {
+              "type": "string"
+            },
+            "requested_version": {
+              "type": "string"
+            },
+            "target_version": {
+              "type": "string"
+            },
+            "updated": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "requested_version",
+            "current_version",
+            "target_version",
+            "executable_path",
+            "os",
+            "arch",
+            "release_url",
+            "asset_name",
+            "download_url",
+            "checksum_url",
+            "already_current",
+            "updated",
+            "dry_run",
+            "checksum_verified"
+          ],
+          "type": "object"
+        }
+      },
+      "$id": "https://github.com/sixers/fakturownia-cli/internal/selfupdate/update-result",
+      "$ref": "#/$defs/UpdateResult",
+      "$schema": "https://json-schema.org/draft/2020-12/schema"
+    },
+    "envelope_schema": {
+      "properties": {
+        "data": {
+          "$defs": {
+            "UpdateResult": {
+              "properties": {
+                "already_current": {
+                  "type": "boolean"
+                },
+                "arch": {
+                  "type": "string"
+                },
+                "asset_name": {
+                  "type": "string"
+                },
+                "checksum_url": {
+                  "type": "string"
+                },
+                "checksum_verified": {
+                  "type": "boolean"
+                },
+                "current_version": {
+                  "type": "string"
+                },
+                "download_url": {
+                  "type": "string"
+                },
+                "dry_run": {
+                  "type": "boolean"
+                },
+                "executable_path": {
+                  "type": "string"
+                },
+                "os": {
+                  "type": "string"
+                },
+                "release_url": {
+                  "type": "string"
+                },
+                "requested_version": {
+                  "type": "string"
+                },
+                "target_version": {
+                  "type": "string"
+                },
+                "updated": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "requested_version",
+                "current_version",
+                "target_version",
+                "executable_path",
+                "os",
+                "arch",
+                "release_url",
+                "asset_name",
+                "download_url",
+                "checksum_url",
+                "already_current",
+                "updated",
+                "dry_run",
+                "checksum_verified"
+              ],
+              "type": "object"
+            }
+          },
+          "$id": "https://github.com/sixers/fakturownia-cli/internal/selfupdate/update-result",
+          "$ref": "#/$defs/UpdateResult",
+          "$schema": "https://json-schema.org/draft/2020-12/schema"
+        },
+        "errors": {
+          "items": {
+            "$defs": {
+              "ErrorDetail": {
+                "properties": {
+                  "class": {
+                    "type": "string"
+                  },
+                  "code": {
+                    "type": "string"
+                  },
+                  "hint": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "retryable": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "class",
+                  "code",
+                  "message",
+                  "retryable"
+                ],
+                "type": "object"
+              }
+            },
+            "$id": "https://github.com/sixers/fakturownia-cli/internal/output/error-detail",
+            "$ref": "#/$defs/ErrorDetail",
+            "$schema": "https://json-schema.org/draft/2020-12/schema"
+          },
+          "type": "array"
+        },
+        "meta": {
+          "$defs": {
+            "Meta": {
+              "properties": {
+                "command": {
+                  "type": "string"
+                },
+                "duration_ms": {
+                  "type": "integer"
+                },
+                "pagination": {
+                  "$ref": "#/$defs/Pagination"
+                },
+                "profile": {
+                  "type": "string"
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "command",
+                "duration_ms"
+              ],
+              "type": "object"
+            },
+            "Pagination": {
+              "properties": {
+                "has_next": {
+                  "type": "boolean"
+                },
+                "page": {
+                  "type": "integer"
+                },
+                "per_page": {
+                  "type": "integer"
+                },
+                "returned": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "page",
+                "per_page",
+                "returned",
+                "has_next"
+              ],
+              "type": "object"
+            }
+          },
+          "$id": "https://github.com/sixers/fakturownia-cli/internal/output/meta",
+          "$ref": "#/$defs/Meta",
+          "$schema": "https://json-schema.org/draft/2020-12/schema"
+        },
+        "schema_version": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "success",
+            "error"
+          ],
+          "type": "string"
+        },
+        "warnings": {
+          "items": {
+            "$defs": {
+              "WarningDetail": {
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "message"
+                ],
+                "type": "object"
+              }
+            },
+            "$id": "https://github.com/sixers/fakturownia-cli/internal/output/warning-detail",
+            "$ref": "#/$defs/WarningDetail",
+            "$schema": "https://json-schema.org/draft/2020-12/schema"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "schema_version",
+        "status",
+        "data",
+        "errors",
+        "warnings",
+        "meta"
+      ],
+      "type": "object"
+    }
+  },
+  "errors": [],
+  "warnings": null,
+  "meta": {
+    "command": "schema self update",
+    "duration_ms": 0
+  }
+}

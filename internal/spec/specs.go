@@ -13,6 +13,7 @@ import (
 	"github.com/sixers/fakturownia-cli/internal/doctor"
 	"github.com/sixers/fakturownia-cli/internal/invoice"
 	"github.com/sixers/fakturownia-cli/internal/output"
+	"github.com/sixers/fakturownia-cli/internal/selfupdate"
 )
 
 type FlagSpec struct {
@@ -60,21 +61,21 @@ type SchemaSummary struct {
 }
 
 type CommandSchema struct {
-	SchemaVersion  string         `json:"schema_version"`
-	Command        string         `json:"command"`
-	Use            string         `json:"use"`
-	Summary        string         `json:"summary"`
-	Flags          []FlagSpec     `json:"flags"`
-	EnvVars        []EnvVarSpec   `json:"env_vars"`
-	OutputModes    []string       `json:"output_modes"`
-	ExitCodes      []ExitCodeSpec `json:"exit_codes"`
-	RawSupported   bool           `json:"raw_supported"`
-	Examples       []string       `json:"examples"`
-	DataSchema     map[string]any `json:"data_schema"`
-	RequestBody    *RequestBodySpec `json:"request_body,omitempty"`
-	RequestBodySchema map[string]any `json:"request_body_schema,omitempty"`
-	EnvelopeSchema map[string]any `json:"envelope_schema"`
-	Output         *OutputSpec    `json:"output,omitempty"`
+	SchemaVersion     string           `json:"schema_version"`
+	Command           string           `json:"command"`
+	Use               string           `json:"use"`
+	Summary           string           `json:"summary"`
+	Flags             []FlagSpec       `json:"flags"`
+	EnvVars           []EnvVarSpec     `json:"env_vars"`
+	OutputModes       []string         `json:"output_modes"`
+	ExitCodes         []ExitCodeSpec   `json:"exit_codes"`
+	RawSupported      bool             `json:"raw_supported"`
+	Examples          []string         `json:"examples"`
+	DataSchema        map[string]any   `json:"data_schema"`
+	RequestBody       *RequestBodySpec `json:"request_body,omitempty"`
+	RequestBodySchema map[string]any   `json:"request_body_schema,omitempty"`
+	EnvelopeSchema    map[string]any   `json:"envelope_schema"`
+	Output            *OutputSpec      `json:"output,omitempty"`
 }
 
 func GlobalFlags() []FlagSpec {
@@ -382,6 +383,26 @@ func Registry() []CommandSpec {
 			DataPrototype: doctor.Report{},
 		},
 		{
+			Noun:  "self",
+			Verb:  "update",
+			Use:   "update",
+			Short: "Replace the running binary with a GitHub Release build",
+			Examples: []string{
+				"fakturownia self update",
+				"fakturownia self update --version v0.2.0",
+				"fakturownia self update --dry-run --json",
+			},
+			EnvVars:      nil,
+			OutputModes:  []string{"human", "json"},
+			ExitCodes:    exitCodes,
+			RawSupported: false,
+			Mutating:     true,
+			LocalFlags: []FlagSpec{
+				{Name: "version", Type: "string", Description: "Release tag to install, or latest when omitted"},
+			},
+			DataPrototype: selfupdate.UpdateResult{},
+		},
+		{
 			Noun:          "schema",
 			Verb:          "list",
 			Use:           "list",
@@ -462,21 +483,21 @@ func BuildCommandSchema(spec CommandSpec) (CommandSchema, error) {
 	flags := append([]FlagSpec{}, GlobalFlags()...)
 	flags = append(flags, spec.LocalFlags...)
 	return CommandSchema{
-		SchemaVersion:  output.SchemaVersion,
-		Command:        spec.Noun + " " + spec.Verb,
-		Use:            spec.Use,
-		Summary:        spec.Short,
-		Flags:          flags,
-		EnvVars:        spec.EnvVars,
-		OutputModes:    spec.OutputModes,
-		ExitCodes:      spec.ExitCodes,
-		RawSupported:   spec.RawSupported,
-		Examples:       spec.Examples,
-		DataSchema:     dataSchema,
-		RequestBody:    cloneRequestBodySpec(spec.RequestBody),
+		SchemaVersion:     output.SchemaVersion,
+		Command:           spec.Noun + " " + spec.Verb,
+		Use:               spec.Use,
+		Summary:           spec.Short,
+		Flags:             flags,
+		EnvVars:           spec.EnvVars,
+		OutputModes:       spec.OutputModes,
+		ExitCodes:         spec.ExitCodes,
+		RawSupported:      spec.RawSupported,
+		Examples:          spec.Examples,
+		DataSchema:        dataSchema,
+		RequestBody:       cloneRequestBodySpec(spec.RequestBody),
 		RequestBodySchema: requestBodySchema,
-		EnvelopeSchema: envelopeSchema(dataSchema, errorSchema, warningSchema, metaSchema),
-		Output:         spec.Output,
+		EnvelopeSchema:    envelopeSchema(dataSchema, errorSchema, warningSchema, metaSchema),
+		Output:            spec.Output,
 	}, nil
 }
 

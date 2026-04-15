@@ -47,7 +47,7 @@ func SkillBundle() SkillBundleSpec {
 	return SkillBundleSpec{
 		Name:        "fakturownia",
 		Title:       "fakturownia",
-		Description: "Fakturownia CLI bundle: shared guidance, auth, clients, invoices, schema discovery, and diagnostics for the `fakturownia` command. Use when an agent needs to work with Fakturownia through this CLI.",
+		Description: "Fakturownia CLI bundle: shared guidance, auth, clients, invoices, self-update, schema discovery, and diagnostics for the `fakturownia` command. Use when an agent needs to work with Fakturownia through this CLI.",
 		CLIHelp:     "fakturownia --help",
 		RequiresBins: []string{
 			"fakturownia",
@@ -58,10 +58,19 @@ func SkillBundle() SkillBundleSpec {
 				Key:         "shared",
 				Name:        "fakturownia-shared",
 				Title:       "Shared",
-				Description: "Fakturownia CLI shared patterns: authentication prerequisites, global flags, output modes, `--fields` vs `--columns`, `--raw`, and schema discovery. Use before any area-specific fakturownia task.",
+				Description: "Fakturownia CLI shared patterns: authentication prerequisites, global flags, output modes, `--fields` vs `--columns`, `--raw`, schema discovery, and binary maintenance. Use before any area-specific fakturownia task.",
 				Category:    "core",
-					ExampleRefs: []SkillCommandRef{{Noun: "auth", Verb: "login"}, {Noun: "schema", Verb: "list"}, {Noun: "client", Verb: "list"}, {Noun: "invoice", Verb: "list"}},
-				CLIHelp:     "fakturownia --help",
+				CommandRefs: []SkillCommandRef{
+					{Noun: "self", Verb: "update"},
+				},
+				ExampleRefs: []SkillCommandRef{
+					{Noun: "auth", Verb: "login"},
+					{Noun: "schema", Verb: "list"},
+					{Noun: "self", Verb: "update"},
+					{Noun: "client", Verb: "list"},
+					{Noun: "invoice", Verb: "list"},
+				},
+				CLIHelp: "fakturownia --help",
 				RequiresBins: []string{
 					"fakturownia",
 				},
@@ -69,6 +78,7 @@ func SkillBundle() SkillBundleSpec {
 				WhenToUse: []string{
 					"The task is generally about the `fakturownia` CLI rather than one specific noun.",
 					"You need auth setup, global flags, output behavior, or command discovery before calling API-area commands.",
+					"You need to update the installed fakturownia binary from GitHub Releases.",
 				},
 			},
 			{
@@ -97,39 +107,39 @@ func SkillBundle() SkillBundleSpec {
 					"You need to explain or troubleshoot how env vars, profiles, and keychain-backed credentials resolve.",
 				},
 			},
-				{
-					Key:          "clients",
-					Name:         "fakturownia-clients",
-					Title:        "Clients",
-					Description:  "Fakturownia CLI clients: list, fetch, create, update, and delete clients, and inspect README-backed client fields and request schemas.",
-					Category:     "api-area",
-					Prerequisite: "shared",
-					RelatedSkills: []string{
-						"shared",
-						"schema",
-						"doctor",
-					},
-					CommandRefs: []SkillCommandRef{
-						{Noun: "client", Verb: "list"},
-						{Noun: "client", Verb: "get"},
-						{Noun: "client", Verb: "create"},
-						{Noun: "client", Verb: "update"},
-						{Noun: "client", Verb: "delete"},
-					},
-					CLIHelp: "fakturownia client --help",
-					RequiresBins: []string{
-						"fakturownia",
-					},
-					DiscoveryHint: "Use `fakturownia schema client list --json` for output fields and `fakturownia schema client create --json` or `client update --json` for request-body discovery before building selectors or payloads.",
-					WhenToUse: []string{
-						"The task is about reading or mutating clients, including lookup by external ID.",
-						"You need to build a client payload from README-backed field definitions and inspect `request_body_schema` before create or update calls.",
-					},
+			{
+				Key:          "clients",
+				Name:         "fakturownia-clients",
+				Title:        "Clients",
+				Description:  "Fakturownia CLI clients: list, fetch, create, update, and delete clients, and inspect README-backed client fields and request schemas.",
+				Category:     "api-area",
+				Prerequisite: "shared",
+				RelatedSkills: []string{
+					"shared",
+					"schema",
+					"doctor",
 				},
-				{
-					Key:          "invoices",
-					Name:         "fakturownia-invoices",
-					Title:        "Invoices",
+				CommandRefs: []SkillCommandRef{
+					{Noun: "client", Verb: "list"},
+					{Noun: "client", Verb: "get"},
+					{Noun: "client", Verb: "create"},
+					{Noun: "client", Verb: "update"},
+					{Noun: "client", Verb: "delete"},
+				},
+				CLIHelp: "fakturownia client --help",
+				RequiresBins: []string{
+					"fakturownia",
+				},
+				DiscoveryHint: "Use `fakturownia schema client list --json` for output fields and `fakturownia schema client create --json` or `client update --json` for request-body discovery before building selectors or payloads.",
+				WhenToUse: []string{
+					"The task is about reading or mutating clients, including lookup by external ID.",
+					"You need to build a client payload from README-backed field definitions and inspect `request_body_schema` before create or update calls.",
+				},
+			},
+			{
+				Key:          "invoices",
+				Name:         "fakturownia-invoices",
+				Title:        "Invoices",
 				Description:  "Fakturownia CLI invoices: list invoices, fetch a single invoice, download invoice PDFs, and discover invoice fields through schema output.",
 				Category:     "api-area",
 				Prerequisite: "shared",

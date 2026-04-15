@@ -16,6 +16,7 @@ import (
 	"github.com/sixers/fakturownia-cli/internal/doctor"
 	"github.com/sixers/fakturownia-cli/internal/invoice"
 	"github.com/sixers/fakturownia-cli/internal/output"
+	"github.com/sixers/fakturownia-cli/internal/selfupdate"
 )
 
 type AuthService interface {
@@ -42,11 +43,16 @@ type DoctorService interface {
 	Run(context.Context, doctor.RunRequest) (*doctor.RunResult, error)
 }
 
+type SelfUpdateService interface {
+	Update(context.Context, selfupdate.UpdateRequest) (*selfupdate.UpdateResult, error)
+}
+
 type Dependencies struct {
 	Auth    AuthService
 	Client  ClientService
 	Invoice InvoiceService
 	Doctor  DoctorService
+	Self    SelfUpdateService
 	Stdout  io.Writer
 	Stderr  io.Writer
 }
@@ -100,6 +106,7 @@ func NewRootCommand(deps Dependencies) *cobra.Command {
 	root.AddCommand(newClientCommand(deps, &globals))
 	root.AddCommand(newInvoiceCommand(deps, &globals))
 	root.AddCommand(newDoctorCommand(deps, &globals))
+	root.AddCommand(newSelfCommand(deps, &globals))
 	root.AddCommand(newSchemaCommand(deps, &globals))
 	root.Version = Version
 	root.SetVersionTemplate("{{printf \"%s\\n\" .Version}}")
@@ -728,6 +735,72 @@ func newDoctorCommand(deps Dependencies, globals *globalOptions) *cobra.Command 
 	runCmd.Flags().BoolVar(&checkReleaseIntegrity, "check-release-integrity", false, "verify the running binary against published release metadata")
 	doctorCmd.AddCommand(runCmd)
 	return doctorCmd
+}
+
+func newSelfCommand(deps Dependencies, globals *globalOptions) *cobra.Command {
+	selfCmd := &cobra.Command{
+		Use:   "self",
+		Short: "Maintain the CLI binary",
+	}
+
+	updateSpec, _ := FindCommand("self", "update")
+	var targetVersion string
+	updateCmd := &cobra.Command{
+		Use:   updateSpec.Use,
+		Short: updateSpec.Short,
+		Long:  BuildLongDescription(updateSpec),
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			opts, warnings, appErr := prepareOutputOptions(cmd, updateSpec, globals)
+			if appErr != nil {
+				return writeCommandError(cmd, opts, output.Meta{Command: "self update"}, appErr)
+			}
+
+			start := time.Now()
+			result, err := deps.Self.Update(cmd.Context(), selfupdate.UpdateRequest{
+				CurrentVersion: Version,
+				TargetVersion:  targetVersion,
+				Timeout:        timeoutFromGlobals(globals),
+				DryRun:         globals.DryRun,
+			})
+			meta := output.Meta{
+				Command:    "self update",
+				DurationMS: time.Since(start).Milliseconds(),
+			}
+			if err != nil {
+				return writeCommandError(cmd, opts, meta, err)
+			}
+			writeWarnings(cmd.ErrOrStderr(), opts, warnings)
+			return output.RenderSuccess(cmd.OutOrStdout(), opts, output.Result{
+				Data:     result,
+				Warnings: warnings,
+				Meta:     meta,
+				HumanRenderer: output.LinesRenderer{
+					Lines: func(data any) ([]string, error) {
+						res := data.(*selfupdate.UpdateResult)
+						switch {
+						case res.DryRun:
+							return []string{
+								fmt.Sprintf("would install %s to %s", res.TargetVersion, res.ExecutablePath),
+								fmt.Sprintf("download: %s", res.DownloadURL),
+							}, nil
+						case res.AlreadyCurrent:
+							return []string{
+								fmt.Sprintf("already on %s at %s", res.TargetVersion, res.ExecutablePath),
+							}, nil
+						default:
+							return []string{
+								fmt.Sprintf("installed %s to %s", res.TargetVersion, res.ExecutablePath),
+								fmt.Sprintf("previous version: %s", res.CurrentVersion),
+							}, nil
+						}
+					},
+				},
+			})
+		},
+	}
+	updateCmd.Flags().StringVar(&targetVersion, "version", "", "release tag to install, or latest when omitted")
+	selfCmd.AddCommand(updateCmd)
+	return selfCmd
 }
 
 func newSchemaCommand(_ Dependencies, globals *globalOptions) *cobra.Command {

@@ -136,6 +136,28 @@ func TestClientsSkillIncludesRequestDiscovery(t *testing.T) {
 	}
 }
 
+func TestSharedSkillIncludesSelfUpdateGuidance(t *testing.T) {
+	t.Parallel()
+
+	files, err := RenderSkillFiles()
+	if err != nil {
+		t.Fatalf("RenderSkillFiles() error = %v", err)
+	}
+	byPath := generatedFileMap(files)
+
+	shared := byPath[filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "shared", "SKILL.md"))]
+	want := []string{
+		"fakturownia self update",
+		"--dry-run --json",
+		"--version vX.Y.Z",
+	}
+	for _, needle := range want {
+		if !strings.Contains(shared, needle) {
+			t.Fatalf("expected shared skill to include %q: %s", needle, shared)
+		}
+	}
+}
+
 func TestSkillFrontmatterMatchesMetadata(t *testing.T) {
 	t.Parallel()
 

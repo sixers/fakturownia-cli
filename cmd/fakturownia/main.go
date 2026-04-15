@@ -7,6 +7,7 @@ import (
 	"github.com/sixers/fakturownia-cli/internal/client"
 	"github.com/sixers/fakturownia-cli/internal/doctor"
 	"github.com/sixers/fakturownia-cli/internal/invoice"
+	"github.com/sixers/fakturownia-cli/internal/selfupdate"
 	"github.com/sixers/fakturownia-cli/internal/spec"
 )
 
@@ -21,6 +22,7 @@ func main() {
 		Client:  client.NewService(store),
 		Invoice: invoice.NewService(store),
 		Doctor:  doctor.NewService(store),
+		Self:    selfupdate.NewService(),
 		Stdout:  os.Stdout,
 		Stderr:  os.Stderr,
 	})

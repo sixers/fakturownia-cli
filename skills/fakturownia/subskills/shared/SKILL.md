@@ -1,9 +1,11 @@
 ---
 name: "fakturownia-shared"
-description: "Fakturownia CLI shared patterns: authentication prerequisites, global flags, output modes, `--fields` vs `--columns`, `--raw`, and schema discovery. Use before any area-specific fakturownia task."
+description: "Fakturownia CLI shared patterns: authentication prerequisites, global flags, output modes, `--fields` vs `--columns`, `--raw`, schema discovery, and binary maintenance. Use before any area-specific fakturownia task."
 metadata:
   bundle: "fakturownia"
   category: "core"
+  command_refs:
+    - "self update"
   cli_help: "fakturownia --help"
   requires_bins:
     - "fakturownia"
@@ -18,10 +20,11 @@ metadata:
 
 - The task is generally about the `fakturownia` CLI rather than one specific noun.
 - You need auth setup, global flags, output behavior, or command discovery before calling API-area commands.
+- You need to update the installed fakturownia binary from GitHub Releases.
 
 ## Covered Commands
 
-- This skill documents shared CLI behavior rather than owning a specific command group.
+- `fakturownia self update` — Replace the running binary with a GitHub Release build
 
 ## Notable Flags
 
@@ -54,6 +57,12 @@ metadata:
 - `--quiet` emits bare values when exactly one field or column remains.
 - Use `fakturownia schema list --json` and `fakturownia schema <noun> <verb> --json` before constructing calls programmatically.
 
+## Binary Maintenance
+
+- Use `fakturownia self update` to replace the running binary with the latest GitHub Release build.
+- Add `--version vX.Y.Z` to pin a specific release.
+- Add `--dry-run --json` to preview the download URLs and target install path without modifying the binary.
+
 ## Examples
 
 ```bash
@@ -61,6 +70,9 @@ fakturownia auth login --prefix acme --api-token $FAKTUROWNIA_API_TOKEN
 fakturownia auth login --url https://acme.fakturownia.pl --api-token TOKEN --profile work --set-default
 fakturownia schema list
 fakturownia schema list --json
+fakturownia self update
+fakturownia self update --version v0.2.0
+fakturownia self update --dry-run --json
 fakturownia client list --json
 fakturownia client list --name Acme --columns id,name,email,country
 fakturownia client list --external-id ext-123 --json
