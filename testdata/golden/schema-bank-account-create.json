@@ -158,21 +158,18 @@
     ],
     "raw_supported": true,
     "examples": [
-      "fakturownia bank-account create --input '{\"bank\":\"Bank of China\",\"bank_account\":\"11 1111 1111 1111 1111 1111 1111\",\"bank_account_currency\":\"PLN\",\"default\":true}' --json",
-      "fakturownia bank-account create --input '{\"bank\":\"Bank of China\",\"bank_account_version_departments\":[{\"department_id\":5,\"main_on_department\":true,\"show_on_invoice\":true}]}' --json",
+      "fakturownia bank-account create --input '{\"name\":\"Rachunek główny PLN\",\"bank_account_number\":\"PL61 1090 1014 0000 0712 1981 2874\",\"bank_name\":\"Santander Bank Polska\",\"bank_currency\":\"PLN\",\"default\":true}' --json",
+      "fakturownia bank-account create --input '{\"name\":\"Rachunek działu\",\"bank_account_version_departments\":[{\"department_id\":5,\"main_on_department\":true,\"show_on_invoice\":true}]}' --json",
       "fakturownia bank-account create --input @bank-account.json",
-      "fakturownia bank-account create --input '{\"bank\":\"Bank of China\"}' --dry-run --json"
+      "fakturownia bank-account create --input '{\"name\":\"Rachunek testowy\"}' --dry-run --json"
     ],
     "data_schema": {
       "additionalProperties": true,
       "properties": {
-        "bank": {
-          "type": "string"
+        "bank_account_id": {
+          "type": "integer"
         },
-        "bank_account": {
-          "type": "string"
-        },
-        "bank_account_currency": {
+        "bank_account_number": {
           "type": "string"
         },
         "bank_account_version_departments": {
@@ -193,6 +190,9 @@
           },
           "type": "array"
         },
+        "bank_currency": {
+          "type": "string"
+        },
         "bank_name": {
           "type": "string"
         },
@@ -204,6 +204,12 @@
         },
         "id": {
           "type": "integer"
+        },
+        "name": {
+          "type": [
+            "string",
+            "null"
+          ]
         }
       },
       "type": "object"
@@ -224,16 +230,16 @@
       "path_syntax": "dot_bracket",
       "known_fields": [
         {
-          "path": "bank",
+          "path": "name",
           "type": "string",
-          "description": "Bank display name used by the write examples",
+          "description": "Bank account display name shown in the system",
           "source_section": "Tworzenie rachunku bankowego"
         },
         {
           "path": "bank_name",
           "type": "string",
-          "description": "Bank name returned by the API",
-          "source_section": "Pobranie listy rachunków bankowych"
+          "description": "Bank name",
+          "source_section": "Tworzenie rachunku bankowego"
         },
         {
           "path": "bank_swift",
@@ -242,13 +248,13 @@
           "source_section": "Tworzenie rachunku bankowego"
         },
         {
-          "path": "bank_account",
+          "path": "bank_account_number",
           "type": "string",
           "description": "Bank account number",
           "source_section": "Tworzenie rachunku bankowego"
         },
         {
-          "path": "bank_account_currency",
+          "path": "bank_currency",
           "type": "string",
           "description": "Bank account currency",
           "source_section": "Tworzenie rachunku bankowego"
@@ -293,19 +299,13 @@
       "notes": [
         "the CLI accepts the inner bank_account object, then wraps it in the upstream {\"bank_account\": ...} envelope",
         "known_fields is curated from API_RACHUNKI_BANKOWE.md and is not exhaustive",
-        "the upstream addendum uses `bank` in create and update examples while returned objects expose `bank_name`; both are surfaced for discovery"
+        "the addendum documents `name`, `bank_account_number`, and `bank_currency` in create and update payloads"
       ]
     },
     "request_body_schema": {
       "additionalProperties": true,
       "properties": {
-        "bank": {
-          "type": "string"
-        },
-        "bank_account": {
-          "type": "string"
-        },
-        "bank_account_currency": {
+        "bank_account_number": {
           "type": "string"
         },
         "bank_account_version_departments": {
@@ -329,6 +329,9 @@
           },
           "type": "array"
         },
+        "bank_currency": {
+          "type": "string"
+        },
         "bank_name": {
           "type": "string"
         },
@@ -337,6 +340,9 @@
         },
         "default": {
           "type": "boolean"
+        },
+        "name": {
+          "type": "string"
         }
       },
       "type": "object"
@@ -346,13 +352,10 @@
         "data": {
           "additionalProperties": true,
           "properties": {
-            "bank": {
-              "type": "string"
+            "bank_account_id": {
+              "type": "integer"
             },
-            "bank_account": {
-              "type": "string"
-            },
-            "bank_account_currency": {
+            "bank_account_number": {
               "type": "string"
             },
             "bank_account_version_departments": {
@@ -373,6 +376,9 @@
               },
               "type": "array"
             },
+            "bank_currency": {
+              "type": "string"
+            },
             "bank_name": {
               "type": "string"
             },
@@ -384,6 +390,12 @@
             },
             "id": {
               "type": "integer"
+            },
+            "name": {
+              "type": [
+                "string",
+                "null"
+              ]
             }
           },
           "type": "object"
@@ -547,16 +559,29 @@
           "source_section": "Pobranie pojedycznego rachunku bankowego po ID"
         },
         {
-          "path": "bank",
-          "type": "string",
-          "description": "Bank display name used by write examples",
+          "path": "bank_account_id",
+          "type": "integer",
+          "description": "Bank account identifier returned by the API; always equal to id",
           "projectable": true,
           "selectable": true,
           "commands": [
             "bank-account create"
           ],
-          "presence": "conditional",
-          "source_section": "Tworzenie rachunku bankowego"
+          "presence": "common",
+          "source_section": "Pobranie pojedycznego rachunku bankowego po ID"
+        },
+        {
+          "path": "name",
+          "type": "string|null",
+          "description": "Bank account display name shown in the system",
+          "projectable": true,
+          "selectable": true,
+          "default_column": true,
+          "commands": [
+            "bank-account create"
+          ],
+          "presence": "common",
+          "source_section": "Pobranie listy rachunków bankowych"
         },
         {
           "path": "bank_name",
@@ -564,7 +589,6 @@
           "description": "Bank name returned by the API",
           "projectable": true,
           "selectable": true,
-          "default_column": true,
           "commands": [
             "bank-account create"
           ],
@@ -584,7 +608,7 @@
           "source_section": "Pobranie listy rachunków bankowych"
         },
         {
-          "path": "bank_account",
+          "path": "bank_account_number",
           "type": "string",
           "description": "Bank account number",
           "projectable": true,
@@ -597,7 +621,7 @@
           "source_section": "Pobranie listy rachunków bankowych"
         },
         {
-          "path": "bank_account_currency",
+          "path": "bank_currency",
           "type": "string",
           "description": "Bank account currency",
           "projectable": true,
@@ -673,15 +697,15 @@
       ],
       "default_columns": [
         "id",
-        "bank_name",
-        "bank_account",
-        "bank_account_currency",
+        "name",
+        "bank_account_number",
+        "bank_currency",
         "default"
       ],
       "notes": [
         "known_fields is curated from API_RACHUNKI_BANKOWE.md and is not exhaustive",
         "unknown upstream fields may still appear in data and can still be selected when the path syntax is valid",
-        "the upstream addendum uses `bank` in write examples while returned objects expose `bank_name`; both are surfaced in schema discovery where appropriate"
+        "the addendum uses `name`, `bank_account_number`, and `bank_currency` for CRUD payloads and returns `bank_account_id` alongside `id`"
       ]
     }
   },

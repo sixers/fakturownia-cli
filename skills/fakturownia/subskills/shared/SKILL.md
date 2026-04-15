@@ -100,7 +100,7 @@ fakturownia payment list --include invoices --json
 fakturownia payment list --columns id,name,price,paid,kind
 fakturownia payment list --page 2 --per-page 25 --raw
 fakturownia bank-account list --json
-fakturownia bank-account list --columns id,bank_name,bank_account,bank_account_currency,default
+fakturownia bank-account list --columns id,name,bank_account_number,bank_currency,default
 fakturownia bank-account list --page 2 --per-page 25 --raw
 fakturownia product list --json
 fakturownia product list --date-from 2025-11-01 --json

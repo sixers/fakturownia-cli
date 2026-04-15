@@ -164,7 +164,7 @@
       {
         "name": "kind",
         "type": "string[]",
-        "description": "Filter by invoice kind",
+        "description": "Filter by invoice kind; one value uses kind= and repeated values use kinds[]",
         "required": false,
         "repeatable": true
       },
@@ -366,25 +366,43 @@
             "type": "integer"
           },
           "gov_corrected_invoice_number": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "gov_error_messages": {
             "items": {
               "type": "string"
             },
-            "type": "array"
+            "type": [
+              "array",
+              "null"
+            ]
           },
           "gov_id": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "gov_link": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "gov_sell_date": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "gov_send_date": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "gov_status": {
             "enum": [
@@ -399,12 +417,19 @@
               "demo_send_error",
               "demo_server_error",
               "demo_not_applicable",
-              "demo_not_connected"
+              "demo_not_connected",
+              null
             ],
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "gov_verification_link": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "id": {
             "type": "integer"
@@ -490,7 +515,15 @@
               "vat_mp",
               "vat_rr",
               "correction_note",
-              "accounting_note"
+              "accounting_note",
+              "client_order",
+              "dw",
+              "wnt",
+              "wdt",
+              "import_service",
+              "import_service_eu",
+              "import_products",
+              "export_products"
             ],
             "type": "string"
           },
@@ -835,25 +868,43 @@
                 "type": "integer"
               },
               "gov_corrected_invoice_number": {
-                "type": "string"
+                "type": [
+                  "string",
+                  "null"
+                ]
               },
               "gov_error_messages": {
                 "items": {
                   "type": "string"
                 },
-                "type": "array"
+                "type": [
+                  "array",
+                  "null"
+                ]
               },
               "gov_id": {
-                "type": "string"
+                "type": [
+                  "string",
+                  "null"
+                ]
               },
               "gov_link": {
-                "type": "string"
+                "type": [
+                  "string",
+                  "null"
+                ]
               },
               "gov_sell_date": {
-                "type": "string"
+                "type": [
+                  "string",
+                  "null"
+                ]
               },
               "gov_send_date": {
-                "type": "string"
+                "type": [
+                  "string",
+                  "null"
+                ]
               },
               "gov_status": {
                 "enum": [
@@ -868,12 +919,19 @@
                   "demo_send_error",
                   "demo_server_error",
                   "demo_not_applicable",
-                  "demo_not_connected"
+                  "demo_not_connected",
+                  null
                 ],
-                "type": "string"
+                "type": [
+                  "string",
+                  "null"
+                ]
               },
               "gov_verification_link": {
-                "type": "string"
+                "type": [
+                  "string",
+                  "null"
+                ]
               },
               "id": {
                 "type": "integer"
@@ -959,7 +1017,15 @@
                   "vat_mp",
                   "vat_rr",
                   "correction_note",
-                  "accounting_note"
+                  "accounting_note",
+                  "client_order",
+                  "dw",
+                  "wnt",
+                  "wdt",
+                  "import_service",
+                  "import_service_eu",
+                  "import_products",
+                  "export_products"
                 ],
                 "type": "string"
               },
@@ -1419,7 +1485,15 @@
             "vat_mp",
             "vat_rr",
             "correction_note",
-            "accounting_note"
+            "accounting_note",
+            "client_order",
+            "dw",
+            "wnt",
+            "wdt",
+            "import_service",
+            "import_service_eu",
+            "import_products",
+            "export_products"
           ]
         },
         {
@@ -1445,7 +1519,7 @@
         },
         {
           "path": "gov_status",
-          "type": "string",
+          "type": "string|null",
           "description": "KSeF send status",
           "projectable": true,
           "selectable": true,
@@ -1472,7 +1546,7 @@
         },
         {
           "path": "gov_id",
-          "type": "string",
+          "type": "string|null",
           "description": "KSeF invoice number",
           "projectable": true,
           "selectable": true,
@@ -1485,7 +1559,7 @@
         },
         {
           "path": "gov_send_date",
-          "type": "string",
+          "type": "string|null",
           "description": "KSeF send timestamp",
           "projectable": true,
           "selectable": true,
@@ -1498,7 +1572,7 @@
         },
         {
           "path": "gov_sell_date",
-          "type": "string",
+          "type": "string|null",
           "description": "Sale date registered in KSeF",
           "projectable": true,
           "selectable": true,
@@ -1511,7 +1585,7 @@
         },
         {
           "path": "gov_error_messages[]",
-          "type": "array<string>",
+          "type": "array<string>|null",
           "description": "KSeF validation or send errors",
           "projectable": true,
           "selectable": false,
@@ -1524,7 +1598,7 @@
         },
         {
           "path": "gov_verification_link",
-          "type": "string",
+          "type": "string|null",
           "description": "KSeF verification link used for QR codes",
           "projectable": true,
           "selectable": true,
@@ -1537,7 +1611,7 @@
         },
         {
           "path": "gov_link",
-          "type": "string",
+          "type": "string|null",
           "description": "Direct KSeF portal link for the invoice",
           "projectable": true,
           "selectable": true,
@@ -1550,7 +1624,7 @@
         },
         {
           "path": "gov_corrected_invoice_number",
-          "type": "string",
+          "type": "string|null",
           "description": "KSeF number of the corrected invoice",
           "projectable": true,
           "selectable": true,

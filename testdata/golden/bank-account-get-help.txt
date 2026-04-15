@@ -44,7 +44,7 @@ Exit Codes
 
 Examples
   fakturownia bank-account get --id 100
-  fakturownia bank-account get --id 100 --fields id,bank_name,bank_account --json
+  fakturownia bank-account get --id 100 --fields id,name,bank_account_number --json
   fakturownia bank-account get --id 100 --raw
 
 Usage:

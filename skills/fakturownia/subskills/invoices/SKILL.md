@@ -76,7 +76,7 @@ metadata:
 - `--client-id`: Filter by client ID
 - `--invoice-ids`: Filter by specific invoice IDs
 - `--number`: Filter by invoice number
-- `--kind`: Filter by invoice kind
+- `--kind`: Filter by invoice kind; one value uses kind= and repeated values use kinds[]
 - `--search-date-type` (enum `issue_date`, `paid_date`, `transaction_date`): Date field to search by
 - `--order`: Sort order
 - `--income` (enum `yes`, `no`): Income selector

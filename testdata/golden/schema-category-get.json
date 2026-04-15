@@ -166,7 +166,10 @@
       "additionalProperties": true,
       "properties": {
         "description": {
-          "type": "string"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "id": {
           "type": "integer"
@@ -183,7 +186,10 @@
           "additionalProperties": true,
           "properties": {
             "description": {
-              "type": "string"
+              "type": [
+                "string",
+                "null"
+              ]
             },
             "id": {
               "type": "integer"

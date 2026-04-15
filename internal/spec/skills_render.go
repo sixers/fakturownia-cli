@@ -464,10 +464,10 @@ func writePaymentsDiscoverySection(b *strings.Builder) {
 func writeBankAccountsDiscoverySection(b *strings.Builder) {
 	b.WriteString("## Output and Request Discovery\n\n")
 	b.WriteString("- Use `fakturownia schema bank-account list --json` and `fakturownia schema bank-account get --json` before building selectors.\n")
-	b.WriteString("- Read `output.known_fields` to discover addendum-backed bank-account fields such as `bank_name`, `bank_account`, `bank_account_currency`, `default`, and nested `bank_account_version_departments[]` settings.\n")
+	b.WriteString("- Read `output.known_fields` to discover addendum-backed bank-account fields such as `name`, `bank_name`, `bank_account_number`, `bank_currency`, `bank_account_id`, `default`, and nested `bank_account_version_departments[]` settings.\n")
 	b.WriteString("- Use `fakturownia schema bank-account create --json` and `fakturownia schema bank-account update --json` to inspect `request_body_schema` and accepted `--input` modes.\n")
 	b.WriteString("- `--input` accepts inline JSON, `@file`, or `-` for stdin, and the CLI wraps the inner object into the upstream `bank_account` envelope.\n")
-	b.WriteString("- The addendum uses `bank` in write examples while returned objects expose `bank_name`; both appear in schema discovery so agents can map the two shapes cleanly.\n")
+	b.WriteString("- The addendum documents `name`, `bank_account_number`, and `bank_currency` in CRUD payloads, while returned objects also expose `bank_account_id` alongside `id`.\n")
 	b.WriteString("- Invoice schemas now also cite the bank-account addendum for `bank_account_id`, `buyer_mass_payment_code`, and embedded `bank_accounts[]` fields.\n\n")
 }
 

@@ -209,7 +209,10 @@
                 "type": "integer"
               },
               "percentage": {
-                "type": "string"
+                "type": [
+                  "number",
+                  "null"
+                ]
               },
               "price_gross": {
                 "type": "number"
@@ -400,7 +403,10 @@
                     "type": "integer"
                   },
                   "percentage": {
-                    "type": "string"
+                    "type": [
+                      "number",
+                      "null"
+                    ]
                   },
                   "price_gross": {
                     "type": "number"

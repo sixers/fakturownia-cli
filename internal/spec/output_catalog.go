@@ -81,16 +81,16 @@ func invoiceBaseOutputSpec(shape string, commands []string) *OutputSpec {
 			{Path: "id", Type: "integer", Description: "Invoice ID", Projectable: true, Selectable: true, DefaultColumn: true, Commands: commands, Presence: "common", SourceSection: "Faktury - przykłady wywołania"},
 			{Path: "number", Type: "string", Description: "Invoice number", Projectable: true, Selectable: true, DefaultColumn: true, Commands: commands, Presence: "common", SourceSection: "Faktury - przykłady wywołania"},
 			{Path: "token", Type: "string", Description: "Public invoice token used to derive view and PDF links", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Link do podglądu faktury i pobieranie do PDF"},
-			{Path: "kind", Type: "string", Description: "Invoice kind", Projectable: true, Selectable: true, Commands: commands, Presence: "common", SourceSection: "Faktury - specyfikacja, rodzaje pól, kody GTU", EnumValues: []string{"vat", "proforma", "bill", "receipt", "advance", "final", "correction", "invoice_other", "vat_margin", "kp", "kw", "estimate", "vat_mp", "vat_rr", "correction_note", "accounting_note"}},
+			{Path: "kind", Type: "string", Description: "Invoice kind", Projectable: true, Selectable: true, Commands: commands, Presence: "common", SourceSection: "Faktury - specyfikacja, rodzaje pól, kody GTU", EnumValues: []string{"vat", "proforma", "bill", "receipt", "advance", "final", "correction", "invoice_other", "vat_margin", "kp", "kw", "estimate", "vat_mp", "vat_rr", "correction_note", "accounting_note", "client_order", "dw", "wnt", "wdt", "import_service", "import_service_eu", "import_products", "export_products"}},
 			{Path: "status", Type: "string", Description: "Invoice status", Projectable: true, Selectable: true, DefaultColumn: true, Commands: commands, Presence: "common", SourceSection: "Faktury - specyfikacja, rodzaje pól, kody GTU", EnumValues: []string{"issued", "sent", "paid", "partial", "rejected"}},
-			{Path: "gov_status", Type: "string", Description: "KSeF send status", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Sprawdzanie statusu wysyłki", EnumValues: []string{"ok", "processing", "send_error", "server_error", "not_applicable", "not_connected", "demo_ok", "demo_processing", "demo_send_error", "demo_server_error", "demo_not_applicable", "demo_not_connected"}},
-			{Path: "gov_id", Type: "string", Description: "KSeF invoice number", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Sprawdzanie statusu wysyłki"},
-			{Path: "gov_send_date", Type: "string", Description: "KSeF send timestamp", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Sprawdzanie statusu wysyłki"},
-			{Path: "gov_sell_date", Type: "string", Description: "Sale date registered in KSeF", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Sprawdzanie statusu wysyłki"},
-			{Path: "gov_error_messages[]", Type: "array<string>", Description: "KSeF validation or send errors", Projectable: true, Selectable: false, Commands: commands, Presence: "conditional", SourceSection: "Sprawdzanie statusu wysyłki"},
-			{Path: "gov_verification_link", Type: "string", Description: "KSeF verification link used for QR codes", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Sprawdzanie statusu wysyłki"},
-			{Path: "gov_link", Type: "string", Description: "Direct KSeF portal link for the invoice", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Sprawdzanie statusu wysyłki"},
-			{Path: "gov_corrected_invoice_number", Type: "string", Description: "KSeF number of the corrected invoice", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Korekty faktur"},
+			{Path: "gov_status", Type: "string|null", Description: "KSeF send status", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Sprawdzanie statusu wysyłki", EnumValues: []string{"ok", "processing", "send_error", "server_error", "not_applicable", "not_connected", "demo_ok", "demo_processing", "demo_send_error", "demo_server_error", "demo_not_applicable", "demo_not_connected"}},
+			{Path: "gov_id", Type: "string|null", Description: "KSeF invoice number", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Sprawdzanie statusu wysyłki"},
+			{Path: "gov_send_date", Type: "string|null", Description: "KSeF send timestamp", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Sprawdzanie statusu wysyłki"},
+			{Path: "gov_sell_date", Type: "string|null", Description: "Sale date registered in KSeF", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Sprawdzanie statusu wysyłki"},
+			{Path: "gov_error_messages[]", Type: "array<string>|null", Description: "KSeF validation or send errors", Projectable: true, Selectable: false, Commands: commands, Presence: "conditional", SourceSection: "Sprawdzanie statusu wysyłki"},
+			{Path: "gov_verification_link", Type: "string|null", Description: "KSeF verification link used for QR codes", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Sprawdzanie statusu wysyłki"},
+			{Path: "gov_link", Type: "string|null", Description: "Direct KSeF portal link for the invoice", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Sprawdzanie statusu wysyłki"},
+			{Path: "gov_corrected_invoice_number", Type: "string|null", Description: "KSeF number of the corrected invoice", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Korekty faktur"},
 			{Path: "issue_date", Type: "string", Description: "Invoice issue date", Projectable: true, Selectable: true, DefaultColumn: true, Commands: commands, Presence: "common", SourceSection: "Pobranie listy faktur z aktualnego miesiąca"},
 			{Path: "sale_date", Type: "string", Description: "Invoice sale date", Projectable: true, Selectable: true, Commands: commands, Presence: "common", SourceSection: "Pobranie faktury po ID"},
 			{Path: "payment_to", Type: "string", Description: "Payment due date", Projectable: true, Selectable: true, Commands: commands, Presence: "common", SourceSection: "Faktury - specyfikacja, rodzaje pól, kody GTU"},
@@ -347,8 +347,9 @@ func newOpenObjectSchema() map[string]any {
 }
 
 func schemaForField(field OutputFieldSpec) map[string]any {
+	baseType, nullable := splitNullableType(field.Type)
 	var schema map[string]any
-	switch field.Type {
+	switch baseType {
 	case "string":
 		schema = map[string]any{"type": "string"}
 	case "integer":
@@ -369,15 +370,35 @@ func schemaForField(field OutputFieldSpec) map[string]any {
 			"type":  "array",
 			"items": map[string]any{"type": "string"},
 		}
-	case "integer|null":
-		schema = map[string]any{"type": []any{"integer", "null"}}
 	default:
 		schema = map[string]any{"type": "string"}
 	}
+	if nullable {
+		if schemaType, ok := schema["type"].(string); ok {
+			schema["type"] = []any{schemaType, "null"}
+		}
+	}
 	if len(field.EnumValues) > 0 {
-		schema["enum"] = append([]string{}, field.EnumValues...)
+		if nullable {
+			values := make([]any, 0, len(field.EnumValues)+1)
+			for _, value := range field.EnumValues {
+				values = append(values, value)
+			}
+			values = append(values, nil)
+			schema["enum"] = values
+		} else {
+			schema["enum"] = append([]string{}, field.EnumValues...)
+		}
 	}
 	return schema
+}
+
+func splitNullableType(value string) (string, bool) {
+	const suffix = "|null"
+	if len(value) > len(suffix) && value[len(value)-len(suffix):] == suffix {
+		return value[:len(value)-len(suffix)], true
+	}
+	return value, false
 }
 
 func mergeSchemaMaps(left, right map[string]any) map[string]any {
@@ -427,6 +448,21 @@ func cloneSchemaValue(value any) any {
 }
 
 func schemaType(schema map[string]any) string {
-	typed, _ := schema["type"].(string)
-	return typed
+	switch typed := schema["type"].(type) {
+	case string:
+		return typed
+	case []any:
+		for _, value := range typed {
+			if text, ok := value.(string); ok && text != "null" {
+				return text
+			}
+		}
+	case []string:
+		for _, value := range typed {
+			if value != "null" {
+				return value
+			}
+		}
+	}
+	return ""
 }

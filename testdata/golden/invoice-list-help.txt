@@ -15,7 +15,7 @@ Optional Flags
   --client-id (string): Filter by client ID
   --invoice-ids (string[]): Filter by specific invoice IDs
   --number (string): Filter by invoice number
-  --kind (string[]): Filter by invoice kind
+  --kind (string[]): Filter by invoice kind; one value uses kind= and repeated values use kinds[]
   --search-date-type (string): Date field to search by enum=issue_date,paid_date,transaction_date
   --order (string): Sort order
   --income (string): Income selector enum=no,yes

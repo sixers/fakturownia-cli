@@ -371,7 +371,7 @@ fakturownia schema warehouse-document create --json
 fakturownia category list --fields name,description --json
 fakturownia client list --fields name,email --json
 fakturownia payment list --include invoices --fields name,price,paid --json
-fakturownia bank-account get --id 100 --fields id,bank_name,bank_account,bank_account_version_departments[].show_on_invoice --json
+fakturownia bank-account get --id 100 --fields id,name,bank_account_number,bank_account_version_departments[].show_on_invoice --json
 fakturownia product list --fields name,code,stock_level --json
 fakturownia price-list get --id 8523 --fields id,name,price_list_positions[].price_gross --json
 fakturownia warehouse list --fields name,description --json
@@ -462,7 +462,7 @@ fakturownia payment create --input '{"name":"Payment 001","price":100.05,"invoic
 ```bash
 fakturownia bank-account list --json
 fakturownia bank-account get --id 100 --json
-fakturownia bank-account create --input '{"bank":"Bank of China","bank_account":"11 1111 1111 1111 1111 1111 1111","bank_account_currency":"PLN","default":true}' --dry-run --json
+fakturownia bank-account create --input '{"name":"Rachunek główny PLN","bank_account_number":"PL61 1090 1014 0000 0712 1981 2874","bank_name":"Santander Bank Polska","bank_currency":"PLN","default":true}' --dry-run --json
 fakturownia bank-account update --id 100 --input '{"bank_account_version_departments":[{"department_id":5,"show_on_invoice":true,"main_on_department":true}]}' --json
 ```
 

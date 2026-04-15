@@ -303,25 +303,43 @@
           "type": "integer"
         },
         "gov_corrected_invoice_number": {
-          "type": "string"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "gov_error_messages": {
           "items": {
             "type": "string"
           },
-          "type": "array"
+          "type": [
+            "array",
+            "null"
+          ]
         },
         "gov_id": {
-          "type": "string"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "gov_link": {
-          "type": "string"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "gov_sell_date": {
-          "type": "string"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "gov_send_date": {
-          "type": "string"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "gov_status": {
           "enum": [
@@ -336,12 +354,19 @@
             "demo_send_error",
             "demo_server_error",
             "demo_not_applicable",
-            "demo_not_connected"
+            "demo_not_connected",
+            null
           ],
-          "type": "string"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "gov_verification_link": {
-          "type": "string"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "id": {
           "type": "integer"
@@ -427,7 +452,15 @@
             "vat_mp",
             "vat_rr",
             "correction_note",
-            "accounting_note"
+            "accounting_note",
+            "client_order",
+            "dw",
+            "wnt",
+            "wdt",
+            "import_service",
+            "import_service_eu",
+            "import_products",
+            "export_products"
           ],
           "type": "string"
         },
@@ -706,7 +739,15 @@
             "vat_mp",
             "vat_rr",
             "correction_note",
-            "accounting_note"
+            "accounting_note",
+            "client_order",
+            "dw",
+            "wnt",
+            "wdt",
+            "import_service",
+            "import_service_eu",
+            "import_products",
+            "export_products"
           ],
           "source_section": "Dodanie nowej faktury"
         },
@@ -858,6 +899,52 @@
           "source_section": "Dodanie faktury OSS"
         },
         {
+          "path": "seller_email",
+          "type": "string",
+          "description": "Seller email address",
+          "source_section": "Dodanie nowej faktury"
+        },
+        {
+          "path": "seller_phone",
+          "type": "string",
+          "description": "Seller phone number",
+          "source_section": "Dodanie nowej faktury"
+        },
+        {
+          "path": "seller_fax",
+          "type": "string",
+          "description": "Seller fax number",
+          "source_section": "Dodanie nowej faktury"
+        },
+        {
+          "path": "seller_www",
+          "type": "string",
+          "description": "Seller website",
+          "source_section": "Dodanie nowej faktury"
+        },
+        {
+          "path": "seller_bdo_no",
+          "type": "string",
+          "description": "Seller BDO number",
+          "source_section": "Dodanie nowej faktury"
+        },
+        {
+          "path": "use_invoice_issuer",
+          "type": "string",
+          "description": "Use alternate invoice issuer data",
+          "enum_values": [
+            "1",
+            "0"
+          ],
+          "source_section": "Dodanie nowej faktury"
+        },
+        {
+          "path": "invoice_issuer",
+          "type": "string",
+          "description": "Invoice issuer label or description",
+          "source_section": "Dodanie nowej faktury"
+        },
+        {
           "path": "buyer_name",
           "type": "string",
           "description": "Buyer display name",
@@ -931,10 +1018,44 @@
           "source_section": "Dodanie nowej faktury"
         },
         {
+          "path": "buyer_note",
+          "type": "string",
+          "description": "Additional buyer description",
+          "source_section": "Dodanie nowej faktury"
+        },
+        {
+          "path": "buyer_phone",
+          "type": "string",
+          "description": "Buyer phone number",
+          "source_section": "Korekty faktur"
+        },
+        {
+          "path": "buyer_mobile_phone",
+          "type": "string",
+          "description": "Buyer mobile phone number",
+          "source_section": "Korekty faktur"
+        },
+        {
           "path": "buyer_override",
           "type": "boolean",
           "description": "Update selected buyer fields on the linked client card",
           "source_section": "Dodanie nowej faktury"
+        },
+        {
+          "path": "use_delivery_address",
+          "type": "string",
+          "description": "Use an alternate delivery address",
+          "enum_values": [
+            "1",
+            "0"
+          ],
+          "source_section": "Pola klienta"
+        },
+        {
+          "path": "delivery_address",
+          "type": "string",
+          "description": "Alternate delivery address",
+          "source_section": "Pola klienta"
         },
         {
           "path": "client_id",
@@ -1070,7 +1191,8 @@
           "description": "Reason code for non-taxable positions",
           "enum_values": [
             "export_service",
-            "export_service_eu"
+            "export_service_eu",
+            "not_specified"
           ],
           "source_section": "Zmiany w API przy tworzeniu faktur"
         },
@@ -1526,11 +1648,20 @@
         "buyer_mass_payment_code": {
           "type": "string"
         },
+        "buyer_mobile_phone": {
+          "type": "string"
+        },
         "buyer_name": {
+          "type": "string"
+        },
+        "buyer_note": {
           "type": "string"
         },
         "buyer_override": {
           "type": "boolean"
+        },
+        "buyer_phone": {
+          "type": "string"
         },
         "buyer_post_code": {
           "type": "string"
@@ -1561,6 +1692,9 @@
           "type": "string"
         },
         "currency": {
+          "type": "string"
+        },
+        "delivery_address": {
           "type": "string"
         },
         "department_id": {
@@ -1620,6 +1754,9 @@
             "type": "integer"
           },
           "type": "array"
+        },
+        "invoice_issuer": {
+          "type": "string"
         },
         "issue_date": {
           "type": "string"
@@ -1695,14 +1832,23 @@
             "vat_mp",
             "vat_rr",
             "correction_note",
-            "accounting_note"
+            "accounting_note",
+            "client_order",
+            "dw",
+            "wnt",
+            "wdt",
+            "import_service",
+            "import_service_eu",
+            "import_products",
+            "export_products"
           ],
           "type": "string"
         },
         "np_tax_kind": {
           "enum": [
             "export_service",
-            "export_service_eu"
+            "export_service_eu",
+            "not_specified"
           ],
           "type": "string"
         },
@@ -1878,13 +2024,25 @@
         "sell_date": {
           "type": "string"
         },
+        "seller_bdo_no": {
+          "type": "string"
+        },
         "seller_city": {
           "type": "string"
         },
         "seller_country": {
           "type": "string"
         },
+        "seller_email": {
+          "type": "string"
+        },
+        "seller_fax": {
+          "type": "string"
+        },
         "seller_name": {
+          "type": "string"
+        },
+        "seller_phone": {
           "type": "string"
         },
         "seller_post_code": {
@@ -1904,6 +2062,9 @@
             "empty",
             "nip_with_id"
           ],
+          "type": "string"
+        },
+        "seller_www": {
           "type": "string"
         },
         "settlement_positions": {
@@ -1936,6 +2097,20 @@
         },
         "show_attachments": {
           "type": "boolean"
+        },
+        "use_delivery_address": {
+          "enum": [
+            "1",
+            "0"
+          ],
+          "type": "string"
+        },
+        "use_invoice_issuer": {
+          "enum": [
+            "1",
+            "0"
+          ],
+          "type": "string"
         },
         "use_oss": {
           "type": "boolean"
@@ -2054,25 +2229,43 @@
               "type": "integer"
             },
             "gov_corrected_invoice_number": {
-              "type": "string"
+              "type": [
+                "string",
+                "null"
+              ]
             },
             "gov_error_messages": {
               "items": {
                 "type": "string"
               },
-              "type": "array"
+              "type": [
+                "array",
+                "null"
+              ]
             },
             "gov_id": {
-              "type": "string"
+              "type": [
+                "string",
+                "null"
+              ]
             },
             "gov_link": {
-              "type": "string"
+              "type": [
+                "string",
+                "null"
+              ]
             },
             "gov_sell_date": {
-              "type": "string"
+              "type": [
+                "string",
+                "null"
+              ]
             },
             "gov_send_date": {
-              "type": "string"
+              "type": [
+                "string",
+                "null"
+              ]
             },
             "gov_status": {
               "enum": [
@@ -2087,12 +2280,19 @@
                 "demo_send_error",
                 "demo_server_error",
                 "demo_not_applicable",
-                "demo_not_connected"
+                "demo_not_connected",
+                null
               ],
-              "type": "string"
+              "type": [
+                "string",
+                "null"
+              ]
             },
             "gov_verification_link": {
-              "type": "string"
+              "type": [
+                "string",
+                "null"
+              ]
             },
             "id": {
               "type": "integer"
@@ -2178,7 +2378,15 @@
                 "vat_mp",
                 "vat_rr",
                 "correction_note",
-                "accounting_note"
+                "accounting_note",
+                "client_order",
+                "dw",
+                "wnt",
+                "wdt",
+                "import_service",
+                "import_service_eu",
+                "import_products",
+                "export_products"
               ],
               "type": "string"
             },
@@ -2632,7 +2840,15 @@
             "vat_mp",
             "vat_rr",
             "correction_note",
-            "accounting_note"
+            "accounting_note",
+            "client_order",
+            "dw",
+            "wnt",
+            "wdt",
+            "import_service",
+            "import_service_eu",
+            "import_products",
+            "export_products"
           ]
         },
         {
@@ -2657,7 +2873,7 @@
         },
         {
           "path": "gov_status",
-          "type": "string",
+          "type": "string|null",
           "description": "KSeF send status",
           "projectable": true,
           "selectable": true,
@@ -2683,7 +2899,7 @@
         },
         {
           "path": "gov_id",
-          "type": "string",
+          "type": "string|null",
           "description": "KSeF invoice number",
           "projectable": true,
           "selectable": true,
@@ -2695,7 +2911,7 @@
         },
         {
           "path": "gov_send_date",
-          "type": "string",
+          "type": "string|null",
           "description": "KSeF send timestamp",
           "projectable": true,
           "selectable": true,
@@ -2707,7 +2923,7 @@
         },
         {
           "path": "gov_sell_date",
-          "type": "string",
+          "type": "string|null",
           "description": "Sale date registered in KSeF",
           "projectable": true,
           "selectable": true,
@@ -2719,7 +2935,7 @@
         },
         {
           "path": "gov_error_messages[]",
-          "type": "array<string>",
+          "type": "array<string>|null",
           "description": "KSeF validation or send errors",
           "projectable": true,
           "selectable": false,
@@ -2731,7 +2947,7 @@
         },
         {
           "path": "gov_verification_link",
-          "type": "string",
+          "type": "string|null",
           "description": "KSeF verification link used for QR codes",
           "projectable": true,
           "selectable": true,
@@ -2743,7 +2959,7 @@
         },
         {
           "path": "gov_link",
-          "type": "string",
+          "type": "string|null",
           "description": "Direct KSeF portal link for the invoice",
           "projectable": true,
           "selectable": true,
@@ -2755,7 +2971,7 @@
         },
         {
           "path": "gov_corrected_invoice_number",
-          "type": "string",
+          "type": "string|null",
           "description": "KSeF number of the corrected invoice",
           "projectable": true,
           "selectable": true,

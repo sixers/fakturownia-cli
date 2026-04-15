@@ -50,11 +50,13 @@ func TestGetReturnsBankAccount(t *testing.T) {
 			t.Fatalf("unexpected path: %s", r.URL.Path)
 		}
 		_ = json.NewEncoder(w).Encode(map[string]any{
-			"id":                    100,
-			"bank_name":             "Bank of China",
-			"bank_account":          "11 1111 1111 1111 1111 1111 1111",
-			"bank_account_currency": "PLN",
-			"default":               true,
+			"id":                  100,
+			"bank_account_id":     100,
+			"name":                "Rachunek główny PLN",
+			"bank_name":           "Bank of China",
+			"bank_account_number": "11 1111 1111 1111 1111 1111 1111",
+			"bank_currency":       "PLN",
+			"default":             true,
 		})
 	}))
 	defer server.Close()
@@ -110,10 +112,11 @@ func TestCreateUpdateDeleteAndDryRun(t *testing.T) {
 		Timeout:    5 * time.Second,
 		MaxRetries: 1,
 		Input: map[string]any{
-			"bank":                  "Bank of China",
-			"bank_account":          "11 1111 1111 1111 1111 1111 1111",
-			"bank_account_currency": "PLN",
-			"default":               true,
+			"name":                "Rachunek główny PLN",
+			"bank_name":           "Bank of China",
+			"bank_account_number": "11 1111 1111 1111 1111 1111 1111",
+			"bank_currency":       "PLN",
+			"default":             true,
 		},
 	})
 	if err != nil {
@@ -154,7 +157,7 @@ func TestCreateUpdateDeleteAndDryRun(t *testing.T) {
 		Env:        env,
 		Timeout:    5 * time.Second,
 		MaxRetries: 1,
-		Input:      map[string]any{"bank": "Plan Bank"},
+		Input:      map[string]any{"name": "Plan Bank"},
 		DryRun:     true,
 	})
 	if err != nil {

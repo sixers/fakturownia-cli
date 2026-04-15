@@ -159,19 +159,16 @@
     "raw_supported": true,
     "examples": [
       "fakturownia bank-account get --id 100",
-      "fakturownia bank-account get --id 100 --fields id,bank_name,bank_account --json",
+      "fakturownia bank-account get --id 100 --fields id,name,bank_account_number --json",
       "fakturownia bank-account get --id 100 --raw"
     ],
     "data_schema": {
       "additionalProperties": true,
       "properties": {
-        "bank": {
-          "type": "string"
+        "bank_account_id": {
+          "type": "integer"
         },
-        "bank_account": {
-          "type": "string"
-        },
-        "bank_account_currency": {
+        "bank_account_number": {
           "type": "string"
         },
         "bank_account_version_departments": {
@@ -192,6 +189,9 @@
           },
           "type": "array"
         },
+        "bank_currency": {
+          "type": "string"
+        },
         "bank_name": {
           "type": "string"
         },
@@ -203,6 +203,12 @@
         },
         "id": {
           "type": "integer"
+        },
+        "name": {
+          "type": [
+            "string",
+            "null"
+          ]
         }
       },
       "type": "object"
@@ -212,13 +218,10 @@
         "data": {
           "additionalProperties": true,
           "properties": {
-            "bank": {
-              "type": "string"
+            "bank_account_id": {
+              "type": "integer"
             },
-            "bank_account": {
-              "type": "string"
-            },
-            "bank_account_currency": {
+            "bank_account_number": {
               "type": "string"
             },
             "bank_account_version_departments": {
@@ -239,6 +242,9 @@
               },
               "type": "array"
             },
+            "bank_currency": {
+              "type": "string"
+            },
             "bank_name": {
               "type": "string"
             },
@@ -250,6 +256,12 @@
             },
             "id": {
               "type": "integer"
+            },
+            "name": {
+              "type": [
+                "string",
+                "null"
+              ]
             }
           },
           "type": "object"
@@ -413,16 +425,29 @@
           "source_section": "Pobranie pojedycznego rachunku bankowego po ID"
         },
         {
-          "path": "bank",
-          "type": "string",
-          "description": "Bank display name used by write examples",
+          "path": "bank_account_id",
+          "type": "integer",
+          "description": "Bank account identifier returned by the API; always equal to id",
           "projectable": true,
           "selectable": true,
           "commands": [
             "bank-account get"
           ],
-          "presence": "conditional",
-          "source_section": "Tworzenie rachunku bankowego"
+          "presence": "common",
+          "source_section": "Pobranie pojedycznego rachunku bankowego po ID"
+        },
+        {
+          "path": "name",
+          "type": "string|null",
+          "description": "Bank account display name shown in the system",
+          "projectable": true,
+          "selectable": true,
+          "default_column": true,
+          "commands": [
+            "bank-account get"
+          ],
+          "presence": "common",
+          "source_section": "Pobranie listy rachunków bankowych"
         },
         {
           "path": "bank_name",
@@ -430,7 +455,6 @@
           "description": "Bank name returned by the API",
           "projectable": true,
           "selectable": true,
-          "default_column": true,
           "commands": [
             "bank-account get"
           ],
@@ -450,7 +474,7 @@
           "source_section": "Pobranie listy rachunków bankowych"
         },
         {
-          "path": "bank_account",
+          "path": "bank_account_number",
           "type": "string",
           "description": "Bank account number",
           "projectable": true,
@@ -463,7 +487,7 @@
           "source_section": "Pobranie listy rachunków bankowych"
         },
         {
-          "path": "bank_account_currency",
+          "path": "bank_currency",
           "type": "string",
           "description": "Bank account currency",
           "projectable": true,
@@ -539,15 +563,15 @@
       ],
       "default_columns": [
         "id",
-        "bank_name",
-        "bank_account",
-        "bank_account_currency",
+        "name",
+        "bank_account_number",
+        "bank_currency",
         "default"
       ],
       "notes": [
         "known_fields is curated from API_RACHUNKI_BANKOWE.md and is not exhaustive",
         "unknown upstream fields may still appear in data and can still be selected when the path syntax is valid",
-        "the upstream addendum uses `bank` in write examples while returned objects expose `bank_name`; both are surfaced in schema discovery where appropriate"
+        "the addendum uses `name`, `bank_account_number`, and `bank_currency` for CRUD payloads and returns `bank_account_id` alongside `id`"
       ]
     }
   },

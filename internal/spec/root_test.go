@@ -2119,7 +2119,7 @@ func TestSchemaBankAccountGetExposesKnownFields(t *testing.T) {
 	}
 
 	body := stdout.String()
-	if !jsonContains(body, `"path": "bank_account"`) || !jsonContains(body, `"path": "bank_account_version_departments[].show_on_invoice"`) {
+	if !jsonContains(body, `"path": "bank_account_number"`) || !jsonContains(body, `"path": "bank_account_version_departments[].show_on_invoice"`) {
 		t.Fatalf("expected schema bank-account get to advertise known fields: %s", body)
 	}
 }
@@ -2147,7 +2147,7 @@ func TestSchemaBankAccountCreateExposesRequestBodySchema(t *testing.T) {
 	}
 
 	body := stdout.String()
-	if !jsonContains(body, `"wrapper_key": "bank_account"`) || !jsonContains(body, `"path": "bank_account_version_departments[].remove"`) {
+	if !jsonContains(body, `"wrapper_key": "bank_account"`) || !jsonContains(body, `"path": "bank_account_number"`) || !jsonContains(body, `"path": "bank_account_version_departments[].remove"`) {
 		t.Fatalf("expected schema bank-account create to advertise request-body fields: %s", body)
 	}
 }

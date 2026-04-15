@@ -513,9 +513,12 @@ func (s *Service) List(ctx context.Context, req ListRequest) (*ListResponse, err
 	if req.Number != "" {
 		query.Set("number", req.Number)
 	}
-	for _, kind := range req.Kinds {
-		if trimmed := strings.TrimSpace(kind); trimmed != "" {
-			query.Add("kinds[]", trimmed)
+	kinds := trimNonEmpty(req.Kinds)
+	if len(kinds) == 1 {
+		query.Set("kind", kinds[0])
+	} else {
+		for _, kind := range kinds {
+			query.Add("kinds[]", kind)
 		}
 	}
 	if req.SearchDateType != "" {

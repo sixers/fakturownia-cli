@@ -384,7 +384,7 @@ func SkillBundle() SkillBundleSpec {
 				RequiresBins: []string{
 					"fakturownia",
 				},
-				DiscoveryHint: "Use `fakturownia schema bank-account list --json` for output discovery and `fakturownia schema bank-account create --json` before building `bank_account` payloads or invoice bank-account fields.",
+				DiscoveryHint: "Use `fakturownia schema bank-account list --json` for output discovery and `fakturownia schema bank-account create --json` before building `bank_account` payloads with `name`, `bank_account_number`, and `bank_currency` or invoice bank-account fields.",
 				WhenToUse: []string{
 					"The task is about reading or mutating bank accounts exposed by API_RACHUNKI_BANKOWE.md.",
 					"You need invoice bank-account fields such as `bank_account_id`, `buyer_mass_payment_code`, or embedded `bank_accounts[]` and want the matching schema guidance.",

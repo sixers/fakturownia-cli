@@ -166,13 +166,19 @@
       "additionalProperties": true,
       "properties": {
         "description": {
-          "type": "string"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "id": {
           "type": "integer"
         },
         "kind": {
-          "type": "string"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "name": {
           "type": "string"
@@ -186,13 +192,19 @@
           "additionalProperties": true,
           "properties": {
             "description": {
-              "type": "string"
+              "type": [
+                "string",
+                "null"
+              ]
             },
             "id": {
               "type": "integer"
             },
             "kind": {
-              "type": "string"
+              "type": [
+                "string",
+                "null"
+              ]
             },
             "name": {
               "type": "string"

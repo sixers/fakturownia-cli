@@ -3540,7 +3540,7 @@ func newBankAccountCommand(deps Dependencies, globals *globalOptions) *cobra.Com
 				Warnings:       warnings,
 				Meta:           meta,
 				HumanRenderer:  output.TableRenderer{},
-				DefaultColumns: defaultColumns(listSpec, []string{"id", "bank_name", "bank_account", "bank_account_currency", "default"}),
+				DefaultColumns: defaultColumns(listSpec, []string{"id", "name", "bank_account_number", "bank_currency", "default"}),
 			})
 		},
 	}

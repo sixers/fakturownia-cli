@@ -43,10 +43,10 @@ Exit Codes
   9: internal CLI failure
 
 Examples
-  fakturownia bank-account create --input '{"bank":"Bank of China","bank_account":"11 1111 1111 1111 1111 1111 1111","bank_account_currency":"PLN","default":true}' --json
-  fakturownia bank-account create --input '{"bank":"Bank of China","bank_account_version_departments":[{"department_id":5,"main_on_department":true,"show_on_invoice":true}]}' --json
+  fakturownia bank-account create --input '{"name":"Rachunek główny PLN","bank_account_number":"PL61 1090 1014 0000 0712 1981 2874","bank_name":"Santander Bank Polska","bank_currency":"PLN","default":true}' --json
+  fakturownia bank-account create --input '{"name":"Rachunek działu","bank_account_version_departments":[{"department_id":5,"main_on_department":true,"show_on_invoice":true}]}' --json
   fakturownia bank-account create --input @bank-account.json
-  fakturownia bank-account create --input '{"bank":"Bank of China"}' --dry-run --json
+  fakturownia bank-account create --input '{"name":"Rachunek testowy"}' --dry-run --json
 
 Usage:
   fakturownia bank-account create --input -|@file|JSON [flags]

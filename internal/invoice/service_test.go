@@ -246,6 +246,72 @@ func TestSendEmailBuildsQueryParameters(t *testing.T) {
 	}
 }
 
+func TestListBuildsKindQueries(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name        string
+		kinds       []string
+		assertQuery func(t *testing.T, query url.Values)
+	}{
+		{
+			name:  "single kind uses kind",
+			kinds: []string{"vat"},
+			assertQuery: func(t *testing.T, query url.Values) {
+				t.Helper()
+				if got := query.Get("kind"); got != "vat" {
+					t.Fatalf("expected singular kind query, got %#v", query)
+				}
+				if got := query["kinds[]"]; len(got) != 0 {
+					t.Fatalf("did not expect repeated kinds[] query, got %#v", query)
+				}
+			},
+		},
+		{
+			name:  "multiple kinds use kinds array",
+			kinds: []string{"vat", "proforma"},
+			assertQuery: func(t *testing.T, query url.Values) {
+				t.Helper()
+				if got := query.Get("kind"); got != "" {
+					t.Fatalf("did not expect singular kind query, got %#v", query)
+				}
+				if got := query["kinds[]"]; len(got) != 2 || got[0] != "vat" || got[1] != "proforma" {
+					t.Fatalf("expected repeated kinds[] query, got %#v", query)
+				}
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			server := useTLSTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+				if r.URL.Path != "/invoices.json" {
+					t.Fatalf("unexpected path %q", r.URL.Path)
+				}
+				tt.assertQuery(t, r.URL.Query())
+				_ = json.NewEncoder(w).Encode([]map[string]any{{"id": 100}})
+			})
+
+			service := newServiceWithHTTPClient(nil, server.Client())
+			result, err := service.List(context.Background(), ListRequest{
+				ConfigPath: filepath.Join(t.TempDir(), "config.json"),
+				Env:        config.Env{URL: server.URL, APIToken: "token"},
+				Page:       1,
+				PerPage:    25,
+				Kinds:      tt.kinds,
+			})
+			if err != nil {
+				t.Fatalf("List() error = %v", err)
+			}
+			if len(result.Invoices) != 1 {
+				t.Fatalf("unexpected list result: %#v", result)
+			}
+		})
+	}
+}
+
 func TestAddAttachmentOrchestratesCredentialsUploadAndAttach(t *testing.T) {
 	t.Parallel()
 
