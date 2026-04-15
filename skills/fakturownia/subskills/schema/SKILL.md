@@ -8,8 +8,10 @@ metadata:
   related_skills:
     - "fakturownia-shared"
     - "fakturownia-products"
+    - "fakturownia-price-lists"
     - "fakturownia-invoices"
     - "fakturownia-recurrings"
+    - "fakturownia-warehouse-documents"
   command_refs:
     - "schema list"
     - "schema <noun> <verb>"
@@ -63,5 +65,7 @@ fakturownia schema auth login --json
 
 - [fakturownia-shared](../shared/SKILL.md)
 - [fakturownia-products](../products/SKILL.md)
+- [fakturownia-price-lists](../price-lists/SKILL.md)
 - [fakturownia-invoices](../invoices/SKILL.md)
 - [fakturownia-recurrings](../recurrings/SKILL.md)
+- [fakturownia-warehouse-documents](../warehouse-documents/SKILL.md)

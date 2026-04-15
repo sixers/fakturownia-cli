@@ -1,0 +1,873 @@
+{
+  "schema_version": "fakturownia-cli/v1alpha1",
+  "status": "success",
+  "data": {
+    "schema_version": "fakturownia-cli/v1alpha1",
+    "command": "price-list update",
+    "use": "update --id ID --input -|@file|JSON",
+    "summary": "Update a price list",
+    "flags": [
+      {
+        "name": "profile",
+        "type": "string",
+        "description": "Select a named profile",
+        "required": false
+      },
+      {
+        "name": "json",
+        "type": "bool",
+        "description": "Alias for --output json",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "output",
+        "type": "string",
+        "description": "Output format",
+        "required": false,
+        "default": "human",
+        "enum": [
+          "human",
+          "json"
+        ]
+      },
+      {
+        "name": "quiet",
+        "type": "bool",
+        "description": "Emit bare values when exactly one field or column remains",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "fields",
+        "type": "string[]",
+        "description": "Project JSON envelope data fields using dot/bracket paths like number or positions[].name",
+        "required": false,
+        "repeatable": true
+      },
+      {
+        "name": "columns",
+        "type": "string[]",
+        "description": "Select human table columns using dot/bracket paths like number or positions[].name",
+        "required": false,
+        "repeatable": true
+      },
+      {
+        "name": "raw",
+        "type": "bool",
+        "description": "Emit the upstream JSON response body directly when supported",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "dry-run",
+        "type": "bool",
+        "description": "Accepted on read-only commands and reserved for future mutating request previews",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "timeout-ms",
+        "type": "int",
+        "description": "HTTP timeout in milliseconds",
+        "required": false,
+        "default": "30000"
+      },
+      {
+        "name": "max-retries",
+        "type": "int",
+        "description": "Maximum retry attempts for idempotent reads on network or 5xx failures",
+        "required": false,
+        "default": "2"
+      },
+      {
+        "name": "non-interactive",
+        "type": "bool",
+        "description": "Disable interactive behavior",
+        "required": false,
+        "default": "true"
+      },
+      {
+        "name": "config",
+        "type": "string",
+        "description": "Override the config file path",
+        "required": false
+      },
+      {
+        "name": "id",
+        "type": "string",
+        "description": "Price list ID",
+        "required": true
+      },
+      {
+        "name": "input",
+        "type": "string",
+        "description": "Price list JSON input as inline JSON, @file, or - for stdin",
+        "required": true
+      }
+    ],
+    "env_vars": [
+      {
+        "name": "FAKTUROWNIA_PROFILE",
+        "description": "Select a profile unless --profile is provided"
+      },
+      {
+        "name": "FAKTUROWNIA_URL",
+        "description": "Override the base account URL from any profile"
+      },
+      {
+        "name": "FAKTUROWNIA_API_TOKEN",
+        "description": "Override the API token from any profile"
+      }
+    ],
+    "output_modes": [
+      "human",
+      "json"
+    ],
+    "exit_codes": [
+      {
+        "code": 0,
+        "description": "success"
+      },
+      {
+        "code": 2,
+        "description": "usage or validation error"
+      },
+      {
+        "code": 3,
+        "description": "not found"
+      },
+      {
+        "code": 4,
+        "description": "authentication or permission failure"
+      },
+      {
+        "code": 5,
+        "description": "conflict"
+      },
+      {
+        "code": 6,
+        "description": "network or timeout failure"
+      },
+      {
+        "code": 7,
+        "description": "reserved for throttling or retry budget exhaustion"
+      },
+      {
+        "code": 8,
+        "description": "remote API rejected the request"
+      },
+      {
+        "code": 9,
+        "description": "internal CLI failure"
+      }
+    ],
+    "raw_supported": true,
+    "examples": [
+      "fakturownia price-list update --id 8523 --input '{\"description\":\"updated\"}' --json",
+      "fakturownia price-list update --id 8523 --input @price-list-update.json",
+      "fakturownia price-list update --id 8523 --input '{\"currency\":\"EUR\"}' --dry-run --json"
+    ],
+    "data_schema": {
+      "additionalProperties": true,
+      "properties": {
+        "account_id": {
+          "type": "integer"
+        },
+        "created_at": {
+          "type": "string"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "deleted": {
+          "type": "boolean"
+        },
+        "description": {
+          "type": "string"
+        },
+        "id": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "price_list_positions": {
+          "items": {
+            "additionalProperties": true,
+            "properties": {
+              "account_id": {
+                "type": "integer"
+              },
+              "created_at": {
+                "type": "string"
+              },
+              "deleted": {
+                "type": "boolean"
+              },
+              "id": {
+                "type": "integer"
+              },
+              "percentage": {
+                "type": "string"
+              },
+              "price_gross": {
+                "type": "number"
+              },
+              "price_list_id": {
+                "type": "integer"
+              },
+              "price_net": {
+                "type": "number"
+              },
+              "priceable_id": {
+                "type": "integer"
+              },
+              "priceable_type": {
+                "type": "string"
+              },
+              "tax": {
+                "type": "string"
+              },
+              "updated_at": {
+                "type": "string"
+              },
+              "use_percentage": {
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "updated_at": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "request_body": {
+      "input_flag": "input",
+      "input_modes": [
+        "inline_json",
+        "@file",
+        "stdin"
+      ],
+      "wrapper_key": "price_list",
+      "open_ended": true,
+      "catalog_basis": {
+        "source": "readme",
+        "url": "https://github.com/fakturownia/API/blob/master/README.md"
+      },
+      "path_syntax": "dot_bracket",
+      "known_fields": [
+        {
+          "path": "name",
+          "type": "string",
+          "description": "Price list name",
+          "source_section": "Dodanie cennika"
+        },
+        {
+          "path": "description",
+          "type": "string",
+          "description": "Price list description",
+          "source_section": "Dodanie cennika"
+        },
+        {
+          "path": "currency",
+          "type": "string",
+          "description": "Price list currency",
+          "source_section": "Dodanie cennika"
+        },
+        {
+          "path": "price_list_positions_attributes",
+          "type": "object",
+          "description": "Open object keyed by upstream string indexes like \"0\" and \"1\", where each value describes one price list position entry",
+          "source_section": "Dodanie cennika"
+        }
+      ],
+      "notes": [
+        "the CLI accepts the inner price list object, then wraps it in the upstream {\"price_list\": ...} envelope",
+        "known_fields is curated from the upstream README and verified API behavior and is not exhaustive",
+        "price_list_positions_attributes is an open object keyed by upstream string indexes like \"0\" and \"1\""
+      ]
+    },
+    "request_body_schema": {
+      "additionalProperties": true,
+      "properties": {
+        "currency": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "price_list_positions_attributes": {
+          "additionalProperties": {
+            "additionalProperties": true,
+            "properties": {
+              "id": {
+                "description": "Existing price list position ID",
+                "type": "integer"
+              },
+              "percentage": {
+                "description": "Percentage adjustment",
+                "type": "number"
+              },
+              "price_gross": {
+                "description": "Gross price",
+                "type": "number"
+              },
+              "price_net": {
+                "description": "Net price",
+                "type": "number"
+              },
+              "priceable_id": {
+                "description": "Referenced priceable ID",
+                "type": "integer"
+              },
+              "priceable_name": {
+                "description": "Referenced priceable name",
+                "type": "string"
+              },
+              "priceable_type": {
+                "description": "Referenced priceable type",
+                "type": "string"
+              },
+              "tax": {
+                "description": "Tax rate",
+                "type": "string"
+              },
+              "use_percentage": {
+                "description": "Use percentage pricing flag",
+                "type": "boolean"
+              },
+              "use_tax": {
+                "description": "Use explicit tax flag",
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          },
+          "description": "Open object keyed by upstream string indexes like \"0\" and \"1\", where each value describes one price list position entry",
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "envelope_schema": {
+      "properties": {
+        "data": {
+          "additionalProperties": true,
+          "properties": {
+            "account_id": {
+              "type": "integer"
+            },
+            "created_at": {
+              "type": "string"
+            },
+            "currency": {
+              "type": "string"
+            },
+            "deleted": {
+              "type": "boolean"
+            },
+            "description": {
+              "type": "string"
+            },
+            "id": {
+              "type": "integer"
+            },
+            "name": {
+              "type": "string"
+            },
+            "price_list_positions": {
+              "items": {
+                "additionalProperties": true,
+                "properties": {
+                  "account_id": {
+                    "type": "integer"
+                  },
+                  "created_at": {
+                    "type": "string"
+                  },
+                  "deleted": {
+                    "type": "boolean"
+                  },
+                  "id": {
+                    "type": "integer"
+                  },
+                  "percentage": {
+                    "type": "string"
+                  },
+                  "price_gross": {
+                    "type": "number"
+                  },
+                  "price_list_id": {
+                    "type": "integer"
+                  },
+                  "price_net": {
+                    "type": "number"
+                  },
+                  "priceable_id": {
+                    "type": "integer"
+                  },
+                  "priceable_type": {
+                    "type": "string"
+                  },
+                  "tax": {
+                    "type": "string"
+                  },
+                  "updated_at": {
+                    "type": "string"
+                  },
+                  "use_percentage": {
+                    "type": "boolean"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "updated_at": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "errors": {
+          "items": {
+            "$defs": {
+              "ErrorDetail": {
+                "properties": {
+                  "class": {
+                    "type": "string"
+                  },
+                  "code": {
+                    "type": "string"
+                  },
+                  "hint": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "retryable": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "class",
+                  "code",
+                  "message",
+                  "retryable"
+                ],
+                "type": "object"
+              }
+            },
+            "$id": "https://github.com/sixers/fakturownia-cli/internal/output/error-detail",
+            "$ref": "#/$defs/ErrorDetail",
+            "$schema": "https://json-schema.org/draft/2020-12/schema"
+          },
+          "type": "array"
+        },
+        "meta": {
+          "$defs": {
+            "Meta": {
+              "properties": {
+                "command": {
+                  "type": "string"
+                },
+                "duration_ms": {
+                  "type": "integer"
+                },
+                "pagination": {
+                  "$ref": "#/$defs/Pagination"
+                },
+                "profile": {
+                  "type": "string"
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "command",
+                "duration_ms"
+              ],
+              "type": "object"
+            },
+            "Pagination": {
+              "properties": {
+                "has_next": {
+                  "type": "boolean"
+                },
+                "page": {
+                  "type": "integer"
+                },
+                "per_page": {
+                  "type": "integer"
+                },
+                "returned": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "page",
+                "per_page",
+                "returned",
+                "has_next"
+              ],
+              "type": "object"
+            }
+          },
+          "$id": "https://github.com/sixers/fakturownia-cli/internal/output/meta",
+          "$ref": "#/$defs/Meta",
+          "$schema": "https://json-schema.org/draft/2020-12/schema"
+        },
+        "schema_version": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "success",
+            "error"
+          ],
+          "type": "string"
+        },
+        "warnings": {
+          "items": {
+            "$defs": {
+              "WarningDetail": {
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "message"
+                ],
+                "type": "object"
+              }
+            },
+            "$id": "https://github.com/sixers/fakturownia-cli/internal/output/warning-detail",
+            "$ref": "#/$defs/WarningDetail",
+            "$schema": "https://json-schema.org/draft/2020-12/schema"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "schema_version",
+        "status",
+        "data",
+        "errors",
+        "warnings",
+        "meta"
+      ],
+      "type": "object"
+    },
+    "output": {
+      "shape": "object",
+      "open_ended": true,
+      "catalog_basis": {
+        "source": "readme",
+        "url": "https://github.com/fakturownia/API/blob/master/README.md"
+      },
+      "path_syntax": "dot_bracket",
+      "known_fields": [
+        {
+          "path": "id",
+          "type": "integer",
+          "description": "Price list ID",
+          "projectable": true,
+          "selectable": true,
+          "default_column": true,
+          "commands": [
+            "price-list update"
+          ],
+          "presence": "common",
+          "source_section": "Pobranie listy cenników"
+        },
+        {
+          "path": "name",
+          "type": "string",
+          "description": "Price list name",
+          "projectable": true,
+          "selectable": true,
+          "default_column": true,
+          "commands": [
+            "price-list update"
+          ],
+          "presence": "common",
+          "source_section": "Dodanie cennika"
+        },
+        {
+          "path": "description",
+          "type": "string",
+          "description": "Price list description",
+          "projectable": true,
+          "selectable": true,
+          "default_column": true,
+          "commands": [
+            "price-list update"
+          ],
+          "presence": "conditional",
+          "source_section": "Dodanie cennika"
+        },
+        {
+          "path": "currency",
+          "type": "string",
+          "description": "Price list currency",
+          "projectable": true,
+          "selectable": true,
+          "default_column": true,
+          "commands": [
+            "price-list update"
+          ],
+          "presence": "common",
+          "source_section": "Dodanie cennika"
+        },
+        {
+          "path": "deleted",
+          "type": "boolean",
+          "description": "Deleted flag",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "price-list update"
+          ],
+          "presence": "conditional",
+          "source_section": "Pobranie cennika po ID"
+        },
+        {
+          "path": "account_id",
+          "type": "integer",
+          "description": "Owning account ID",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "price-list update"
+          ],
+          "presence": "conditional",
+          "source_section": "Pobranie cennika po ID"
+        },
+        {
+          "path": "created_at",
+          "type": "string",
+          "description": "Creation timestamp",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "price-list update"
+          ],
+          "presence": "conditional",
+          "source_section": "Pobranie cennika po ID"
+        },
+        {
+          "path": "updated_at",
+          "type": "string",
+          "description": "Last update timestamp",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "price-list update"
+          ],
+          "presence": "conditional",
+          "source_section": "Pobranie cennika po ID"
+        },
+        {
+          "path": "price_list_positions[]",
+          "type": "array<object>",
+          "description": "Price list position entries",
+          "projectable": true,
+          "selectable": false,
+          "commands": [
+            "price-list update"
+          ],
+          "presence": "conditional",
+          "source_section": "Pobranie cennika po ID"
+        },
+        {
+          "path": "price_list_positions[].id",
+          "type": "integer",
+          "description": "Price list position ID",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "price-list update"
+          ],
+          "presence": "conditional",
+          "source_section": "Pobranie cennika po ID"
+        },
+        {
+          "path": "price_list_positions[].priceable_id",
+          "type": "integer",
+          "description": "Referenced priceable ID",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "price-list update"
+          ],
+          "presence": "conditional",
+          "source_section": "Pobranie cennika po ID"
+        },
+        {
+          "path": "price_list_positions[].priceable_type",
+          "type": "string",
+          "description": "Referenced priceable type",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "price-list update"
+          ],
+          "presence": "conditional",
+          "source_section": "Pobranie cennika po ID"
+        },
+        {
+          "path": "price_list_positions[].price_list_id",
+          "type": "integer",
+          "description": "Owning price list ID",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "price-list update"
+          ],
+          "presence": "conditional",
+          "source_section": "Pobranie cennika po ID"
+        },
+        {
+          "path": "price_list_positions[].use_percentage",
+          "type": "boolean",
+          "description": "Use percentage pricing flag",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "price-list update"
+          ],
+          "presence": "conditional",
+          "source_section": "Pobranie cennika po ID"
+        },
+        {
+          "path": "price_list_positions[].percentage",
+          "type": "number|null",
+          "description": "Percentage adjustment",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "price-list update"
+          ],
+          "presence": "conditional",
+          "source_section": "Pobranie cennika po ID"
+        },
+        {
+          "path": "price_list_positions[].price_net",
+          "type": "number",
+          "description": "Net price",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "price-list update"
+          ],
+          "presence": "conditional",
+          "source_section": "Pobranie cennika po ID"
+        },
+        {
+          "path": "price_list_positions[].price_gross",
+          "type": "number",
+          "description": "Gross price",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "price-list update"
+          ],
+          "presence": "conditional",
+          "source_section": "Pobranie cennika po ID"
+        },
+        {
+          "path": "price_list_positions[].tax",
+          "type": "string",
+          "description": "Tax rate",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "price-list update"
+          ],
+          "presence": "conditional",
+          "source_section": "Pobranie cennika po ID"
+        },
+        {
+          "path": "price_list_positions[].deleted",
+          "type": "boolean",
+          "description": "Deleted flag for the position",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "price-list update"
+          ],
+          "presence": "conditional",
+          "source_section": "Pobranie cennika po ID"
+        },
+        {
+          "path": "price_list_positions[].account_id",
+          "type": "integer",
+          "description": "Owning account ID",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "price-list update"
+          ],
+          "presence": "conditional",
+          "source_section": "Pobranie cennika po ID"
+        },
+        {
+          "path": "price_list_positions[].created_at",
+          "type": "string",
+          "description": "Creation timestamp",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "price-list update"
+          ],
+          "presence": "conditional",
+          "source_section": "Pobranie cennika po ID"
+        },
+        {
+          "path": "price_list_positions[].updated_at",
+          "type": "string",
+          "description": "Last update timestamp",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "price-list update"
+          ],
+          "presence": "conditional",
+          "source_section": "Pobranie cennika po ID"
+        }
+      ],
+      "default_columns": [
+        "id",
+        "name",
+        "currency",
+        "description"
+      ],
+      "notes": [
+        "known_fields is curated from the upstream README and verified API behavior and is not exhaustive",
+        "unknown upstream fields may still appear in data and can still be selected when the path syntax is valid",
+        "price-list get is included because /price_lists/:id.json has been verified against live API behavior even though the current README price_lists section does not document it explicitly"
+      ]
+    }
+  },
+  "errors": [],
+  "warnings": null,
+  "meta": {
+    "command": "schema price-list update",
+    "duration_ms": 0
+  }
+}

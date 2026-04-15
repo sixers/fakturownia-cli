@@ -1,6 +1,6 @@
 ---
 name: "fakturownia"
-description: "Fakturownia CLI bundle: shared guidance, auth, clients, products, invoices, recurrings, self-update, schema discovery, diagnostics, and generated invoice recipes for the `fakturownia` command. Use when an agent needs to work with Fakturownia through this CLI."
+description: "Fakturownia CLI bundle: shared guidance, auth, clients, products, price lists, invoices, recurrings, warehouse documents, self-update, schema discovery, diagnostics, and generated invoice recipes for the `fakturownia` command. Use when an agent needs to work with Fakturownia through this CLI."
 metadata:
   category: "bundle"
   cli_help: "fakturownia --help"
@@ -27,8 +27,10 @@ Use this as the entrypoint for the generated Fakturownia CLI skill bundle.
 - [fakturownia-auth](subskills/auth/SKILL.md): Fakturownia CLI auth: persist, inspect, and remove profiles and API tokens with `fakturownia auth ...`.
 - [fakturownia-clients](subskills/clients/SKILL.md): Fakturownia CLI clients: list, fetch, create, update, and delete clients, and inspect README-backed client fields and request schemas.
 - [fakturownia-products](subskills/products/SKILL.md): Fakturownia CLI products: list, fetch, create, and update products, including warehouse-aware reads and README-backed request schemas.
+- [fakturownia-price-lists](subskills/price-lists/SKILL.md): Fakturownia CLI price lists: list, fetch, create, update, and delete price lists, including upstream-shaped position payloads and schema-backed discovery.
 - [fakturownia-invoices](subskills/invoices/SKILL.md): Fakturownia CLI invoices: list, fetch, create, update, delete, email, cancel, print, attach files, derive public links, and discover invoice fields and payloads through schema output.
 - [fakturownia-recurrings](subskills/recurrings/SKILL.md): Fakturownia CLI recurrings: list, create, and update recurring invoice definitions with README-backed request and output discovery.
+- [fakturownia-warehouse-documents](subskills/warehouse-documents/SKILL.md): Fakturownia CLI warehouse documents: list, fetch, create, update, and delete warehouse documents, including kind selection and invoice linking through payload fields.
 - [fakturownia-schema](subskills/schema/SKILL.md): Fakturownia CLI schema discovery: inspect supported commands, flags, examples, exit codes, and output schemas with `fakturownia schema ...`.
 - [fakturownia-doctor](subskills/doctor/SKILL.md): Fakturownia CLI diagnostics: validate config resolution, keychain access, reachability, authenticated API access, and release integrity with `fakturownia doctor run`.
 

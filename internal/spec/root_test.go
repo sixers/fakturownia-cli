@@ -14,10 +14,12 @@ import (
 	"github.com/sixers/fakturownia-cli/internal/doctor"
 	"github.com/sixers/fakturownia-cli/internal/invoice"
 	"github.com/sixers/fakturownia-cli/internal/output"
+	"github.com/sixers/fakturownia-cli/internal/pricelist"
 	"github.com/sixers/fakturownia-cli/internal/product"
 	"github.com/sixers/fakturownia-cli/internal/recurring"
 	"github.com/sixers/fakturownia-cli/internal/selfupdate"
 	"github.com/sixers/fakturownia-cli/internal/transport"
+	"github.com/sixers/fakturownia-cli/internal/warehousedocument"
 )
 
 type fakeAuthService struct {
@@ -439,6 +441,87 @@ func (f *fakeProductService) Update(_ context.Context, req product.UpdateRequest
 	}, nil
 }
 
+type fakePriceListService struct {
+	listReq   pricelist.ListRequest
+	getReq    pricelist.GetRequest
+	createReq pricelist.CreateRequest
+	updateReq pricelist.UpdateRequest
+	deleteReq pricelist.DeleteRequest
+}
+
+func (f *fakePriceListService) List(_ context.Context, req pricelist.ListRequest) (*pricelist.ListResponse, error) {
+	f.listReq = req
+	return &pricelist.ListResponse{
+		PriceLists: []map[string]any{
+			{
+				"id":          8523,
+				"name":        "Dropshipper",
+				"description": "test",
+				"currency":    "PLN",
+			},
+		},
+		RawBody:    []byte(`[{"id":8523,"name":"Dropshipper"}]`),
+		Profile:    req.Profile,
+		RequestID:  "req-price-list-list",
+		Pagination: output.Pagination{Page: req.Page, PerPage: req.PerPage, Returned: 1, HasNext: false},
+	}, nil
+}
+
+func (f *fakePriceListService) Get(_ context.Context, req pricelist.GetRequest) (*pricelist.GetResponse, error) {
+	f.getReq = req
+	return &pricelist.GetResponse{
+		PriceList: map[string]any{
+			"id":          8523,
+			"name":        "Dropshipper",
+			"description": "test",
+			"currency":    "PLN",
+			"price_list_positions": []any{
+				map[string]any{"id": 556438, "priceable_id": 97149307, "price_gross": "33.16"},
+			},
+		},
+		RawBody:   []byte(`{"id":8523,"name":"Dropshipper","price_list_positions":[{"id":556438,"priceable_id":97149307,"price_gross":"33.16"}]}`),
+		Profile:   req.Profile,
+		RequestID: "req-price-list-get",
+	}, nil
+}
+
+func (f *fakePriceListService) Create(_ context.Context, req pricelist.CreateRequest) (*pricelist.CreateResponse, error) {
+	f.createReq = req
+	if req.DryRun {
+		plan := transport.PlanJSONRequest("POST", "/price_lists.json", nil, map[string]any{"price_list": req.Input})
+		return &pricelist.CreateResponse{Profile: req.Profile, DryRun: &plan}, nil
+	}
+	return &pricelist.CreateResponse{
+		PriceList: map[string]any{"id": 8523, "name": req.Input["name"], "currency": req.Input["currency"]},
+		RawBody:   []byte(`{"id":8523,"name":"Dropshipper"}`),
+		Profile:   req.Profile,
+		RequestID: "req-price-list-create",
+	}, nil
+}
+
+func (f *fakePriceListService) Update(_ context.Context, req pricelist.UpdateRequest) (*pricelist.UpdateResponse, error) {
+	f.updateReq = req
+	if req.DryRun {
+		plan := transport.PlanJSONRequest("PUT", "/price_lists/"+req.ID+".json", nil, map[string]any{"price_list": req.Input})
+		return &pricelist.UpdateResponse{Profile: req.Profile, DryRun: &plan}, nil
+	}
+	return &pricelist.UpdateResponse{
+		PriceList: map[string]any{"id": req.ID, "description": req.Input["description"], "currency": req.Input["currency"]},
+		RawBody:   []byte(`{"id":8523,"description":"updated"}`),
+		Profile:   req.Profile,
+		RequestID: "req-price-list-update",
+	}, nil
+}
+
+func (f *fakePriceListService) Delete(_ context.Context, req pricelist.DeleteRequest) (*pricelist.DeleteResponse, error) {
+	f.deleteReq = req
+	if req.DryRun {
+		plan := transport.PlanJSONRequest("DELETE", "/price_lists/"+req.ID+".json", nil, nil)
+		return &pricelist.DeleteResponse{ID: req.ID, Profile: req.Profile, DryRun: &plan}, nil
+	}
+	return &pricelist.DeleteResponse{ID: req.ID, Deleted: true, Profile: req.Profile, RequestID: "req-price-list-delete"}, nil
+}
+
 type fakeSelfUpdateService struct {
 	updateReq selfupdate.UpdateRequest
 }
@@ -487,6 +570,90 @@ func (f *fakeRecurringService) Update(_ context.Context, req recurring.UpdateReq
 	}, nil
 }
 
+type fakeWarehouseDocumentService struct {
+	listReq   warehousedocument.ListRequest
+	getReq    warehousedocument.GetRequest
+	createReq warehousedocument.CreateRequest
+	updateReq warehousedocument.UpdateRequest
+	deleteReq warehousedocument.DeleteRequest
+}
+
+func (f *fakeWarehouseDocumentService) List(_ context.Context, req warehousedocument.ListRequest) (*warehousedocument.ListResponse, error) {
+	f.listReq = req
+	return &warehousedocument.ListResponse{
+		WarehouseDocuments: []map[string]any{
+			{
+				"id":           15,
+				"kind":         "mm",
+				"number":       "MM/1/2026",
+				"issue_date":   "2026-04-01",
+				"warehouse_id": 1,
+				"client_name":  "Acme",
+			},
+		},
+		RawBody:    []byte(`[{"id":15,"kind":"mm"}]`),
+		Profile:    req.Profile,
+		RequestID:  "req-warehouse-list",
+		Pagination: output.Pagination{Page: req.Page, PerPage: req.PerPage, Returned: 1, HasNext: false},
+	}, nil
+}
+
+func (f *fakeWarehouseDocumentService) Get(_ context.Context, req warehousedocument.GetRequest) (*warehousedocument.GetResponse, error) {
+	f.getReq = req
+	return &warehousedocument.GetResponse{
+		WarehouseDocument: map[string]any{
+			"id":           15,
+			"kind":         "wz",
+			"number":       "WZ/1/2026",
+			"client_name":  "Acme",
+			"warehouse_id": 1,
+			"warehouse_actions": []any{
+				map[string]any{"product_id": 7, "quantity": 2, "warehouse2_id": 3},
+			},
+		},
+		RawBody:   []byte(`{"id":15,"kind":"wz","warehouse_actions":[{"product_id":7,"quantity":2,"warehouse2_id":3}]}`),
+		Profile:   req.Profile,
+		RequestID: "req-warehouse-get",
+	}, nil
+}
+
+func (f *fakeWarehouseDocumentService) Create(_ context.Context, req warehousedocument.CreateRequest) (*warehousedocument.CreateResponse, error) {
+	f.createReq = req
+	if req.DryRun {
+		plan := transport.PlanJSONRequest("POST", "/warehouse_documents.json", nil, map[string]any{"warehouse_document": req.Input})
+		return &warehousedocument.CreateResponse{Profile: req.Profile, DryRun: &plan}, nil
+	}
+	return &warehousedocument.CreateResponse{
+		WarehouseDocument: map[string]any{"id": 15, "kind": req.Input["kind"], "warehouse_actions": req.Input["warehouse_actions"]},
+		RawBody:           []byte(`{"id":15,"kind":"mm"}`),
+		Profile:           req.Profile,
+		RequestID:         "req-warehouse-create",
+	}, nil
+}
+
+func (f *fakeWarehouseDocumentService) Update(_ context.Context, req warehousedocument.UpdateRequest) (*warehousedocument.UpdateResponse, error) {
+	f.updateReq = req
+	if req.DryRun {
+		plan := transport.PlanJSONRequest("PUT", "/warehouse_documents/"+req.ID+".json", nil, map[string]any{"warehouse_document": req.Input})
+		return &warehousedocument.UpdateResponse{Profile: req.Profile, DryRun: &plan}, nil
+	}
+	return &warehousedocument.UpdateResponse{
+		WarehouseDocument: map[string]any{"id": req.ID, "invoice_ids": req.Input["invoice_ids"]},
+		RawBody:           []byte(`{"id":15,"invoice_ids":[100,111]}`),
+		Profile:           req.Profile,
+		RequestID:         "req-warehouse-update",
+	}, nil
+}
+
+func (f *fakeWarehouseDocumentService) Delete(_ context.Context, req warehousedocument.DeleteRequest) (*warehousedocument.DeleteResponse, error) {
+	f.deleteReq = req
+	if req.DryRun {
+		plan := transport.PlanJSONRequest("DELETE", "/warehouse_documents/"+req.ID+".json", nil, nil)
+		return &warehousedocument.DeleteResponse{ID: req.ID, Profile: req.Profile, DryRun: &plan}, nil
+	}
+	return &warehousedocument.DeleteResponse{ID: req.ID, Deleted: true, Profile: req.Profile, RequestID: "req-warehouse-delete"}, nil
+}
+
 func (f *fakeSelfUpdateService) Update(_ context.Context, req selfupdate.UpdateRequest) (*selfupdate.UpdateResult, error) {
 	f.updateReq = req
 	return &selfupdate.UpdateResult{
@@ -518,7 +685,9 @@ func TestCommandIntegration(t *testing.T) {
 	clientSvc := &fakeClientService{}
 	invoiceSvc := &fakeInvoiceService{}
 	productSvc := &fakeProductService{}
+	priceListSvc := &fakePriceListService{}
 	recurringSvc := &fakeRecurringService{}
+	warehouseSvc := &fakeWarehouseDocumentService{}
 	doctorSvc := &fakeDoctorService{}
 	selfSvc := &fakeSelfUpdateService{}
 
@@ -529,7 +698,9 @@ func TestCommandIntegration(t *testing.T) {
 			Client:    clientSvc,
 			Invoice:   invoiceSvc,
 			Product:   productSvc,
+			PriceList: priceListSvc,
 			Recurring: recurringSvc,
+			Warehouse: warehouseSvc,
 			Doctor:    doctorSvc,
 			Self:      selfSvc,
 			Stdout:    &stdout,
@@ -656,6 +827,110 @@ func TestCommandIntegration(t *testing.T) {
 	}
 	if !jsonContains(stdout, `"price_gross": "102"`) {
 		t.Fatalf("unexpected product update output: %s", stdout)
+	}
+
+	stdout, _, err = run("price-list", "list", "--json")
+	if err != nil {
+		t.Fatalf("price-list list error = %v", err)
+	}
+	if !jsonContains(stdout, `"name": "Dropshipper"`) {
+		t.Fatalf("unexpected price-list list output: %s", stdout)
+	}
+
+	stdout, _, err = run("price-list", "get", "--id", "8523", "--json")
+	if err != nil {
+		t.Fatalf("price-list get error = %v", err)
+	}
+	if priceListSvc.getReq.ID != "8523" {
+		t.Fatalf("expected price-list get ID to be forwarded, got %q", priceListSvc.getReq.ID)
+	}
+	if !jsonContains(stdout, `"price_list_positions": [`) {
+		t.Fatalf("unexpected price-list get output: %s", stdout)
+	}
+
+	stdout, _, err = run("price-list", "create", "--input", `{"name":"Dropshipper","currency":"PLN"}`, "--json")
+	if err != nil {
+		t.Fatalf("price-list create error = %v", err)
+	}
+	if priceListSvc.createReq.Input["name"] != "Dropshipper" {
+		t.Fatalf("expected price-list create input to be parsed, got %#v", priceListSvc.createReq.Input)
+	}
+	if !jsonContains(stdout, `"id": 8523`) {
+		t.Fatalf("unexpected price-list create output: %s", stdout)
+	}
+
+	stdout, _, err = runWithInput(`{"description":"updated"}`, "price-list", "update", "--id", "8523", "--input", "-", "--json")
+	if err != nil {
+		t.Fatalf("price-list update error = %v", err)
+	}
+	if priceListSvc.updateReq.Input["description"] != "updated" {
+		t.Fatalf("expected price-list update stdin input, got %#v", priceListSvc.updateReq.Input)
+	}
+	if !jsonContains(stdout, `"description": "updated"`) {
+		t.Fatalf("unexpected price-list update output: %s", stdout)
+	}
+
+	stdout, _, err = run("price-list", "delete", "--id", "8523", "--yes", "--dry-run", "--json")
+	if err != nil {
+		t.Fatalf("price-list delete dry-run error = %v", err)
+	}
+	if !priceListSvc.deleteReq.DryRun {
+		t.Fatal("expected price-list delete dry-run flag to be forwarded")
+	}
+	if !jsonContains(stdout, `"method": "DELETE"`) {
+		t.Fatalf("unexpected price-list delete dry-run output: %s", stdout)
+	}
+
+	stdout, _, err = run("warehouse-document", "list", "--json")
+	if err != nil {
+		t.Fatalf("warehouse-document list error = %v", err)
+	}
+	if !jsonContains(stdout, `"number": "MM/1/2026"`) {
+		t.Fatalf("unexpected warehouse-document list output: %s", stdout)
+	}
+
+	stdout, _, err = run("warehouse-document", "get", "--id", "15", "--json")
+	if err != nil {
+		t.Fatalf("warehouse-document get error = %v", err)
+	}
+	if warehouseSvc.getReq.ID != "15" {
+		t.Fatalf("expected warehouse-document get ID to be forwarded, got %q", warehouseSvc.getReq.ID)
+	}
+	if !jsonContains(stdout, `"warehouse_actions": [`) {
+		t.Fatalf("unexpected warehouse-document get output: %s", stdout)
+	}
+
+	stdout, _, err = run("warehouse-document", "create", "--input", `{"kind":"mm","warehouse_actions":[{"product_id":7,"quantity":2,"warehouse2_id":3}]}`, "--json")
+	if err != nil {
+		t.Fatalf("warehouse-document create error = %v", err)
+	}
+	if warehouseSvc.createReq.Input["kind"] != "mm" {
+		t.Fatalf("expected warehouse-document create input to be parsed, got %#v", warehouseSvc.createReq.Input)
+	}
+	if !jsonContains(stdout, `"id": 15`) {
+		t.Fatalf("unexpected warehouse-document create output: %s", stdout)
+	}
+
+	stdout, _, err = runWithInput(`{"invoice_ids":[100,111]}`, "warehouse-document", "update", "--id", "15", "--input", "-", "--json")
+	if err != nil {
+		t.Fatalf("warehouse-document update error = %v", err)
+	}
+	if _, ok := warehouseSvc.updateReq.Input["invoice_ids"]; !ok {
+		t.Fatalf("expected warehouse-document update stdin input, got %#v", warehouseSvc.updateReq.Input)
+	}
+	if !jsonContains(stdout, `"invoice_ids": [`) {
+		t.Fatalf("unexpected warehouse-document update output: %s", stdout)
+	}
+
+	stdout, _, err = run("warehouse-document", "delete", "--id", "15", "--yes", "--dry-run", "--json")
+	if err != nil {
+		t.Fatalf("warehouse-document delete dry-run error = %v", err)
+	}
+	if !warehouseSvc.deleteReq.DryRun {
+		t.Fatal("expected warehouse-document delete dry-run flag to be forwarded")
+	}
+	if !jsonContains(stdout, `"method": "DELETE"`) {
+		t.Fatalf("unexpected warehouse-document delete dry-run output: %s", stdout)
 	}
 
 	stdout, _, err = run("invoice", "get", "--id", "1", "--fields", "id,number", "--json")
@@ -889,6 +1164,16 @@ func TestGolden(t *testing.T) {
 		{name: "schema-product-get-json", args: []string{"schema", "product", "get", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-product-get.json")},
 		{name: "schema-product-create-json", args: []string{"schema", "product", "create", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-product-create.json")},
 		{name: "schema-product-update-json", args: []string{"schema", "product", "update", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-product-update.json")},
+		{name: "price-list-list-help", args: []string{"price-list", "list", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "price-list-list-help.txt")},
+		{name: "price-list-get-help", args: []string{"price-list", "get", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "price-list-get-help.txt")},
+		{name: "price-list-create-help", args: []string{"price-list", "create", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "price-list-create-help.txt")},
+		{name: "price-list-update-help", args: []string{"price-list", "update", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "price-list-update-help.txt")},
+		{name: "price-list-delete-help", args: []string{"price-list", "delete", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "price-list-delete-help.txt")},
+		{name: "schema-price-list-list-json", args: []string{"schema", "price-list", "list", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-price-list-list.json")},
+		{name: "schema-price-list-get-json", args: []string{"schema", "price-list", "get", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-price-list-get.json")},
+		{name: "schema-price-list-create-json", args: []string{"schema", "price-list", "create", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-price-list-create.json")},
+		{name: "schema-price-list-update-json", args: []string{"schema", "price-list", "update", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-price-list-update.json")},
+		{name: "schema-price-list-delete-json", args: []string{"schema", "price-list", "delete", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-price-list-delete.json")},
 		{name: "self-update-help", args: []string{"self", "update", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "self-update-help.txt")},
 		{name: "schema-self-update-json", args: []string{"schema", "self", "update", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-self-update.json")},
 		{name: "invoice-list-help", args: []string{"invoice", "list", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "invoice-list-help.txt")},
@@ -924,6 +1209,16 @@ func TestGolden(t *testing.T) {
 		{name: "schema-recurring-list-json", args: []string{"schema", "recurring", "list", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-recurring-list.json")},
 		{name: "schema-recurring-create-json", args: []string{"schema", "recurring", "create", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-recurring-create.json")},
 		{name: "schema-recurring-update-json", args: []string{"schema", "recurring", "update", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-recurring-update.json")},
+		{name: "warehouse-document-list-help", args: []string{"warehouse-document", "list", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "warehouse-document-list-help.txt")},
+		{name: "warehouse-document-get-help", args: []string{"warehouse-document", "get", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "warehouse-document-get-help.txt")},
+		{name: "warehouse-document-create-help", args: []string{"warehouse-document", "create", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "warehouse-document-create-help.txt")},
+		{name: "warehouse-document-update-help", args: []string{"warehouse-document", "update", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "warehouse-document-update-help.txt")},
+		{name: "warehouse-document-delete-help", args: []string{"warehouse-document", "delete", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "warehouse-document-delete-help.txt")},
+		{name: "schema-warehouse-document-list-json", args: []string{"schema", "warehouse-document", "list", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-warehouse-document-list.json")},
+		{name: "schema-warehouse-document-get-json", args: []string{"schema", "warehouse-document", "get", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-warehouse-document-get.json")},
+		{name: "schema-warehouse-document-create-json", args: []string{"schema", "warehouse-document", "create", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-warehouse-document-create.json")},
+		{name: "schema-warehouse-document-update-json", args: []string{"schema", "warehouse-document", "update", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-warehouse-document-update.json")},
+		{name: "schema-warehouse-document-delete-json", args: []string{"schema", "warehouse-document", "delete", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-warehouse-document-delete.json")},
 	}
 
 	for _, tc := range cases {
@@ -935,7 +1230,9 @@ func TestGolden(t *testing.T) {
 				Client:    &fakeClientService{},
 				Invoice:   &fakeInvoiceService{},
 				Product:   &fakeProductService{},
+				PriceList: &fakePriceListService{},
 				Recurring: &fakeRecurringService{},
+				Warehouse: &fakeWarehouseDocumentService{},
 				Doctor:    &fakeDoctorService{},
 				Self:      &fakeSelfUpdateService{},
 				Stdout:    &stdout,
@@ -993,7 +1290,9 @@ func TestSchemaListUsesRows(t *testing.T) {
 		Client:    &fakeClientService{},
 		Invoice:   &fakeInvoiceService{},
 		Product:   &fakeProductService{},
+		PriceList: &fakePriceListService{},
 		Recurring: &fakeRecurringService{},
+		Warehouse: &fakeWarehouseDocumentService{},
 		Doctor:    &fakeDoctorService{},
 		Self:      &fakeSelfUpdateService{},
 		Stdout:    &stdout,
@@ -1027,7 +1326,9 @@ func TestSchemaInvoiceListExposesKnownFields(t *testing.T) {
 		Client:    &fakeClientService{},
 		Invoice:   &fakeInvoiceService{},
 		Product:   &fakeProductService{},
+		PriceList: &fakePriceListService{},
 		Recurring: &fakeRecurringService{},
+		Warehouse: &fakeWarehouseDocumentService{},
 		Doctor:    &fakeDoctorService{},
 		Self:      &fakeSelfUpdateService{},
 		Stdout:    &stdout,
@@ -1052,7 +1353,9 @@ func TestSchemaProductCreateExposesRequestBodySchema(t *testing.T) {
 		Client:    &fakeClientService{},
 		Invoice:   &fakeInvoiceService{},
 		Product:   &fakeProductService{},
+		PriceList: &fakePriceListService{},
 		Recurring: &fakeRecurringService{},
+		Warehouse: &fakeWarehouseDocumentService{},
 		Doctor:    &fakeDoctorService{},
 		Self:      &fakeSelfUpdateService{},
 		Stdout:    &stdout,
@@ -1078,7 +1381,9 @@ func TestSchemaProductListExposesKnownFields(t *testing.T) {
 		Client:    &fakeClientService{},
 		Invoice:   &fakeInvoiceService{},
 		Product:   &fakeProductService{},
+		PriceList: &fakePriceListService{},
 		Recurring: &fakeRecurringService{},
+		Warehouse: &fakeWarehouseDocumentService{},
 		Doctor:    &fakeDoctorService{},
 		Self:      &fakeSelfUpdateService{},
 		Stdout:    &stdout,
@@ -1095,6 +1400,62 @@ func TestSchemaProductListExposesKnownFields(t *testing.T) {
 	}
 }
 
+func TestSchemaPriceListGetExposesKnownFields(t *testing.T) {
+	t.Parallel()
+
+	var stdout bytes.Buffer
+	cmd := NewRootCommand(Dependencies{
+		Auth:      &fakeAuthService{},
+		Client:    &fakeClientService{},
+		Invoice:   &fakeInvoiceService{},
+		Product:   &fakeProductService{},
+		PriceList: &fakePriceListService{},
+		Recurring: &fakeRecurringService{},
+		Warehouse: &fakeWarehouseDocumentService{},
+		Doctor:    &fakeDoctorService{},
+		Self:      &fakeSelfUpdateService{},
+		Stdout:    &stdout,
+		Stderr:    &bytes.Buffer{},
+	})
+	cmd.SetArgs([]string{"schema", "price-list", "get", "--json"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("Execute() error = %v", err)
+	}
+
+	body := stdout.String()
+	if !jsonContains(body, `"path": "price_list_positions[]"`) || !strings.Contains(body, "live API behavior") {
+		t.Fatalf("expected schema price-list get to advertise positions and live-behavior note: %s", body)
+	}
+}
+
+func TestSchemaPriceListCreateExposesRequestBodySchema(t *testing.T) {
+	t.Parallel()
+
+	var stdout bytes.Buffer
+	cmd := NewRootCommand(Dependencies{
+		Auth:      &fakeAuthService{},
+		Client:    &fakeClientService{},
+		Invoice:   &fakeInvoiceService{},
+		Product:   &fakeProductService{},
+		PriceList: &fakePriceListService{},
+		Recurring: &fakeRecurringService{},
+		Warehouse: &fakeWarehouseDocumentService{},
+		Doctor:    &fakeDoctorService{},
+		Self:      &fakeSelfUpdateService{},
+		Stdout:    &stdout,
+		Stderr:    &bytes.Buffer{},
+	})
+	cmd.SetArgs([]string{"schema", "price-list", "create", "--json"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("Execute() error = %v", err)
+	}
+
+	body := stdout.String()
+	if !jsonContains(body, `"wrapper_key": "price_list"`) || !jsonContains(body, `"price_list_positions_attributes"`) || !jsonContains(body, `"priceable_id"`) {
+		t.Fatalf("expected schema price-list create to advertise upstream request-body fields: %s", body)
+	}
+}
+
 func TestSchemaInvoiceCreateExposesRequestBodySchema(t *testing.T) {
 	t.Parallel()
 
@@ -1104,7 +1465,9 @@ func TestSchemaInvoiceCreateExposesRequestBodySchema(t *testing.T) {
 		Client:    &fakeClientService{},
 		Invoice:   &fakeInvoiceService{},
 		Product:   &fakeProductService{},
+		PriceList: &fakePriceListService{},
 		Recurring: &fakeRecurringService{},
+		Warehouse: &fakeWarehouseDocumentService{},
 		Doctor:    &fakeDoctorService{},
 		Self:      &fakeSelfUpdateService{},
 		Stdout:    &stdout,
@@ -1130,7 +1493,9 @@ func TestSchemaRecurringCreateExposesRequestBodySchema(t *testing.T) {
 		Client:    &fakeClientService{},
 		Invoice:   &fakeInvoiceService{},
 		Product:   &fakeProductService{},
+		PriceList: &fakePriceListService{},
 		Recurring: &fakeRecurringService{},
+		Warehouse: &fakeWarehouseDocumentService{},
 		Doctor:    &fakeDoctorService{},
 		Self:      &fakeSelfUpdateService{},
 		Stdout:    &stdout,
@@ -1147,6 +1512,34 @@ func TestSchemaRecurringCreateExposesRequestBodySchema(t *testing.T) {
 	}
 }
 
+func TestSchemaWarehouseDocumentCreateExposesRequestBodySchema(t *testing.T) {
+	t.Parallel()
+
+	var stdout bytes.Buffer
+	cmd := NewRootCommand(Dependencies{
+		Auth:      &fakeAuthService{},
+		Client:    &fakeClientService{},
+		Invoice:   &fakeInvoiceService{},
+		Product:   &fakeProductService{},
+		PriceList: &fakePriceListService{},
+		Recurring: &fakeRecurringService{},
+		Warehouse: &fakeWarehouseDocumentService{},
+		Doctor:    &fakeDoctorService{},
+		Self:      &fakeSelfUpdateService{},
+		Stdout:    &stdout,
+		Stderr:    &bytes.Buffer{},
+	})
+	cmd.SetArgs([]string{"schema", "warehouse-document", "create", "--json"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("Execute() error = %v", err)
+	}
+
+	body := stdout.String()
+	if !jsonContains(body, `"wrapper_key": "warehouse_document"`) || !jsonContains(body, `"path": "warehouse_actions[].product_id"`) || !jsonContains(body, `"path": "invoice_ids[]"`) {
+		t.Fatalf("expected schema warehouse-document create to advertise nested request-body fields: %s", body)
+	}
+}
+
 func TestConfigFlagPassThrough(t *testing.T) {
 	t.Parallel()
 
@@ -1157,7 +1550,9 @@ func TestConfigFlagPassThrough(t *testing.T) {
 		Client:    &fakeClientService{},
 		Invoice:   &fakeInvoiceService{},
 		Product:   &fakeProductService{},
+		PriceList: &fakePriceListService{},
 		Recurring: &fakeRecurringService{},
+		Warehouse: &fakeWarehouseDocumentService{},
 		Doctor:    &fakeDoctorService{},
 		Self:      &fakeSelfUpdateService{},
 		Stdout:    &stdout,

@@ -7,10 +7,12 @@ import (
 	"github.com/sixers/fakturownia-cli/internal/client"
 	"github.com/sixers/fakturownia-cli/internal/doctor"
 	"github.com/sixers/fakturownia-cli/internal/invoice"
+	"github.com/sixers/fakturownia-cli/internal/pricelist"
 	"github.com/sixers/fakturownia-cli/internal/product"
 	"github.com/sixers/fakturownia-cli/internal/recurring"
 	"github.com/sixers/fakturownia-cli/internal/selfupdate"
 	"github.com/sixers/fakturownia-cli/internal/spec"
+	"github.com/sixers/fakturownia-cli/internal/warehousedocument"
 )
 
 func main() {
@@ -23,8 +25,10 @@ func main() {
 		Auth:      auth.NewService(store),
 		Client:    client.NewService(store),
 		Invoice:   invoice.NewService(store),
+		PriceList: pricelist.NewService(store),
 		Product:   product.NewService(store),
 		Recurring: recurring.NewService(store),
+		Warehouse: warehousedocument.NewService(store),
 		Doctor:    doctor.NewService(store),
 		Self:      selfupdate.NewService(),
 		Stdout:    os.Stdout,

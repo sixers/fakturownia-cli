@@ -81,6 +81,9 @@ fakturownia product list --json
 fakturownia product list --date-from 2025-11-01 --json
 fakturownia product list --warehouse-id 7 --columns id,name,code,stock_level
 fakturownia product list --page 2 --per-page 25 --raw
+fakturownia price-list list --json
+fakturownia price-list list --columns id,name,currency,description
+fakturownia price-list list --page 2 --per-page 25 --raw
 fakturownia invoice list --json
 fakturownia invoice list --period this_month --columns id,number,buyer_name,price_gross
 fakturownia invoice list --include-positions --fields number,positions[].name --json
@@ -88,5 +91,8 @@ fakturownia invoice list --page 2 --per-page 25 --raw
 fakturownia recurring list --json
 fakturownia recurring list --columns id,name,every,next_invoice_date,send_email
 fakturownia recurring list --raw
+fakturownia warehouse-document list --json
+fakturownia warehouse-document list --columns id,kind,number,client_name
+fakturownia warehouse-document list --page 2 --per-page 25 --raw
 ```
 

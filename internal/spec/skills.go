@@ -47,7 +47,7 @@ func SkillBundle() SkillBundleSpec {
 	return SkillBundleSpec{
 		Name:        "fakturownia",
 		Title:       "fakturownia",
-		Description: "Fakturownia CLI bundle: shared guidance, auth, clients, products, invoices, recurrings, self-update, schema discovery, diagnostics, and generated invoice recipes for the `fakturownia` command. Use when an agent needs to work with Fakturownia through this CLI.",
+		Description: "Fakturownia CLI bundle: shared guidance, auth, clients, products, price lists, invoices, recurrings, warehouse documents, self-update, schema discovery, diagnostics, and generated invoice recipes for the `fakturownia` command. Use when an agent needs to work with Fakturownia through this CLI.",
 		CLIHelp:     "fakturownia --help",
 		RequiresBins: []string{
 			"fakturownia",
@@ -69,8 +69,10 @@ func SkillBundle() SkillBundleSpec {
 					{Noun: "self", Verb: "update"},
 					{Noun: "client", Verb: "list"},
 					{Noun: "product", Verb: "list"},
+					{Noun: "price-list", Verb: "list"},
 					{Noun: "invoice", Verb: "list"},
 					{Noun: "recurring", Verb: "list"},
+					{Noun: "warehouse-document", Verb: "list"},
 				},
 				CLIHelp: "fakturownia --help",
 				RequiresBins: []string{
@@ -167,6 +169,36 @@ func SkillBundle() SkillBundleSpec {
 				},
 			},
 			{
+				Key:          "price-lists",
+				Name:         "fakturownia-price-lists",
+				Title:        "Price Lists",
+				Description:  "Fakturownia CLI price lists: list, fetch, create, update, and delete price lists, including upstream-shaped position payloads and schema-backed discovery.",
+				Category:     "api-area",
+				Prerequisite: "shared",
+				RelatedSkills: []string{
+					"shared",
+					"products",
+					"schema",
+					"doctor",
+				},
+				CommandRefs: []SkillCommandRef{
+					{Noun: "price-list", Verb: "list"},
+					{Noun: "price-list", Verb: "get"},
+					{Noun: "price-list", Verb: "create"},
+					{Noun: "price-list", Verb: "update"},
+					{Noun: "price-list", Verb: "delete"},
+				},
+				CLIHelp: "fakturownia price-list --help",
+				RequiresBins: []string{
+					"fakturownia",
+				},
+				DiscoveryHint: "Use `fakturownia schema price-list list --json` for output fields and `fakturownia schema price-list create --json` for the upstream-shaped request contract, especially `price_list_positions_attributes`.",
+				WhenToUse: []string{
+					"The task is about reading or mutating price lists and their position entries.",
+					"You need to inspect the verified `price-list get` output shape or build upstream-shaped `price_list_positions_attributes` payloads before create or update calls.",
+				},
+			},
+			{
 				Key:          "invoices",
 				Name:         "fakturownia-invoices",
 				Title:        "Invoices",
@@ -176,6 +208,7 @@ func SkillBundle() SkillBundleSpec {
 				RelatedSkills: []string{
 					"shared",
 					"products",
+					"price-lists",
 					"recurrings",
 					"schema",
 					"doctor",
@@ -235,6 +268,37 @@ func SkillBundle() SkillBundleSpec {
 				},
 			},
 			{
+				Key:          "warehouse-documents",
+				Name:         "fakturownia-warehouse-documents",
+				Title:        "Warehouse Documents",
+				Description:  "Fakturownia CLI warehouse documents: list, fetch, create, update, and delete warehouse documents, including kind selection and invoice linking through payload fields.",
+				Category:     "api-area",
+				Prerequisite: "shared",
+				RelatedSkills: []string{
+					"shared",
+					"products",
+					"invoices",
+					"schema",
+					"doctor",
+				},
+				CommandRefs: []SkillCommandRef{
+					{Noun: "warehouse-document", Verb: "list"},
+					{Noun: "warehouse-document", Verb: "get"},
+					{Noun: "warehouse-document", Verb: "create"},
+					{Noun: "warehouse-document", Verb: "update"},
+					{Noun: "warehouse-document", Verb: "delete"},
+				},
+				CLIHelp: "fakturownia warehouse-document --help",
+				RequiresBins: []string{
+					"fakturownia",
+				},
+				DiscoveryHint: "Use `fakturownia schema warehouse-document list --json` for output discovery and `fakturownia schema warehouse-document create --json` before building `warehouse_actions[]` or `invoice_ids[]` payloads.",
+				WhenToUse: []string{
+					"The task is about warehouse transfers, receipts, releases, or related warehouse-document maintenance.",
+					"You need to choose warehouse document kinds through the payload, or link invoices using `invoice_ids[]` during updates.",
+				},
+			},
+			{
 				Key:          "schema",
 				Name:         "fakturownia-schema",
 				Title:        "Schema",
@@ -244,8 +308,10 @@ func SkillBundle() SkillBundleSpec {
 				RelatedSkills: []string{
 					"shared",
 					"products",
+					"price-lists",
 					"invoices",
 					"recurrings",
+					"warehouse-documents",
 				},
 				CommandRefs: []SkillCommandRef{
 					{Noun: "schema", Verb: "list"},

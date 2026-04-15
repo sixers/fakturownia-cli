@@ -1,0 +1,912 @@
+{
+  "schema_version": "fakturownia-cli/v1alpha1",
+  "status": "success",
+  "data": {
+    "schema_version": "fakturownia-cli/v1alpha1",
+    "command": "warehouse-document create",
+    "use": "create --input -|@file|JSON",
+    "summary": "Create a warehouse document",
+    "flags": [
+      {
+        "name": "profile",
+        "type": "string",
+        "description": "Select a named profile",
+        "required": false
+      },
+      {
+        "name": "json",
+        "type": "bool",
+        "description": "Alias for --output json",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "output",
+        "type": "string",
+        "description": "Output format",
+        "required": false,
+        "default": "human",
+        "enum": [
+          "human",
+          "json"
+        ]
+      },
+      {
+        "name": "quiet",
+        "type": "bool",
+        "description": "Emit bare values when exactly one field or column remains",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "fields",
+        "type": "string[]",
+        "description": "Project JSON envelope data fields using dot/bracket paths like number or positions[].name",
+        "required": false,
+        "repeatable": true
+      },
+      {
+        "name": "columns",
+        "type": "string[]",
+        "description": "Select human table columns using dot/bracket paths like number or positions[].name",
+        "required": false,
+        "repeatable": true
+      },
+      {
+        "name": "raw",
+        "type": "bool",
+        "description": "Emit the upstream JSON response body directly when supported",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "dry-run",
+        "type": "bool",
+        "description": "Accepted on read-only commands and reserved for future mutating request previews",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "timeout-ms",
+        "type": "int",
+        "description": "HTTP timeout in milliseconds",
+        "required": false,
+        "default": "30000"
+      },
+      {
+        "name": "max-retries",
+        "type": "int",
+        "description": "Maximum retry attempts for idempotent reads on network or 5xx failures",
+        "required": false,
+        "default": "2"
+      },
+      {
+        "name": "non-interactive",
+        "type": "bool",
+        "description": "Disable interactive behavior",
+        "required": false,
+        "default": "true"
+      },
+      {
+        "name": "config",
+        "type": "string",
+        "description": "Override the config file path",
+        "required": false
+      },
+      {
+        "name": "input",
+        "type": "string",
+        "description": "Warehouse document JSON input as inline JSON, @file, or - for stdin",
+        "required": true
+      }
+    ],
+    "env_vars": [
+      {
+        "name": "FAKTUROWNIA_PROFILE",
+        "description": "Select a profile unless --profile is provided"
+      },
+      {
+        "name": "FAKTUROWNIA_URL",
+        "description": "Override the base account URL from any profile"
+      },
+      {
+        "name": "FAKTUROWNIA_API_TOKEN",
+        "description": "Override the API token from any profile"
+      }
+    ],
+    "output_modes": [
+      "human",
+      "json"
+    ],
+    "exit_codes": [
+      {
+        "code": 0,
+        "description": "success"
+      },
+      {
+        "code": 2,
+        "description": "usage or validation error"
+      },
+      {
+        "code": 3,
+        "description": "not found"
+      },
+      {
+        "code": 4,
+        "description": "authentication or permission failure"
+      },
+      {
+        "code": 5,
+        "description": "conflict"
+      },
+      {
+        "code": 6,
+        "description": "network or timeout failure"
+      },
+      {
+        "code": 7,
+        "description": "reserved for throttling or retry budget exhaustion"
+      },
+      {
+        "code": 8,
+        "description": "remote API rejected the request"
+      },
+      {
+        "code": 9,
+        "description": "internal CLI failure"
+      }
+    ],
+    "raw_supported": true,
+    "examples": [
+      "fakturownia warehouse-document create --input '{\"kind\":\"mm\",\"warehouse_id\":1,\"warehouse_actions\":[{\"product_id\":7,\"quantity\":2,\"warehouse2_id\":3}]}' --json",
+      "fakturownia warehouse-document create --input '{\"kind\":\"wz\",\"client_id\":12,\"warehouse_actions\":[{\"product_id\":7,\"tax\":\"23\",\"price_net\":\"100\",\"quantity\":2}]}' --json",
+      "fakturownia warehouse-document create --input @warehouse-document.json",
+      "fakturownia warehouse-document create --input '{\"kind\":\"mm\"}' --dry-run --json"
+    ],
+    "data_schema": {
+      "additionalProperties": true,
+      "properties": {
+        "client_id": {
+          "type": "integer"
+        },
+        "client_name": {
+          "type": "string"
+        },
+        "department_id": {
+          "type": "integer"
+        },
+        "department_name": {
+          "type": "string"
+        },
+        "id": {
+          "type": "integer"
+        },
+        "issue_date": {
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "mm",
+            "pz",
+            "wz"
+          ],
+          "type": "string"
+        },
+        "number": {
+          "type": "string"
+        },
+        "warehouse_actions": {
+          "items": {
+            "additionalProperties": true,
+            "properties": {
+              "price_net": {
+                "type": "number"
+              },
+              "product_id": {
+                "type": "integer"
+              },
+              "product_name": {
+                "type": "string"
+              },
+              "purchase_price_net": {
+                "type": "number"
+              },
+              "purchase_tax": {
+                "type": "string"
+              },
+              "quantity": {
+                "type": "number"
+              },
+              "tax": {
+                "type": "string"
+              },
+              "warehouse2_id": {
+                "type": "integer"
+              }
+            },
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "warehouse_id": {
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "request_body": {
+      "input_flag": "input",
+      "input_modes": [
+        "inline_json",
+        "@file",
+        "stdin"
+      ],
+      "wrapper_key": "warehouse_document",
+      "open_ended": true,
+      "catalog_basis": {
+        "source": "readme",
+        "url": "https://github.com/fakturownia/API/blob/master/README.md"
+      },
+      "path_syntax": "dot_bracket",
+      "known_fields": [
+        {
+          "path": "kind",
+          "type": "string",
+          "description": "Warehouse document kind",
+          "enum_values": [
+            "mm",
+            "pz",
+            "wz"
+          ],
+          "source_section": "Dodawanie dokumentu MM"
+        },
+        {
+          "path": "warehouse_id",
+          "type": "integer",
+          "description": "Primary warehouse ID",
+          "source_section": "Dodawanie dokumentu MM"
+        },
+        {
+          "path": "number",
+          "type": "string",
+          "description": "Warehouse document number",
+          "source_section": "Aktualizacja dokumentu magazynowego"
+        },
+        {
+          "path": "issue_date",
+          "type": "string",
+          "description": "Issue date",
+          "source_section": "Dodawanie dokumentu MM"
+        },
+        {
+          "path": "department_name",
+          "type": "string",
+          "description": "Department name",
+          "source_section": "Dodawanie dokumentu MM"
+        },
+        {
+          "path": "department_id",
+          "type": "integer",
+          "description": "Department ID",
+          "source_section": "Aktualizacja dokumentu magazynowego"
+        },
+        {
+          "path": "client_name",
+          "type": "string",
+          "description": "Client name",
+          "source_section": "Dodawanie dokumentu WZ"
+        },
+        {
+          "path": "client_id",
+          "type": "integer",
+          "description": "Client ID",
+          "source_section": "Aktualizacja dokumentu magazynowego"
+        },
+        {
+          "path": "invoice_ids[]",
+          "type": "integer",
+          "description": "Linked invoice IDs",
+          "source_section": "Dodawanie numerów powiązanych faktur do dokumentu magazynowego"
+        },
+        {
+          "path": "warehouse_actions[]",
+          "type": "array<object>",
+          "description": "Warehouse action line items",
+          "source_section": "Dodawanie dokumentu MM"
+        },
+        {
+          "path": "warehouse_actions[].product_id",
+          "type": "integer",
+          "description": "Referenced product ID",
+          "source_section": "Dodawanie dokumentu MM"
+        },
+        {
+          "path": "warehouse_actions[].product_name",
+          "type": "string",
+          "description": "Product name",
+          "source_section": "Dodawanie dokumentu PZ"
+        },
+        {
+          "path": "warehouse_actions[].purchase_tax",
+          "type": "string",
+          "description": "Purchase tax rate",
+          "source_section": "Dodawanie dokumentu PZ"
+        },
+        {
+          "path": "warehouse_actions[].purchase_price_net",
+          "type": "number",
+          "description": "Net purchase price",
+          "source_section": "Dodawanie dokumentu PZ"
+        },
+        {
+          "path": "warehouse_actions[].tax",
+          "type": "string",
+          "description": "Sales tax rate",
+          "source_section": "Dodawanie dokumentu WZ"
+        },
+        {
+          "path": "warehouse_actions[].price_net",
+          "type": "number",
+          "description": "Net price",
+          "source_section": "Dodawanie dokumentu WZ"
+        },
+        {
+          "path": "warehouse_actions[].quantity",
+          "type": "number",
+          "description": "Quantity",
+          "source_section": "Dodawanie dokumentu MM"
+        },
+        {
+          "path": "warehouse_actions[].warehouse2_id",
+          "type": "integer",
+          "description": "Target warehouse ID for transfers",
+          "source_section": "Dodawanie dokumentu MM"
+        }
+      ],
+      "notes": [
+        "the CLI accepts the inner warehouse document object, then wraps it in the upstream {\"warehouse_document\": ...} envelope",
+        "known_fields is curated from the upstream README and is not exhaustive",
+        "warehouse document variants such as mm, pz, and wz are selected through the payload kind field rather than separate CLI verbs"
+      ]
+    },
+    "request_body_schema": {
+      "additionalProperties": true,
+      "properties": {
+        "client_id": {
+          "type": "integer"
+        },
+        "client_name": {
+          "type": "string"
+        },
+        "department_id": {
+          "type": "integer"
+        },
+        "department_name": {
+          "type": "string"
+        },
+        "invoice_ids": {
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "issue_date": {
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "mm",
+            "pz",
+            "wz"
+          ],
+          "type": "string"
+        },
+        "number": {
+          "type": "string"
+        },
+        "warehouse_actions": {
+          "items": {
+            "additionalProperties": true,
+            "properties": {
+              "price_net": {
+                "type": "number"
+              },
+              "product_id": {
+                "type": "integer"
+              },
+              "product_name": {
+                "type": "string"
+              },
+              "purchase_price_net": {
+                "type": "number"
+              },
+              "purchase_tax": {
+                "type": "string"
+              },
+              "quantity": {
+                "type": "number"
+              },
+              "tax": {
+                "type": "string"
+              },
+              "warehouse2_id": {
+                "type": "integer"
+              }
+            },
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "warehouse_id": {
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "envelope_schema": {
+      "properties": {
+        "data": {
+          "additionalProperties": true,
+          "properties": {
+            "client_id": {
+              "type": "integer"
+            },
+            "client_name": {
+              "type": "string"
+            },
+            "department_id": {
+              "type": "integer"
+            },
+            "department_name": {
+              "type": "string"
+            },
+            "id": {
+              "type": "integer"
+            },
+            "issue_date": {
+              "type": "string"
+            },
+            "kind": {
+              "enum": [
+                "mm",
+                "pz",
+                "wz"
+              ],
+              "type": "string"
+            },
+            "number": {
+              "type": "string"
+            },
+            "warehouse_actions": {
+              "items": {
+                "additionalProperties": true,
+                "properties": {
+                  "price_net": {
+                    "type": "number"
+                  },
+                  "product_id": {
+                    "type": "integer"
+                  },
+                  "product_name": {
+                    "type": "string"
+                  },
+                  "purchase_price_net": {
+                    "type": "number"
+                  },
+                  "purchase_tax": {
+                    "type": "string"
+                  },
+                  "quantity": {
+                    "type": "number"
+                  },
+                  "tax": {
+                    "type": "string"
+                  },
+                  "warehouse2_id": {
+                    "type": "integer"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "warehouse_id": {
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        },
+        "errors": {
+          "items": {
+            "$defs": {
+              "ErrorDetail": {
+                "properties": {
+                  "class": {
+                    "type": "string"
+                  },
+                  "code": {
+                    "type": "string"
+                  },
+                  "hint": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "retryable": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "class",
+                  "code",
+                  "message",
+                  "retryable"
+                ],
+                "type": "object"
+              }
+            },
+            "$id": "https://github.com/sixers/fakturownia-cli/internal/output/error-detail",
+            "$ref": "#/$defs/ErrorDetail",
+            "$schema": "https://json-schema.org/draft/2020-12/schema"
+          },
+          "type": "array"
+        },
+        "meta": {
+          "$defs": {
+            "Meta": {
+              "properties": {
+                "command": {
+                  "type": "string"
+                },
+                "duration_ms": {
+                  "type": "integer"
+                },
+                "pagination": {
+                  "$ref": "#/$defs/Pagination"
+                },
+                "profile": {
+                  "type": "string"
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "command",
+                "duration_ms"
+              ],
+              "type": "object"
+            },
+            "Pagination": {
+              "properties": {
+                "has_next": {
+                  "type": "boolean"
+                },
+                "page": {
+                  "type": "integer"
+                },
+                "per_page": {
+                  "type": "integer"
+                },
+                "returned": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "page",
+                "per_page",
+                "returned",
+                "has_next"
+              ],
+              "type": "object"
+            }
+          },
+          "$id": "https://github.com/sixers/fakturownia-cli/internal/output/meta",
+          "$ref": "#/$defs/Meta",
+          "$schema": "https://json-schema.org/draft/2020-12/schema"
+        },
+        "schema_version": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "success",
+            "error"
+          ],
+          "type": "string"
+        },
+        "warnings": {
+          "items": {
+            "$defs": {
+              "WarningDetail": {
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "message"
+                ],
+                "type": "object"
+              }
+            },
+            "$id": "https://github.com/sixers/fakturownia-cli/internal/output/warning-detail",
+            "$ref": "#/$defs/WarningDetail",
+            "$schema": "https://json-schema.org/draft/2020-12/schema"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "schema_version",
+        "status",
+        "data",
+        "errors",
+        "warnings",
+        "meta"
+      ],
+      "type": "object"
+    },
+    "output": {
+      "shape": "object",
+      "open_ended": true,
+      "catalog_basis": {
+        "source": "readme",
+        "url": "https://github.com/fakturownia/API/blob/master/README.md"
+      },
+      "path_syntax": "dot_bracket",
+      "known_fields": [
+        {
+          "path": "id",
+          "type": "integer",
+          "description": "Warehouse document ID",
+          "projectable": true,
+          "selectable": true,
+          "default_column": true,
+          "commands": [
+            "warehouse-document create"
+          ],
+          "presence": "common",
+          "source_section": "Dokumenty magazynowe - przykłady wywołania"
+        },
+        {
+          "path": "kind",
+          "type": "string",
+          "description": "Warehouse document kind",
+          "projectable": true,
+          "selectable": true,
+          "default_column": true,
+          "commands": [
+            "warehouse-document create"
+          ],
+          "presence": "common",
+          "source_section": "Dodawanie dokumentu MM",
+          "enum_values": [
+            "mm",
+            "pz",
+            "wz"
+          ]
+        },
+        {
+          "path": "number",
+          "type": "string",
+          "description": "Warehouse document number",
+          "projectable": true,
+          "selectable": true,
+          "default_column": true,
+          "commands": [
+            "warehouse-document create"
+          ],
+          "presence": "conditional",
+          "source_section": "Pobranie dokumentu magazynowego po ID"
+        },
+        {
+          "path": "warehouse_id",
+          "type": "integer",
+          "description": "Primary warehouse ID",
+          "projectable": true,
+          "selectable": true,
+          "default_column": true,
+          "commands": [
+            "warehouse-document create"
+          ],
+          "presence": "common",
+          "source_section": "Dodawanie dokumentu MM"
+        },
+        {
+          "path": "issue_date",
+          "type": "string",
+          "description": "Issue date",
+          "projectable": true,
+          "selectable": true,
+          "default_column": true,
+          "commands": [
+            "warehouse-document create"
+          ],
+          "presence": "common",
+          "source_section": "Dodawanie dokumentu MM"
+        },
+        {
+          "path": "department_name",
+          "type": "string",
+          "description": "Department name",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "warehouse-document create"
+          ],
+          "presence": "conditional",
+          "source_section": "Dokumenty magazynowe - przykłady wywołania"
+        },
+        {
+          "path": "department_id",
+          "type": "integer",
+          "description": "Department ID",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "warehouse-document create"
+          ],
+          "presence": "conditional",
+          "source_section": "Dokumenty magazynowe - przykłady wywołania"
+        },
+        {
+          "path": "client_name",
+          "type": "string",
+          "description": "Client name",
+          "projectable": true,
+          "selectable": true,
+          "default_column": true,
+          "commands": [
+            "warehouse-document create"
+          ],
+          "presence": "conditional",
+          "source_section": "Dokumenty magazynowe - przykłady wywołania"
+        },
+        {
+          "path": "client_id",
+          "type": "integer",
+          "description": "Client ID",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "warehouse-document create"
+          ],
+          "presence": "conditional",
+          "source_section": "Dokumenty magazynowe - przykłady wywołania"
+        },
+        {
+          "path": "warehouse_actions[]",
+          "type": "array<object>",
+          "description": "Warehouse action line items",
+          "projectable": true,
+          "selectable": false,
+          "commands": [
+            "warehouse-document create"
+          ],
+          "presence": "conditional",
+          "source_section": "Dodawanie dokumentu MM"
+        },
+        {
+          "path": "warehouse_actions[].product_id",
+          "type": "integer",
+          "description": "Referenced product ID",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "warehouse-document create"
+          ],
+          "presence": "conditional",
+          "source_section": "Dodawanie dokumentu MM"
+        },
+        {
+          "path": "warehouse_actions[].product_name",
+          "type": "string",
+          "description": "Product name",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "warehouse-document create"
+          ],
+          "presence": "conditional",
+          "source_section": "Dodawanie dokumentu PZ"
+        },
+        {
+          "path": "warehouse_actions[].purchase_tax",
+          "type": "string",
+          "description": "Purchase tax rate",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "warehouse-document create"
+          ],
+          "presence": "conditional",
+          "source_section": "Dodawanie dokumentu PZ"
+        },
+        {
+          "path": "warehouse_actions[].purchase_price_net",
+          "type": "number",
+          "description": "Net purchase price",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "warehouse-document create"
+          ],
+          "presence": "conditional",
+          "source_section": "Dodawanie dokumentu PZ"
+        },
+        {
+          "path": "warehouse_actions[].tax",
+          "type": "string",
+          "description": "Sales tax rate",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "warehouse-document create"
+          ],
+          "presence": "conditional",
+          "source_section": "Dodawanie dokumentu WZ"
+        },
+        {
+          "path": "warehouse_actions[].price_net",
+          "type": "number",
+          "description": "Net price",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "warehouse-document create"
+          ],
+          "presence": "conditional",
+          "source_section": "Dodawanie dokumentu WZ"
+        },
+        {
+          "path": "warehouse_actions[].quantity",
+          "type": "number",
+          "description": "Quantity",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "warehouse-document create"
+          ],
+          "presence": "conditional",
+          "source_section": "Dodawanie dokumentu MM"
+        },
+        {
+          "path": "warehouse_actions[].warehouse2_id",
+          "type": "integer",
+          "description": "Target warehouse ID for transfers",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "warehouse-document create"
+          ],
+          "presence": "conditional",
+          "source_section": "Dodawanie dokumentu MM"
+        }
+      ],
+      "default_columns": [
+        "id",
+        "kind",
+        "number",
+        "issue_date",
+        "warehouse_id",
+        "client_name"
+      ],
+      "notes": [
+        "known_fields is curated from the upstream README and is not exhaustive",
+        "unknown upstream fields may still appear in data and can still be selected when the path syntax is valid"
+      ]
+    }
+  },
+  "errors": [],
+  "warnings": null,
+  "meta": {
+    "command": "schema warehouse-document create",
+    "duration_ms": 0
+  }
+}

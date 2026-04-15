@@ -8,6 +8,7 @@ metadata:
   related_skills:
     - "fakturownia-shared"
     - "fakturownia-products"
+    - "fakturownia-price-lists"
     - "fakturownia-recurrings"
     - "fakturownia-schema"
     - "fakturownia-doctor"
@@ -169,6 +170,7 @@ fakturownia invoice download --id 123 --path ./invoice-123.pdf --json
 
 - [fakturownia-shared](../shared/SKILL.md)
 - [fakturownia-products](../products/SKILL.md)
+- [fakturownia-price-lists](../price-lists/SKILL.md)
 - [fakturownia-recurrings](../recurrings/SKILL.md)
 - [fakturownia-schema](../schema/SKILL.md)
 - [fakturownia-doctor](../doctor/SKILL.md)

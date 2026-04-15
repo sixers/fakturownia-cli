@@ -171,6 +171,66 @@
       "verb": "update"
     },
     {
+      "noun": "price-list",
+      "summary": "List price lists",
+      "use": "list",
+      "verb": "list"
+    },
+    {
+      "noun": "price-list",
+      "summary": "Fetch a single price list by ID",
+      "use": "get --id ID",
+      "verb": "get"
+    },
+    {
+      "noun": "price-list",
+      "summary": "Create a price list",
+      "use": "create --input -|@file|JSON",
+      "verb": "create"
+    },
+    {
+      "noun": "price-list",
+      "summary": "Update a price list",
+      "use": "update --id ID --input -|@file|JSON",
+      "verb": "update"
+    },
+    {
+      "noun": "price-list",
+      "summary": "Delete a price list",
+      "use": "delete --id ID --yes",
+      "verb": "delete"
+    },
+    {
+      "noun": "warehouse-document",
+      "summary": "List warehouse documents",
+      "use": "list",
+      "verb": "list"
+    },
+    {
+      "noun": "warehouse-document",
+      "summary": "Fetch a single warehouse document by ID",
+      "use": "get --id ID",
+      "verb": "get"
+    },
+    {
+      "noun": "warehouse-document",
+      "summary": "Create a warehouse document",
+      "use": "create --input -|@file|JSON",
+      "verb": "create"
+    },
+    {
+      "noun": "warehouse-document",
+      "summary": "Update a warehouse document",
+      "use": "update --id ID --input -|@file|JSON",
+      "verb": "update"
+    },
+    {
+      "noun": "warehouse-document",
+      "summary": "Delete a warehouse document",
+      "use": "delete --id ID --yes",
+      "verb": "delete"
+    },
+    {
       "noun": "doctor",
       "summary": "Validate local auth and API reachability",
       "use": "run",

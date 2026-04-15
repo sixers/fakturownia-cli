@@ -38,8 +38,10 @@ func TestGeneratedSkillFilesMatchGolden(t *testing.T) {
 		skillAreaPath(sharedSkillArea(SkillBundle())),
 		filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "clients", "SKILL.md")),
 		filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "products", "SKILL.md")),
+		filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "price-lists", "SKILL.md")),
 		filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "invoices", "SKILL.md")),
 		filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "recurrings", "SKILL.md")),
+		filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "warehouse-documents", "SKILL.md")),
 		recipeIndexPath(),
 		recipePath(Recipes()[0]),
 		docsSkillsPath(),
@@ -189,6 +191,28 @@ func TestProductsSkillIncludesRequestDiscovery(t *testing.T) {
 	}
 }
 
+func TestPriceListsSkillIncludesRequestDiscovery(t *testing.T) {
+	t.Parallel()
+
+	files, err := RenderSkillFiles()
+	if err != nil {
+		t.Fatalf("RenderSkillFiles() error = %v", err)
+	}
+	byPath := generatedFileMap(files)
+
+	priceLists := byPath[filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "price-lists", "SKILL.md"))]
+	want := []string{
+		"fakturownia schema price-list list --json",
+		"fakturownia schema price-list create --json",
+		"price_list_positions_attributes",
+	}
+	for _, needle := range want {
+		if !strings.Contains(priceLists, needle) {
+			t.Fatalf("expected price-lists skill to include %q: %s", needle, priceLists)
+		}
+	}
+}
+
 func TestSharedSkillIncludesSelfUpdateGuidance(t *testing.T) {
 	t.Parallel()
 
@@ -207,6 +231,29 @@ func TestSharedSkillIncludesSelfUpdateGuidance(t *testing.T) {
 	for _, needle := range want {
 		if !strings.Contains(shared, needle) {
 			t.Fatalf("expected shared skill to include %q: %s", needle, shared)
+		}
+	}
+}
+
+func TestWarehouseDocumentsSkillIncludesRequestDiscovery(t *testing.T) {
+	t.Parallel()
+
+	files, err := RenderSkillFiles()
+	if err != nil {
+		t.Fatalf("RenderSkillFiles() error = %v", err)
+	}
+	byPath := generatedFileMap(files)
+
+	warehouseDocs := byPath[filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "warehouse-documents", "SKILL.md"))]
+	want := []string{
+		"fakturownia schema warehouse-document list --json",
+		"fakturownia schema warehouse-document create --json",
+		"invoice_ids[]",
+		"warehouse_actions[]",
+	}
+	for _, needle := range want {
+		if !strings.Contains(warehouseDocs, needle) {
+			t.Fatalf("expected warehouse-documents skill to include %q: %s", needle, warehouseDocs)
 		}
 	}
 }
