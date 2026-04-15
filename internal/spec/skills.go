@@ -47,7 +47,7 @@ func SkillBundle() SkillBundleSpec {
 	return SkillBundleSpec{
 		Name:        "fakturownia",
 		Title:       "fakturownia",
-		Description: "Fakturownia CLI bundle: shared guidance, auth, clients, products, price lists, invoices, recurrings, warehouse documents, self-update, schema discovery, diagnostics, and generated invoice recipes for the `fakturownia` command. Use when an agent needs to work with Fakturownia through this CLI.",
+		Description: "Fakturownia CLI bundle: shared guidance, auth, categories, clients, payments, products, price lists, invoices, recurrings, warehouse documents, self-update, schema discovery, diagnostics, and generated invoice recipes for the `fakturownia` command. Use when an agent needs to work with Fakturownia through this CLI.",
 		CLIHelp:     "fakturownia --help",
 		RequiresBins: []string{
 			"fakturownia",
@@ -65,9 +65,11 @@ func SkillBundle() SkillBundleSpec {
 				},
 				ExampleRefs: []SkillCommandRef{
 					{Noun: "auth", Verb: "login"},
+					{Noun: "category", Verb: "list"},
 					{Noun: "schema", Verb: "list"},
 					{Noun: "self", Verb: "update"},
 					{Noun: "client", Verb: "list"},
+					{Noun: "payment", Verb: "list"},
 					{Noun: "product", Verb: "list"},
 					{Noun: "price-list", Verb: "list"},
 					{Noun: "invoice", Verb: "list"},
@@ -112,6 +114,35 @@ func SkillBundle() SkillBundleSpec {
 				},
 			},
 			{
+				Key:          "categories",
+				Name:         "fakturownia-categories",
+				Title:        "Categories",
+				Description:  "Fakturownia CLI categories: list, fetch, create, update, and delete categories, and inspect README-backed category fields and request schemas.",
+				Category:     "api-area",
+				Prerequisite: "shared",
+				RelatedSkills: []string{
+					"shared",
+					"schema",
+					"doctor",
+				},
+				CommandRefs: []SkillCommandRef{
+					{Noun: "category", Verb: "list"},
+					{Noun: "category", Verb: "get"},
+					{Noun: "category", Verb: "create"},
+					{Noun: "category", Verb: "update"},
+					{Noun: "category", Verb: "delete"},
+				},
+				CLIHelp: "fakturownia category --help",
+				RequiresBins: []string{
+					"fakturownia",
+				},
+				DiscoveryHint: "Use `fakturownia schema category list --json` for output fields and `fakturownia schema category create --json` or `category update --json` for request-body discovery.",
+				WhenToUse: []string{
+					"The task is about reading or mutating categories.",
+					"You need to inspect README-backed category fields before creating or updating category payloads.",
+				},
+			},
+			{
 				Key:          "clients",
 				Name:         "fakturownia-clients",
 				Title:        "Clients",
@@ -138,6 +169,36 @@ func SkillBundle() SkillBundleSpec {
 				WhenToUse: []string{
 					"The task is about reading or mutating clients, including lookup by external ID.",
 					"You need to build a client payload from README-backed field definitions and inspect `request_body_schema` before create or update calls.",
+				},
+			},
+			{
+				Key:          "payments",
+				Name:         "fakturownia-payments",
+				Title:        "Payments",
+				Description:  "Fakturownia CLI payments: list, fetch, create, update, and delete banking payments, including the README-backed `include=invoices` list mode and request-body discovery.",
+				Category:     "api-area",
+				Prerequisite: "shared",
+				RelatedSkills: []string{
+					"shared",
+					"invoices",
+					"schema",
+					"doctor",
+				},
+				CommandRefs: []SkillCommandRef{
+					{Noun: "payment", Verb: "list"},
+					{Noun: "payment", Verb: "get"},
+					{Noun: "payment", Verb: "create"},
+					{Noun: "payment", Verb: "update"},
+					{Noun: "payment", Verb: "delete"},
+				},
+				CLIHelp: "fakturownia payment --help",
+				RequiresBins: []string{
+					"fakturownia",
+				},
+				DiscoveryHint: "Use `fakturownia schema payment list --json` for output fields and `fakturownia schema payment create --json` or `payment update --json` for request-body discovery.",
+				WhenToUse: []string{
+					"The task is about reading or mutating banking payments.",
+					"You need the README-backed `--include invoices` list mode or to build payment payloads with `invoice_id` or `invoice_ids`.",
 				},
 			},
 			{

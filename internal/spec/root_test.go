@@ -10,10 +10,12 @@ import (
 	"testing"
 
 	"github.com/sixers/fakturownia-cli/internal/auth"
+	"github.com/sixers/fakturownia-cli/internal/category"
 	"github.com/sixers/fakturownia-cli/internal/client"
 	"github.com/sixers/fakturownia-cli/internal/doctor"
 	"github.com/sixers/fakturownia-cli/internal/invoice"
 	"github.com/sixers/fakturownia-cli/internal/output"
+	"github.com/sixers/fakturownia-cli/internal/payment"
 	"github.com/sixers/fakturownia-cli/internal/pricelist"
 	"github.com/sixers/fakturownia-cli/internal/product"
 	"github.com/sixers/fakturownia-cli/internal/recurring"
@@ -41,6 +43,82 @@ func (f *fakeAuthService) Status(_ context.Context, req auth.StatusRequest) (*au
 func (f *fakeAuthService) Logout(_ context.Context, req auth.LogoutRequest) (*auth.LogoutResult, error) {
 	f.logoutReq = req
 	return &auth.LogoutResult{Profile: req.Profile, Removed: true}, nil
+}
+
+type fakeCategoryService struct {
+	listReq   category.ListRequest
+	getReq    category.GetRequest
+	createReq category.CreateRequest
+	updateReq category.UpdateRequest
+	deleteReq category.DeleteRequest
+}
+
+func (f *fakeCategoryService) List(_ context.Context, req category.ListRequest) (*category.ListResponse, error) {
+	f.listReq = req
+	return &category.ListResponse{
+		Categories: []map[string]any{
+			{
+				"id":          100,
+				"name":        "my_category",
+				"description": "new_description",
+			},
+		},
+		RawBody:    []byte(`[{"id":100,"name":"my_category"}]`),
+		Profile:    req.Profile,
+		RequestID:  "req-category-list",
+		Pagination: output.Pagination{Page: req.Page, PerPage: req.PerPage, Returned: 1, HasNext: false},
+	}, nil
+}
+
+func (f *fakeCategoryService) Get(_ context.Context, req category.GetRequest) (*category.GetResponse, error) {
+	f.getReq = req
+	return &category.GetResponse{
+		Category: map[string]any{
+			"id":          100,
+			"name":        "my_category",
+			"description": "new_description",
+		},
+		RawBody:   []byte(`{"id":100,"name":"my_category","description":"new_description"}`),
+		Profile:   req.Profile,
+		RequestID: "req-category-get",
+	}, nil
+}
+
+func (f *fakeCategoryService) Create(_ context.Context, req category.CreateRequest) (*category.CreateResponse, error) {
+	f.createReq = req
+	if req.DryRun {
+		plan := transport.PlanJSONRequest("POST", "/categories.json", nil, map[string]any{"category": req.Input})
+		return &category.CreateResponse{Profile: req.Profile, DryRun: &plan}, nil
+	}
+	return &category.CreateResponse{
+		Category:  map[string]any{"id": 100, "name": req.Input["name"], "description": req.Input["description"]},
+		RawBody:   []byte(`{"id":100,"name":"my_category"}`),
+		Profile:   req.Profile,
+		RequestID: "req-category-create",
+	}, nil
+}
+
+func (f *fakeCategoryService) Update(_ context.Context, req category.UpdateRequest) (*category.UpdateResponse, error) {
+	f.updateReq = req
+	if req.DryRun {
+		plan := transport.PlanJSONRequest("PUT", "/categories/"+req.ID+".json", nil, map[string]any{"category": req.Input})
+		return &category.UpdateResponse{Profile: req.Profile, DryRun: &plan}, nil
+	}
+	return &category.UpdateResponse{
+		Category:  map[string]any{"id": req.ID, "description": req.Input["description"]},
+		RawBody:   []byte(`{"id":100,"description":"new_description"}`),
+		Profile:   req.Profile,
+		RequestID: "req-category-update",
+	}, nil
+}
+
+func (f *fakeCategoryService) Delete(_ context.Context, req category.DeleteRequest) (*category.DeleteResponse, error) {
+	f.deleteReq = req
+	if req.DryRun {
+		plan := transport.PlanJSONRequest("DELETE", "/categories/"+req.ID+".json", nil, nil)
+		return &category.DeleteResponse{ID: req.ID, Profile: req.Profile, DryRun: &plan}, nil
+	}
+	return &category.DeleteResponse{ID: req.ID, Deleted: true, Profile: req.Profile, RequestID: "req-category-delete"}, nil
 }
 
 type fakeInvoiceService struct {
@@ -250,6 +328,92 @@ type fakeClientService struct {
 	createReq client.CreateRequest
 	updateReq client.UpdateRequest
 	deleteReq client.DeleteRequest
+}
+
+type fakePaymentService struct {
+	listReq   payment.ListRequest
+	getReq    payment.GetRequest
+	createReq payment.CreateRequest
+	updateReq payment.UpdateRequest
+	deleteReq payment.DeleteRequest
+}
+
+func (f *fakePaymentService) List(_ context.Context, req payment.ListRequest) (*payment.ListResponse, error) {
+	f.listReq = req
+	return &payment.ListResponse{
+		Payments: []map[string]any{
+			{
+				"id":         555,
+				"name":       "Payment 001",
+				"price":      100.05,
+				"paid":       true,
+				"kind":       "api",
+				"invoice_id": nil,
+				"invoices": []any{
+					map[string]any{"id": 31, "number": "FV/1"},
+				},
+			},
+		},
+		RawBody:     []byte(`[{"id":555,"name":"Payment 001"}]`),
+		Profile:     req.Profile,
+		RequestID:   "req-payment-list",
+		IncludeUsed: req.Include,
+		Pagination:  output.Pagination{Page: req.Page, PerPage: req.PerPage, Returned: 1, HasNext: false},
+	}, nil
+}
+
+func (f *fakePaymentService) Get(_ context.Context, req payment.GetRequest) (*payment.GetResponse, error) {
+	f.getReq = req
+	return &payment.GetResponse{
+		Payment: map[string]any{
+			"id":         555,
+			"name":       "Payment 001",
+			"price":      100.05,
+			"paid":       true,
+			"kind":       "api",
+			"invoice_id": nil,
+		},
+		RawBody:   []byte(`{"id":555,"name":"Payment 001","price":100.05,"paid":true,"kind":"api","invoice_id":null}`),
+		Profile:   req.Profile,
+		RequestID: "req-payment-get",
+	}, nil
+}
+
+func (f *fakePaymentService) Create(_ context.Context, req payment.CreateRequest) (*payment.CreateResponse, error) {
+	f.createReq = req
+	if req.DryRun {
+		plan := transport.PlanJSONRequest("POST", "/banking/payments.json", nil, map[string]any{"banking_payment": req.Input})
+		return &payment.CreateResponse{Profile: req.Profile, DryRun: &plan}, nil
+	}
+	return &payment.CreateResponse{
+		Payment:   map[string]any{"id": 555, "name": req.Input["name"], "price": req.Input["price"], "paid": req.Input["paid"], "kind": req.Input["kind"]},
+		RawBody:   []byte(`{"id":555,"name":"Payment 001"}`),
+		Profile:   req.Profile,
+		RequestID: "req-payment-create",
+	}, nil
+}
+
+func (f *fakePaymentService) Update(_ context.Context, req payment.UpdateRequest) (*payment.UpdateResponse, error) {
+	f.updateReq = req
+	if req.DryRun {
+		plan := transport.PlanJSONRequest("PATCH", "/banking/payments/"+req.ID+".json", nil, map[string]any{"banking_payment": req.Input})
+		return &payment.UpdateResponse{Profile: req.Profile, DryRun: &plan}, nil
+	}
+	return &payment.UpdateResponse{
+		Payment:   map[string]any{"id": req.ID, "name": req.Input["name"], "price": req.Input["price"]},
+		RawBody:   []byte(`{"id":555,"name":"New payment name","price":100}`),
+		Profile:   req.Profile,
+		RequestID: "req-payment-update",
+	}, nil
+}
+
+func (f *fakePaymentService) Delete(_ context.Context, req payment.DeleteRequest) (*payment.DeleteResponse, error) {
+	f.deleteReq = req
+	if req.DryRun {
+		plan := transport.PlanJSONRequest("DELETE", "/banking/payments/"+req.ID+".json", nil, nil)
+		return &payment.DeleteResponse{ID: req.ID, Profile: req.Profile, DryRun: &plan}, nil
+	}
+	return &payment.DeleteResponse{ID: req.ID, Deleted: true, Profile: req.Profile, RequestID: "req-payment-delete"}, nil
 }
 
 func (f *fakeClientService) List(_ context.Context, req client.ListRequest) (*client.ListResponse, error) {
@@ -682,8 +846,10 @@ func normalizeRequested(value string) string {
 
 func TestCommandIntegration(t *testing.T) {
 	authSvc := &fakeAuthService{}
+	categorySvc := &fakeCategoryService{}
 	clientSvc := &fakeClientService{}
 	invoiceSvc := &fakeInvoiceService{}
+	paymentSvc := &fakePaymentService{}
 	productSvc := &fakeProductService{}
 	priceListSvc := &fakePriceListService{}
 	recurringSvc := &fakeRecurringService{}
@@ -695,8 +861,10 @@ func TestCommandIntegration(t *testing.T) {
 		var stdout, stderr bytes.Buffer
 		cmd := NewRootCommand(Dependencies{
 			Auth:      authSvc,
+			Category:  categorySvc,
 			Client:    clientSvc,
 			Invoice:   invoiceSvc,
+			Payment:   paymentSvc,
 			Product:   productSvc,
 			PriceList: priceListSvc,
 			Recurring: recurringSvc,
@@ -741,6 +909,58 @@ func TestCommandIntegration(t *testing.T) {
 		t.Fatalf("unexpected client list output: %s", stdout)
 	}
 
+	stdout, _, err = run("category", "list", "--json")
+	if err != nil {
+		t.Fatalf("category list error = %v", err)
+	}
+	if !jsonContains(stdout, `"name": "my_category"`) {
+		t.Fatalf("unexpected category list output: %s", stdout)
+	}
+
+	stdout, _, err = run("category", "get", "--id", "100", "--json")
+	if err != nil {
+		t.Fatalf("category get error = %v", err)
+	}
+	if categorySvc.getReq.ID != "100" {
+		t.Fatalf("expected category get ID to be forwarded, got %q", categorySvc.getReq.ID)
+	}
+	if !jsonContains(stdout, `"description": "new_description"`) {
+		t.Fatalf("unexpected category get output: %s", stdout)
+	}
+
+	stdout, _, err = run("category", "create", "--input", `{"name":"my_category","description":null}`, "--json")
+	if err != nil {
+		t.Fatalf("category create error = %v", err)
+	}
+	if categorySvc.createReq.Input["name"] != "my_category" {
+		t.Fatalf("expected category create input to be parsed, got %#v", categorySvc.createReq.Input)
+	}
+	if !jsonContains(stdout, `"id": 100`) {
+		t.Fatalf("unexpected category create output: %s", stdout)
+	}
+
+	stdout, _, err = runWithInput(`{"description":"new_description"}`, "category", "update", "--id", "100", "--input", "-", "--json")
+	if err != nil {
+		t.Fatalf("category update error = %v", err)
+	}
+	if categorySvc.updateReq.Input["description"] != "new_description" {
+		t.Fatalf("expected category update stdin input, got %#v", categorySvc.updateReq.Input)
+	}
+	if !jsonContains(stdout, `"description": "new_description"`) {
+		t.Fatalf("unexpected category update output: %s", stdout)
+	}
+
+	stdout, _, err = run("category", "delete", "--id", "100", "--yes", "--dry-run", "--json")
+	if err != nil {
+		t.Fatalf("category delete dry-run error = %v", err)
+	}
+	if !categorySvc.deleteReq.DryRun {
+		t.Fatal("expected category delete dry-run flag to be forwarded")
+	}
+	if !jsonContains(stdout, `"method": "DELETE"`) {
+		t.Fatalf("unexpected category delete dry-run output: %s", stdout)
+	}
+
 	stdout, _, err = run("client", "get", "--external-id", "ext-123", "--json")
 	if err != nil {
 		t.Fatalf("client get by external-id error = %v", err)
@@ -783,6 +1003,61 @@ func TestCommandIntegration(t *testing.T) {
 	}
 	if !jsonContains(stdout, `"method": "DELETE"`) || !jsonContains(stdout, `"[redacted]"`) {
 		t.Fatalf("unexpected client delete dry-run output: %s", stdout)
+	}
+
+	stdout, _, err = run("payment", "list", "--include", "invoices", "--json")
+	if err != nil {
+		t.Fatalf("payment list error = %v", err)
+	}
+	if len(paymentSvc.listReq.Include) != 1 || paymentSvc.listReq.Include[0] != "invoices" {
+		t.Fatalf("expected payment include to be forwarded, got %#v", paymentSvc.listReq.Include)
+	}
+	if !jsonContains(stdout, `"name": "Payment 001"`) {
+		t.Fatalf("unexpected payment list output: %s", stdout)
+	}
+
+	stdout, _, err = run("payment", "get", "--id", "555", "--json")
+	if err != nil {
+		t.Fatalf("payment get error = %v", err)
+	}
+	if paymentSvc.getReq.ID != "555" {
+		t.Fatalf("expected payment get ID to be forwarded, got %q", paymentSvc.getReq.ID)
+	}
+	if !jsonContains(stdout, `"price": 100.05`) {
+		t.Fatalf("unexpected payment get output: %s", stdout)
+	}
+
+	stdout, _, err = run("payment", "create", "--input", `{"name":"Payment 001","price":100.05,"invoice_id":null,"paid":true,"kind":"api"}`, "--json")
+	if err != nil {
+		t.Fatalf("payment create error = %v", err)
+	}
+	if paymentSvc.createReq.Input["name"] != "Payment 001" {
+		t.Fatalf("expected payment create input to be parsed, got %#v", paymentSvc.createReq.Input)
+	}
+	if !jsonContains(stdout, `"id": 555`) {
+		t.Fatalf("unexpected payment create output: %s", stdout)
+	}
+
+	stdout, _, err = runWithInput(`{"name":"New payment name","price":100}`, "payment", "update", "--id", "555", "--input", "-", "--json")
+	if err != nil {
+		t.Fatalf("payment update error = %v", err)
+	}
+	if paymentSvc.updateReq.Input["name"] != "New payment name" {
+		t.Fatalf("expected payment update stdin input, got %#v", paymentSvc.updateReq.Input)
+	}
+	if !jsonContains(stdout, `"name": "New payment name"`) {
+		t.Fatalf("unexpected payment update output: %s", stdout)
+	}
+
+	stdout, _, err = run("payment", "delete", "--id", "555", "--yes", "--dry-run", "--json")
+	if err != nil {
+		t.Fatalf("payment delete dry-run error = %v", err)
+	}
+	if !paymentSvc.deleteReq.DryRun {
+		t.Fatal("expected payment delete dry-run flag to be forwarded")
+	}
+	if !jsonContains(stdout, `"method": "DELETE"`) {
+		t.Fatalf("unexpected payment delete dry-run output: %s", stdout)
 	}
 
 	stdout, _, err = run("product", "list", "--date-from", "2025-11-01", "--warehouse-id", "7", "--json")
@@ -1153,12 +1428,32 @@ func TestGolden(t *testing.T) {
 		args []string
 		file string
 	}{
+		{name: "category-list-help", args: []string{"category", "list", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "category-list-help.txt")},
+		{name: "category-get-help", args: []string{"category", "get", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "category-get-help.txt")},
+		{name: "category-create-help", args: []string{"category", "create", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "category-create-help.txt")},
+		{name: "category-update-help", args: []string{"category", "update", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "category-update-help.txt")},
+		{name: "category-delete-help", args: []string{"category", "delete", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "category-delete-help.txt")},
+		{name: "schema-category-list-json", args: []string{"schema", "category", "list", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-category-list.json")},
+		{name: "schema-category-get-json", args: []string{"schema", "category", "get", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-category-get.json")},
+		{name: "schema-category-create-json", args: []string{"schema", "category", "create", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-category-create.json")},
+		{name: "schema-category-update-json", args: []string{"schema", "category", "update", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-category-update.json")},
+		{name: "schema-category-delete-json", args: []string{"schema", "category", "delete", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-category-delete.json")},
 		{name: "client-list-help", args: []string{"client", "list", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "client-list-help.txt")},
 		{name: "schema-client-list-json", args: []string{"schema", "client", "list", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-client-list.json")},
 		{name: "schema-client-get-json", args: []string{"schema", "client", "get", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-client-get.json")},
 		{name: "schema-client-create-json", args: []string{"schema", "client", "create", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-client-create.json")},
 		{name: "schema-client-update-json", args: []string{"schema", "client", "update", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-client-update.json")},
 		{name: "schema-client-delete-json", args: []string{"schema", "client", "delete", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-client-delete.json")},
+		{name: "payment-list-help", args: []string{"payment", "list", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "payment-list-help.txt")},
+		{name: "payment-get-help", args: []string{"payment", "get", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "payment-get-help.txt")},
+		{name: "payment-create-help", args: []string{"payment", "create", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "payment-create-help.txt")},
+		{name: "payment-update-help", args: []string{"payment", "update", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "payment-update-help.txt")},
+		{name: "payment-delete-help", args: []string{"payment", "delete", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "payment-delete-help.txt")},
+		{name: "schema-payment-list-json", args: []string{"schema", "payment", "list", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-payment-list.json")},
+		{name: "schema-payment-get-json", args: []string{"schema", "payment", "get", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-payment-get.json")},
+		{name: "schema-payment-create-json", args: []string{"schema", "payment", "create", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-payment-create.json")},
+		{name: "schema-payment-update-json", args: []string{"schema", "payment", "update", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-payment-update.json")},
+		{name: "schema-payment-delete-json", args: []string{"schema", "payment", "delete", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-payment-delete.json")},
 		{name: "product-list-help", args: []string{"product", "list", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "product-list-help.txt")},
 		{name: "schema-product-list-json", args: []string{"schema", "product", "list", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-product-list.json")},
 		{name: "schema-product-get-json", args: []string{"schema", "product", "get", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-product-get.json")},
@@ -1397,6 +1692,90 @@ func TestSchemaProductListExposesKnownFields(t *testing.T) {
 	body := stdout.String()
 	if !jsonContains(body, `"path": "tag_list[]"`) || !jsonContains(body, `"path": "gtu_codes[]"`) {
 		t.Fatalf("expected schema product list to advertise array known fields: %s", body)
+	}
+}
+
+func TestSchemaPaymentListExposesKnownFields(t *testing.T) {
+	t.Parallel()
+
+	var stdout bytes.Buffer
+	cmd := NewRootCommand(Dependencies{
+		Auth:      &fakeAuthService{},
+		Client:    &fakeClientService{},
+		Invoice:   &fakeInvoiceService{},
+		Product:   &fakeProductService{},
+		PriceList: &fakePriceListService{},
+		Recurring: &fakeRecurringService{},
+		Warehouse: &fakeWarehouseDocumentService{},
+		Doctor:    &fakeDoctorService{},
+		Self:      &fakeSelfUpdateService{},
+		Stdout:    &stdout,
+		Stderr:    &bytes.Buffer{},
+	})
+	cmd.SetArgs([]string{"schema", "payment", "list", "--json"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("Execute() error = %v", err)
+	}
+
+	body := stdout.String()
+	if !jsonContains(body, `"path": "invoices[]"`) || !jsonContains(body, `"requires": [`) {
+		t.Fatalf("expected schema payment list to advertise include-backed fields: %s", body)
+	}
+}
+
+func TestSchemaPaymentCreateExposesRequestBodySchema(t *testing.T) {
+	t.Parallel()
+
+	var stdout bytes.Buffer
+	cmd := NewRootCommand(Dependencies{
+		Auth:      &fakeAuthService{},
+		Client:    &fakeClientService{},
+		Invoice:   &fakeInvoiceService{},
+		Product:   &fakeProductService{},
+		PriceList: &fakePriceListService{},
+		Recurring: &fakeRecurringService{},
+		Warehouse: &fakeWarehouseDocumentService{},
+		Doctor:    &fakeDoctorService{},
+		Self:      &fakeSelfUpdateService{},
+		Stdout:    &stdout,
+		Stderr:    &bytes.Buffer{},
+	})
+	cmd.SetArgs([]string{"schema", "payment", "create", "--json"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("Execute() error = %v", err)
+	}
+
+	body := stdout.String()
+	if !jsonContains(body, `"wrapper_key": "banking_payment"`) || !jsonContains(body, `"path": "invoice_ids[]"`) {
+		t.Fatalf("expected schema payment create to advertise banking payment request fields: %s", body)
+	}
+}
+
+func TestSchemaCategoryCreateExposesRequestBodySchema(t *testing.T) {
+	t.Parallel()
+
+	var stdout bytes.Buffer
+	cmd := NewRootCommand(Dependencies{
+		Auth:      &fakeAuthService{},
+		Client:    &fakeClientService{},
+		Invoice:   &fakeInvoiceService{},
+		Product:   &fakeProductService{},
+		PriceList: &fakePriceListService{},
+		Recurring: &fakeRecurringService{},
+		Warehouse: &fakeWarehouseDocumentService{},
+		Doctor:    &fakeDoctorService{},
+		Self:      &fakeSelfUpdateService{},
+		Stdout:    &stdout,
+		Stderr:    &bytes.Buffer{},
+	})
+	cmd.SetArgs([]string{"schema", "category", "create", "--json"})
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("Execute() error = %v", err)
+	}
+
+	body := stdout.String()
+	if !jsonContains(body, `"wrapper_key": "category"`) || !jsonContains(body, `"path": "description"`) {
+		t.Fatalf("expected schema category create to advertise category request fields: %s", body)
 	}
 }
 

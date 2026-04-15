@@ -1,0 +1,584 @@
+{
+  "schema_version": "fakturownia-cli/v1alpha1",
+  "status": "success",
+  "data": {
+    "schema_version": "fakturownia-cli/v1alpha1",
+    "command": "payment create",
+    "use": "create --input -|@file|JSON",
+    "summary": "Create a payment",
+    "flags": [
+      {
+        "name": "profile",
+        "type": "string",
+        "description": "Select a named profile",
+        "required": false
+      },
+      {
+        "name": "json",
+        "type": "bool",
+        "description": "Alias for --output json",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "output",
+        "type": "string",
+        "description": "Output format",
+        "required": false,
+        "default": "human",
+        "enum": [
+          "human",
+          "json"
+        ]
+      },
+      {
+        "name": "quiet",
+        "type": "bool",
+        "description": "Emit bare values when exactly one field or column remains",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "fields",
+        "type": "string[]",
+        "description": "Project JSON envelope data fields using dot/bracket paths like number or positions[].name",
+        "required": false,
+        "repeatable": true
+      },
+      {
+        "name": "columns",
+        "type": "string[]",
+        "description": "Select human table columns using dot/bracket paths like number or positions[].name",
+        "required": false,
+        "repeatable": true
+      },
+      {
+        "name": "raw",
+        "type": "bool",
+        "description": "Emit the upstream JSON response body directly when supported",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "dry-run",
+        "type": "bool",
+        "description": "Accepted on read-only commands and reserved for future mutating request previews",
+        "required": false,
+        "default": "false"
+      },
+      {
+        "name": "timeout-ms",
+        "type": "int",
+        "description": "HTTP timeout in milliseconds",
+        "required": false,
+        "default": "30000"
+      },
+      {
+        "name": "max-retries",
+        "type": "int",
+        "description": "Maximum retry attempts for idempotent reads on network or 5xx failures",
+        "required": false,
+        "default": "2"
+      },
+      {
+        "name": "non-interactive",
+        "type": "bool",
+        "description": "Disable interactive behavior",
+        "required": false,
+        "default": "true"
+      },
+      {
+        "name": "config",
+        "type": "string",
+        "description": "Override the config file path",
+        "required": false
+      },
+      {
+        "name": "input",
+        "type": "string",
+        "description": "Payment JSON input as inline JSON, @file, or - for stdin",
+        "required": true
+      }
+    ],
+    "env_vars": [
+      {
+        "name": "FAKTUROWNIA_PROFILE",
+        "description": "Select a profile unless --profile is provided"
+      },
+      {
+        "name": "FAKTUROWNIA_URL",
+        "description": "Override the base account URL from any profile"
+      },
+      {
+        "name": "FAKTUROWNIA_API_TOKEN",
+        "description": "Override the API token from any profile"
+      }
+    ],
+    "output_modes": [
+      "human",
+      "json"
+    ],
+    "exit_codes": [
+      {
+        "code": 0,
+        "description": "success"
+      },
+      {
+        "code": 2,
+        "description": "usage or validation error"
+      },
+      {
+        "code": 3,
+        "description": "not found"
+      },
+      {
+        "code": 4,
+        "description": "authentication or permission failure"
+      },
+      {
+        "code": 5,
+        "description": "conflict"
+      },
+      {
+        "code": 6,
+        "description": "network or timeout failure"
+      },
+      {
+        "code": 7,
+        "description": "reserved for throttling or retry budget exhaustion"
+      },
+      {
+        "code": 8,
+        "description": "remote API rejected the request"
+      },
+      {
+        "code": 9,
+        "description": "internal CLI failure"
+      }
+    ],
+    "raw_supported": true,
+    "examples": [
+      "fakturownia payment create --input '{\"name\":\"Payment 001\",\"price\":100.05,\"invoice_id\":null,\"paid\":true,\"kind\":\"api\"}' --json",
+      "fakturownia payment create --input '{\"name\":\"Payment 003\",\"price\":200,\"invoice_ids\":[555,666],\"paid\":true,\"kind\":\"api\"}' --json",
+      "fakturownia payment create --input @payment.json",
+      "fakturownia payment create --input '{\"name\":\"Payment 001\"}' --dry-run --json"
+    ],
+    "data_schema": {
+      "additionalProperties": true,
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "invoice_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "invoices": {
+          "items": {
+            "additionalProperties": true,
+            "properties": {},
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "paid": {
+          "type": "boolean"
+        },
+        "price": {
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "request_body": {
+      "input_flag": "input",
+      "input_modes": [
+        "inline_json",
+        "@file",
+        "stdin"
+      ],
+      "wrapper_key": "banking_payment",
+      "open_ended": true,
+      "catalog_basis": {
+        "source": "readme",
+        "url": "https://github.com/fakturownia/API/blob/master/README.md"
+      },
+      "path_syntax": "dot_bracket",
+      "known_fields": [
+        {
+          "path": "name",
+          "type": "string",
+          "description": "Payment name",
+          "source_section": "Dodawanie nowej płatności"
+        },
+        {
+          "path": "price",
+          "type": "number",
+          "description": "Payment amount",
+          "source_section": "Dodawanie nowej płatności"
+        },
+        {
+          "path": "invoice_id",
+          "type": "integer|null",
+          "description": "Single linked invoice ID",
+          "source_section": "Dodawanie nowej płatności"
+        },
+        {
+          "path": "invoice_ids[]",
+          "type": "integer",
+          "description": "Ordered linked invoice IDs",
+          "source_section": "Dodanie nowej płatności powiązanej z istniejącymi fakturami"
+        },
+        {
+          "path": "paid",
+          "type": "boolean",
+          "description": "Paid flag",
+          "source_section": "Dodawanie nowej płatności"
+        },
+        {
+          "path": "kind",
+          "type": "string",
+          "description": "Payment kind",
+          "source_section": "Dodawanie nowej płatności"
+        }
+      ],
+      "notes": [
+        "the CLI accepts the inner banking payment object, then wraps it in the upstream {\"banking_payment\": ...} envelope",
+        "known_fields is curated from the upstream README and is not exhaustive",
+        "invoice_ids pays invoices in the order provided by the upstream API"
+      ]
+    },
+    "request_body_schema": {
+      "additionalProperties": true,
+      "properties": {
+        "invoice_id": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "invoice_ids": {
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "paid": {
+          "type": "boolean"
+        },
+        "price": {
+          "type": "number"
+        }
+      },
+      "type": "object"
+    },
+    "envelope_schema": {
+      "properties": {
+        "data": {
+          "additionalProperties": true,
+          "properties": {
+            "id": {
+              "type": "integer"
+            },
+            "invoice_id": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "invoices": {
+              "items": {
+                "additionalProperties": true,
+                "properties": {},
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "kind": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "paid": {
+              "type": "boolean"
+            },
+            "price": {
+              "type": "number"
+            }
+          },
+          "type": "object"
+        },
+        "errors": {
+          "items": {
+            "$defs": {
+              "ErrorDetail": {
+                "properties": {
+                  "class": {
+                    "type": "string"
+                  },
+                  "code": {
+                    "type": "string"
+                  },
+                  "hint": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "retryable": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "class",
+                  "code",
+                  "message",
+                  "retryable"
+                ],
+                "type": "object"
+              }
+            },
+            "$id": "https://github.com/sixers/fakturownia-cli/internal/output/error-detail",
+            "$ref": "#/$defs/ErrorDetail",
+            "$schema": "https://json-schema.org/draft/2020-12/schema"
+          },
+          "type": "array"
+        },
+        "meta": {
+          "$defs": {
+            "Meta": {
+              "properties": {
+                "command": {
+                  "type": "string"
+                },
+                "duration_ms": {
+                  "type": "integer"
+                },
+                "pagination": {
+                  "$ref": "#/$defs/Pagination"
+                },
+                "profile": {
+                  "type": "string"
+                },
+                "request_id": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "command",
+                "duration_ms"
+              ],
+              "type": "object"
+            },
+            "Pagination": {
+              "properties": {
+                "has_next": {
+                  "type": "boolean"
+                },
+                "page": {
+                  "type": "integer"
+                },
+                "per_page": {
+                  "type": "integer"
+                },
+                "returned": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "page",
+                "per_page",
+                "returned",
+                "has_next"
+              ],
+              "type": "object"
+            }
+          },
+          "$id": "https://github.com/sixers/fakturownia-cli/internal/output/meta",
+          "$ref": "#/$defs/Meta",
+          "$schema": "https://json-schema.org/draft/2020-12/schema"
+        },
+        "schema_version": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "success",
+            "error"
+          ],
+          "type": "string"
+        },
+        "warnings": {
+          "items": {
+            "$defs": {
+              "WarningDetail": {
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "message"
+                ],
+                "type": "object"
+              }
+            },
+            "$id": "https://github.com/sixers/fakturownia-cli/internal/output/warning-detail",
+            "$ref": "#/$defs/WarningDetail",
+            "$schema": "https://json-schema.org/draft/2020-12/schema"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "schema_version",
+        "status",
+        "data",
+        "errors",
+        "warnings",
+        "meta"
+      ],
+      "type": "object"
+    },
+    "output": {
+      "shape": "object",
+      "open_ended": true,
+      "catalog_basis": {
+        "source": "readme",
+        "url": "https://github.com/fakturownia/API/blob/master/README.md"
+      },
+      "path_syntax": "dot_bracket",
+      "known_fields": [
+        {
+          "path": "id",
+          "type": "integer",
+          "description": "Payment ID",
+          "projectable": true,
+          "selectable": true,
+          "default_column": true,
+          "commands": [
+            "payment create"
+          ],
+          "presence": "common",
+          "source_section": "Pobranie wybranej płatności po ID"
+        },
+        {
+          "path": "name",
+          "type": "string",
+          "description": "Payment name",
+          "projectable": true,
+          "selectable": true,
+          "default_column": true,
+          "commands": [
+            "payment create"
+          ],
+          "presence": "common",
+          "source_section": "Dodawanie nowej płatności"
+        },
+        {
+          "path": "price",
+          "type": "number",
+          "description": "Payment amount",
+          "projectable": true,
+          "selectable": true,
+          "default_column": true,
+          "commands": [
+            "payment create"
+          ],
+          "presence": "common",
+          "source_section": "Dodawanie nowej płatności"
+        },
+        {
+          "path": "paid",
+          "type": "boolean",
+          "description": "Paid flag",
+          "projectable": true,
+          "selectable": true,
+          "default_column": true,
+          "commands": [
+            "payment create"
+          ],
+          "presence": "common",
+          "source_section": "Dodawanie nowej płatności"
+        },
+        {
+          "path": "kind",
+          "type": "string",
+          "description": "Payment kind",
+          "projectable": true,
+          "selectable": true,
+          "default_column": true,
+          "commands": [
+            "payment create"
+          ],
+          "presence": "common",
+          "source_section": "Dodawanie nowej płatności"
+        },
+        {
+          "path": "invoice_id",
+          "type": "integer|null",
+          "description": "Single linked invoice ID",
+          "projectable": true,
+          "selectable": true,
+          "commands": [
+            "payment create"
+          ],
+          "presence": "conditional",
+          "source_section": "Dodawanie nowej płatności"
+        },
+        {
+          "path": "invoices[]",
+          "type": "array<object>",
+          "description": "Invoices included when requested through the upstream include=invoices query",
+          "projectable": true,
+          "selectable": false,
+          "commands": [
+            "payment list"
+          ],
+          "presence": "conditional",
+          "requires": [
+            "payment list --include invoices"
+          ],
+          "source_section": "Pobranie płatności wraz z danymi przypiętych faktur"
+        }
+      ],
+      "default_columns": [
+        "id",
+        "name",
+        "price",
+        "paid",
+        "kind"
+      ],
+      "notes": [
+        "known_fields is curated from the upstream README and verified endpoint behavior and is not exhaustive",
+        "unknown upstream fields may still appear in data and can still be selected when the path syntax is valid",
+        "payment get uses the verified singular /banking/payment/:id.json endpoint, while list, update, and delete use /banking/payments"
+      ]
+    }
+  },
+  "errors": [],
+  "warnings": null,
+  "meta": {
+    "command": "schema payment create",
+    "duration_ms": 0
+  }
+}

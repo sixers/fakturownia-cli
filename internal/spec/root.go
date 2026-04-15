@@ -12,12 +12,14 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/sixers/fakturownia-cli/internal/auth"
+	"github.com/sixers/fakturownia-cli/internal/category"
 	"github.com/sixers/fakturownia-cli/internal/client"
 	"github.com/sixers/fakturownia-cli/internal/config"
 	"github.com/sixers/fakturownia-cli/internal/doctor"
 	"github.com/sixers/fakturownia-cli/internal/invoice"
 	"github.com/sixers/fakturownia-cli/internal/jsoninput"
 	"github.com/sixers/fakturownia-cli/internal/output"
+	"github.com/sixers/fakturownia-cli/internal/payment"
 	"github.com/sixers/fakturownia-cli/internal/pricelist"
 	"github.com/sixers/fakturownia-cli/internal/product"
 	"github.com/sixers/fakturownia-cli/internal/recurring"
@@ -29,6 +31,14 @@ type AuthService interface {
 	Login(context.Context, auth.LoginRequest) (*auth.LoginResult, error)
 	Status(context.Context, auth.StatusRequest) (*auth.StatusResult, error)
 	Logout(context.Context, auth.LogoutRequest) (*auth.LogoutResult, error)
+}
+
+type CategoryService interface {
+	List(context.Context, category.ListRequest) (*category.ListResponse, error)
+	Get(context.Context, category.GetRequest) (*category.GetResponse, error)
+	Create(context.Context, category.CreateRequest) (*category.CreateResponse, error)
+	Update(context.Context, category.UpdateRequest) (*category.UpdateResponse, error)
+	Delete(context.Context, category.DeleteRequest) (*category.DeleteResponse, error)
 }
 
 type InvoiceService interface {
@@ -53,6 +63,14 @@ type ClientService interface {
 	Create(context.Context, client.CreateRequest) (*client.CreateResponse, error)
 	Update(context.Context, client.UpdateRequest) (*client.UpdateResponse, error)
 	Delete(context.Context, client.DeleteRequest) (*client.DeleteResponse, error)
+}
+
+type PaymentService interface {
+	List(context.Context, payment.ListRequest) (*payment.ListResponse, error)
+	Get(context.Context, payment.GetRequest) (*payment.GetResponse, error)
+	Create(context.Context, payment.CreateRequest) (*payment.CreateResponse, error)
+	Update(context.Context, payment.UpdateRequest) (*payment.UpdateResponse, error)
+	Delete(context.Context, payment.DeleteRequest) (*payment.DeleteResponse, error)
 }
 
 type ProductService interface {
@@ -94,8 +112,10 @@ type SelfUpdateService interface {
 
 type Dependencies struct {
 	Auth      AuthService
+	Category  CategoryService
 	Client    ClientService
 	Invoice   InvoiceService
+	Payment   PaymentService
 	Product   ProductService
 	PriceList PriceListService
 	Recurring RecurringService
@@ -152,8 +172,10 @@ func NewRootCommand(deps Dependencies) *cobra.Command {
 	root.PersistentFlags().StringVar(&globals.Config, "config", "", "override the config file path")
 
 	root.AddCommand(newAuthCommand(deps, &globals))
+	root.AddCommand(newCategoryCommand(deps, &globals))
 	root.AddCommand(newClientCommand(deps, &globals))
 	root.AddCommand(newInvoiceCommand(deps, &globals))
+	root.AddCommand(newPaymentCommand(deps, &globals))
 	root.AddCommand(newProductCommand(deps, &globals))
 	root.AddCommand(newPriceListCommand(deps, &globals))
 	root.AddCommand(newRecurringCommand(deps, &globals))
@@ -305,6 +327,268 @@ func newAuthCommand(deps Dependencies, globals *globalOptions) *cobra.Command {
 
 	authCmd.AddCommand(loginCmd, statusCmd, logoutCmd)
 	return authCmd
+}
+
+func newCategoryCommand(deps Dependencies, globals *globalOptions) *cobra.Command {
+	categoryCmd := &cobra.Command{
+		Use:   "category",
+		Short: "Read and manage categories",
+	}
+
+	listSpec, _ := FindCommand("category", "list")
+	listReq := category.ListRequest{Page: 1, PerPage: 25}
+	listCmd := &cobra.Command{
+		Use:   listSpec.Use,
+		Short: listSpec.Short,
+		Long:  BuildLongDescription(listSpec),
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			opts, warnings, appErr := prepareOutputOptions(cmd, listSpec, globals)
+			if appErr != nil {
+				return writeCommandError(cmd, opts, output.Meta{Command: "category list"}, appErr)
+			}
+			listReq.ConfigPath = globals.Config
+			listReq.Profile = globals.Profile
+			listReq.Env = config.LookupEnv()
+			listReq.Timeout = timeoutFromGlobals(globals)
+			listReq.MaxRetries = globals.MaxRetries
+
+			start := time.Now()
+			result, err := deps.Category.List(cmd.Context(), listReq)
+			meta := output.Meta{
+				Command:    "category list",
+				Profile:    resultProfile(result),
+				DurationMS: time.Since(start).Milliseconds(),
+			}
+			if result != nil {
+				meta.RequestID = result.RequestID
+				meta.Pagination = &result.Pagination
+			}
+			if err != nil {
+				return writeCommandError(cmd, opts, meta, err)
+			}
+			writeWarnings(cmd.ErrOrStderr(), opts, warnings)
+			return output.RenderSuccess(cmd.OutOrStdout(), opts, output.Result{
+				Data:           result.Categories,
+				RawBody:        result.RawBody,
+				Warnings:       warnings,
+				Meta:           meta,
+				HumanRenderer:  output.TableRenderer{},
+				DefaultColumns: defaultColumns(listSpec, []string{"id", "name", "description"}),
+			})
+		},
+	}
+	listCmd.Flags().IntVar(&listReq.Page, "page", 1, "requested result page")
+	listCmd.Flags().IntVar(&listReq.PerPage, "per-page", 25, "requested result count per page")
+
+	getSpec, _ := FindCommand("category", "get")
+	var getReq category.GetRequest
+	getCmd := &cobra.Command{
+		Use:   getSpec.Use,
+		Short: getSpec.Short,
+		Long:  BuildLongDescription(getSpec),
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			opts, warnings, appErr := prepareOutputOptions(cmd, getSpec, globals)
+			if appErr != nil {
+				return writeCommandError(cmd, opts, output.Meta{Command: "category get"}, appErr)
+			}
+			getReq.ConfigPath = globals.Config
+			getReq.Profile = globals.Profile
+			getReq.Env = config.LookupEnv()
+			getReq.Timeout = timeoutFromGlobals(globals)
+			getReq.MaxRetries = globals.MaxRetries
+
+			start := time.Now()
+			result, err := deps.Category.Get(cmd.Context(), getReq)
+			meta := output.Meta{
+				Command:    "category get",
+				Profile:    resultProfile(result),
+				DurationMS: time.Since(start).Milliseconds(),
+			}
+			if result != nil {
+				meta.RequestID = result.RequestID
+			}
+			if err != nil {
+				return writeCommandError(cmd, opts, meta, err)
+			}
+			writeWarnings(cmd.ErrOrStderr(), opts, warnings)
+			return output.RenderSuccess(cmd.OutOrStdout(), opts, output.Result{
+				Data:          result.Category,
+				RawBody:       result.RawBody,
+				Warnings:      warnings,
+				Meta:          meta,
+				HumanRenderer: output.JSONRenderer{},
+			})
+		},
+	}
+	getCmd.Flags().StringVar(&getReq.ID, "id", "", "category ID")
+	_ = getCmd.MarkFlagRequired("id")
+
+	createSpec, _ := FindCommand("category", "create")
+	var createInput string
+	createCmd := &cobra.Command{
+		Use:   createSpec.Use,
+		Short: createSpec.Short,
+		Long:  BuildLongDescription(createSpec),
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			opts, warnings, appErr := prepareOutputOptions(cmd, createSpec, globals)
+			if appErr != nil {
+				return writeCommandError(cmd, opts, output.Meta{Command: "category create"}, appErr)
+			}
+			input, err := jsoninput.ParseObject(createInput, cmd.InOrStdin(), "category")
+			if err != nil {
+				return writeCommandError(cmd, opts, output.Meta{Command: "category create"}, err)
+			}
+
+			start := time.Now()
+			result, err := deps.Category.Create(cmd.Context(), category.CreateRequest{
+				ConfigPath: globals.Config,
+				Profile:    globals.Profile,
+				Env:        config.LookupEnv(),
+				Timeout:    timeoutFromGlobals(globals),
+				MaxRetries: globals.MaxRetries,
+				Input:      input,
+				DryRun:     globals.DryRun,
+			})
+			meta := output.Meta{
+				Command:    "category create",
+				Profile:    resultProfile(result),
+				DurationMS: time.Since(start).Milliseconds(),
+			}
+			if result != nil {
+				meta.RequestID = result.RequestID
+			}
+			if err != nil {
+				return writeCommandError(cmd, opts, meta, err)
+			}
+			writeWarnings(cmd.ErrOrStderr(), opts, warnings)
+			return output.RenderSuccess(cmd.OutOrStdout(), opts, output.Result{
+				Data:          categoryCreateData(result),
+				RawBody:       result.RawBody,
+				Warnings:      warnings,
+				Meta:          meta,
+				HumanRenderer: output.JSONRenderer{},
+			})
+		},
+	}
+	createCmd.Flags().StringVar(&createInput, "input", "", "category JSON input as inline JSON, @file, or - for stdin")
+	_ = createCmd.MarkFlagRequired("input")
+
+	updateSpec, _ := FindCommand("category", "update")
+	var updateReq category.UpdateRequest
+	var updateInput string
+	updateCmd := &cobra.Command{
+		Use:   updateSpec.Use,
+		Short: updateSpec.Short,
+		Long:  BuildLongDescription(updateSpec),
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			opts, warnings, appErr := prepareOutputOptions(cmd, updateSpec, globals)
+			if appErr != nil {
+				return writeCommandError(cmd, opts, output.Meta{Command: "category update"}, appErr)
+			}
+			input, err := jsoninput.ParseObject(updateInput, cmd.InOrStdin(), "category")
+			if err != nil {
+				return writeCommandError(cmd, opts, output.Meta{Command: "category update"}, err)
+			}
+
+			updateReq.ConfigPath = globals.Config
+			updateReq.Profile = globals.Profile
+			updateReq.Env = config.LookupEnv()
+			updateReq.Timeout = timeoutFromGlobals(globals)
+			updateReq.MaxRetries = globals.MaxRetries
+			updateReq.Input = input
+			updateReq.DryRun = globals.DryRun
+
+			start := time.Now()
+			result, err := deps.Category.Update(cmd.Context(), updateReq)
+			meta := output.Meta{
+				Command:    "category update",
+				Profile:    resultProfile(result),
+				DurationMS: time.Since(start).Milliseconds(),
+			}
+			if result != nil {
+				meta.RequestID = result.RequestID
+			}
+			if err != nil {
+				return writeCommandError(cmd, opts, meta, err)
+			}
+			writeWarnings(cmd.ErrOrStderr(), opts, warnings)
+			return output.RenderSuccess(cmd.OutOrStdout(), opts, output.Result{
+				Data:          categoryUpdateData(result),
+				RawBody:       result.RawBody,
+				Warnings:      warnings,
+				Meta:          meta,
+				HumanRenderer: output.JSONRenderer{},
+			})
+		},
+	}
+	updateCmd.Flags().StringVar(&updateReq.ID, "id", "", "category ID")
+	updateCmd.Flags().StringVar(&updateInput, "input", "", "category JSON input as inline JSON, @file, or - for stdin")
+	_ = updateCmd.MarkFlagRequired("id")
+	_ = updateCmd.MarkFlagRequired("input")
+
+	deleteSpec, _ := FindCommand("category", "delete")
+	var deleteReq category.DeleteRequest
+	var deleteYes bool
+	deleteCmd := &cobra.Command{
+		Use:   deleteSpec.Use,
+		Short: deleteSpec.Short,
+		Long:  BuildLongDescription(deleteSpec),
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			opts, warnings, appErr := prepareOutputOptions(cmd, deleteSpec, globals)
+			if appErr != nil {
+				return writeCommandError(cmd, opts, output.Meta{Command: "category delete"}, appErr)
+			}
+			if !deleteYes {
+				return writeCommandError(cmd, opts, output.Meta{Command: "category delete"}, output.Usage("confirmation_required", "--yes is required for category delete", "rerun with --yes to delete the category"))
+			}
+
+			deleteReq.ConfigPath = globals.Config
+			deleteReq.Profile = globals.Profile
+			deleteReq.Env = config.LookupEnv()
+			deleteReq.Timeout = timeoutFromGlobals(globals)
+			deleteReq.MaxRetries = globals.MaxRetries
+			deleteReq.DryRun = globals.DryRun
+
+			start := time.Now()
+			result, err := deps.Category.Delete(cmd.Context(), deleteReq)
+			meta := output.Meta{
+				Command:    "category delete",
+				Profile:    resultProfile(result),
+				DurationMS: time.Since(start).Milliseconds(),
+			}
+			if result != nil {
+				meta.RequestID = result.RequestID
+			}
+			if err != nil {
+				return writeCommandError(cmd, opts, meta, err)
+			}
+			writeWarnings(cmd.ErrOrStderr(), opts, warnings)
+
+			humanRenderer := output.HumanRenderer(output.LinesRenderer{
+				Lines: func(data any) ([]string, error) {
+					res := data.(*category.DeleteResponse)
+					return []string{fmt.Sprintf("deleted category %s", res.ID)}, nil
+				},
+			})
+			data := categoryDeleteData(result)
+			if result.DryRun != nil {
+				humanRenderer = output.JSONRenderer{}
+			}
+			return output.RenderSuccess(cmd.OutOrStdout(), opts, output.Result{
+				Data:          data,
+				RawBody:       result.RawBody,
+				Warnings:      warnings,
+				Meta:          meta,
+				HumanRenderer: humanRenderer,
+			})
+		},
+	}
+	deleteCmd.Flags().StringVar(&deleteReq.ID, "id", "", "category ID")
+	deleteCmd.Flags().BoolVar(&deleteYes, "yes", false, "confirm category deletion")
+	_ = deleteCmd.MarkFlagRequired("id")
+
+	categoryCmd.AddCommand(listCmd, getCmd, createCmd, updateCmd, deleteCmd)
+	return categoryCmd
 }
 
 func newClientCommand(deps Dependencies, globals *globalOptions) *cobra.Command {
@@ -1606,6 +1890,269 @@ func newProductCommand(deps Dependencies, globals *globalOptions) *cobra.Command
 	return productCmd
 }
 
+func newPaymentCommand(deps Dependencies, globals *globalOptions) *cobra.Command {
+	paymentCmd := &cobra.Command{
+		Use:   "payment",
+		Short: "Read and manage payments",
+	}
+
+	listSpec, _ := FindCommand("payment", "list")
+	listReq := payment.ListRequest{Page: 1, PerPage: 25}
+	listCmd := &cobra.Command{
+		Use:   listSpec.Use,
+		Short: listSpec.Short,
+		Long:  BuildLongDescription(listSpec),
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			opts, warnings, appErr := prepareOutputOptions(cmd, listSpec, globals)
+			if appErr != nil {
+				return writeCommandError(cmd, opts, output.Meta{Command: "payment list"}, appErr)
+			}
+			listReq.ConfigPath = globals.Config
+			listReq.Profile = globals.Profile
+			listReq.Env = config.LookupEnv()
+			listReq.Timeout = timeoutFromGlobals(globals)
+			listReq.MaxRetries = globals.MaxRetries
+
+			start := time.Now()
+			result, err := deps.Payment.List(cmd.Context(), listReq)
+			meta := output.Meta{
+				Command:    "payment list",
+				Profile:    resultProfile(result),
+				DurationMS: time.Since(start).Milliseconds(),
+			}
+			if result != nil {
+				meta.RequestID = result.RequestID
+				meta.Pagination = &result.Pagination
+			}
+			if err != nil {
+				return writeCommandError(cmd, opts, meta, err)
+			}
+			writeWarnings(cmd.ErrOrStderr(), opts, warnings)
+			return output.RenderSuccess(cmd.OutOrStdout(), opts, output.Result{
+				Data:           result.Payments,
+				RawBody:        result.RawBody,
+				Warnings:       warnings,
+				Meta:           meta,
+				HumanRenderer:  output.TableRenderer{},
+				DefaultColumns: defaultColumns(listSpec, []string{"id", "name", "price", "paid", "kind"}),
+			})
+		},
+	}
+	listCmd.Flags().IntVar(&listReq.Page, "page", 1, "requested result page")
+	listCmd.Flags().IntVar(&listReq.PerPage, "per-page", 25, "requested result count per page")
+	listCmd.Flags().StringSliceVar(&listReq.Include, "include", nil, "README-backed payment includes such as invoices")
+
+	getSpec, _ := FindCommand("payment", "get")
+	var getReq payment.GetRequest
+	getCmd := &cobra.Command{
+		Use:   getSpec.Use,
+		Short: getSpec.Short,
+		Long:  BuildLongDescription(getSpec),
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			opts, warnings, appErr := prepareOutputOptions(cmd, getSpec, globals)
+			if appErr != nil {
+				return writeCommandError(cmd, opts, output.Meta{Command: "payment get"}, appErr)
+			}
+			getReq.ConfigPath = globals.Config
+			getReq.Profile = globals.Profile
+			getReq.Env = config.LookupEnv()
+			getReq.Timeout = timeoutFromGlobals(globals)
+			getReq.MaxRetries = globals.MaxRetries
+
+			start := time.Now()
+			result, err := deps.Payment.Get(cmd.Context(), getReq)
+			meta := output.Meta{
+				Command:    "payment get",
+				Profile:    resultProfile(result),
+				DurationMS: time.Since(start).Milliseconds(),
+			}
+			if result != nil {
+				meta.RequestID = result.RequestID
+			}
+			if err != nil {
+				return writeCommandError(cmd, opts, meta, err)
+			}
+			writeWarnings(cmd.ErrOrStderr(), opts, warnings)
+			return output.RenderSuccess(cmd.OutOrStdout(), opts, output.Result{
+				Data:          result.Payment,
+				RawBody:       result.RawBody,
+				Warnings:      warnings,
+				Meta:          meta,
+				HumanRenderer: output.JSONRenderer{},
+			})
+		},
+	}
+	getCmd.Flags().StringVar(&getReq.ID, "id", "", "payment ID")
+	_ = getCmd.MarkFlagRequired("id")
+
+	createSpec, _ := FindCommand("payment", "create")
+	var createInput string
+	createCmd := &cobra.Command{
+		Use:   createSpec.Use,
+		Short: createSpec.Short,
+		Long:  BuildLongDescription(createSpec),
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			opts, warnings, appErr := prepareOutputOptions(cmd, createSpec, globals)
+			if appErr != nil {
+				return writeCommandError(cmd, opts, output.Meta{Command: "payment create"}, appErr)
+			}
+			input, err := jsoninput.ParseObject(createInput, cmd.InOrStdin(), "payment")
+			if err != nil {
+				return writeCommandError(cmd, opts, output.Meta{Command: "payment create"}, err)
+			}
+
+			start := time.Now()
+			result, err := deps.Payment.Create(cmd.Context(), payment.CreateRequest{
+				ConfigPath: globals.Config,
+				Profile:    globals.Profile,
+				Env:        config.LookupEnv(),
+				Timeout:    timeoutFromGlobals(globals),
+				MaxRetries: globals.MaxRetries,
+				Input:      input,
+				DryRun:     globals.DryRun,
+			})
+			meta := output.Meta{
+				Command:    "payment create",
+				Profile:    resultProfile(result),
+				DurationMS: time.Since(start).Milliseconds(),
+			}
+			if result != nil {
+				meta.RequestID = result.RequestID
+			}
+			if err != nil {
+				return writeCommandError(cmd, opts, meta, err)
+			}
+			writeWarnings(cmd.ErrOrStderr(), opts, warnings)
+			return output.RenderSuccess(cmd.OutOrStdout(), opts, output.Result{
+				Data:          paymentCreateData(result),
+				RawBody:       result.RawBody,
+				Warnings:      warnings,
+				Meta:          meta,
+				HumanRenderer: output.JSONRenderer{},
+			})
+		},
+	}
+	createCmd.Flags().StringVar(&createInput, "input", "", "payment JSON input as inline JSON, @file, or - for stdin")
+	_ = createCmd.MarkFlagRequired("input")
+
+	updateSpec, _ := FindCommand("payment", "update")
+	var updateReq payment.UpdateRequest
+	var updateInput string
+	updateCmd := &cobra.Command{
+		Use:   updateSpec.Use,
+		Short: updateSpec.Short,
+		Long:  BuildLongDescription(updateSpec),
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			opts, warnings, appErr := prepareOutputOptions(cmd, updateSpec, globals)
+			if appErr != nil {
+				return writeCommandError(cmd, opts, output.Meta{Command: "payment update"}, appErr)
+			}
+			input, err := jsoninput.ParseObject(updateInput, cmd.InOrStdin(), "payment")
+			if err != nil {
+				return writeCommandError(cmd, opts, output.Meta{Command: "payment update"}, err)
+			}
+
+			updateReq.ConfigPath = globals.Config
+			updateReq.Profile = globals.Profile
+			updateReq.Env = config.LookupEnv()
+			updateReq.Timeout = timeoutFromGlobals(globals)
+			updateReq.MaxRetries = globals.MaxRetries
+			updateReq.Input = input
+			updateReq.DryRun = globals.DryRun
+
+			start := time.Now()
+			result, err := deps.Payment.Update(cmd.Context(), updateReq)
+			meta := output.Meta{
+				Command:    "payment update",
+				Profile:    resultProfile(result),
+				DurationMS: time.Since(start).Milliseconds(),
+			}
+			if result != nil {
+				meta.RequestID = result.RequestID
+			}
+			if err != nil {
+				return writeCommandError(cmd, opts, meta, err)
+			}
+			writeWarnings(cmd.ErrOrStderr(), opts, warnings)
+			return output.RenderSuccess(cmd.OutOrStdout(), opts, output.Result{
+				Data:          paymentUpdateData(result),
+				RawBody:       result.RawBody,
+				Warnings:      warnings,
+				Meta:          meta,
+				HumanRenderer: output.JSONRenderer{},
+			})
+		},
+	}
+	updateCmd.Flags().StringVar(&updateReq.ID, "id", "", "payment ID")
+	updateCmd.Flags().StringVar(&updateInput, "input", "", "payment JSON input as inline JSON, @file, or - for stdin")
+	_ = updateCmd.MarkFlagRequired("id")
+	_ = updateCmd.MarkFlagRequired("input")
+
+	deleteSpec, _ := FindCommand("payment", "delete")
+	var deleteReq payment.DeleteRequest
+	var deleteYes bool
+	deleteCmd := &cobra.Command{
+		Use:   deleteSpec.Use,
+		Short: deleteSpec.Short,
+		Long:  BuildLongDescription(deleteSpec),
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			opts, warnings, appErr := prepareOutputOptions(cmd, deleteSpec, globals)
+			if appErr != nil {
+				return writeCommandError(cmd, opts, output.Meta{Command: "payment delete"}, appErr)
+			}
+			if !deleteYes {
+				return writeCommandError(cmd, opts, output.Meta{Command: "payment delete"}, output.Usage("confirmation_required", "--yes is required for payment delete", "rerun with --yes to delete the payment"))
+			}
+
+			deleteReq.ConfigPath = globals.Config
+			deleteReq.Profile = globals.Profile
+			deleteReq.Env = config.LookupEnv()
+			deleteReq.Timeout = timeoutFromGlobals(globals)
+			deleteReq.MaxRetries = globals.MaxRetries
+			deleteReq.DryRun = globals.DryRun
+
+			start := time.Now()
+			result, err := deps.Payment.Delete(cmd.Context(), deleteReq)
+			meta := output.Meta{
+				Command:    "payment delete",
+				Profile:    resultProfile(result),
+				DurationMS: time.Since(start).Milliseconds(),
+			}
+			if result != nil {
+				meta.RequestID = result.RequestID
+			}
+			if err != nil {
+				return writeCommandError(cmd, opts, meta, err)
+			}
+			writeWarnings(cmd.ErrOrStderr(), opts, warnings)
+
+			humanRenderer := output.HumanRenderer(output.LinesRenderer{
+				Lines: func(data any) ([]string, error) {
+					res := data.(*payment.DeleteResponse)
+					return []string{fmt.Sprintf("deleted payment %s", res.ID)}, nil
+				},
+			})
+			data := paymentDeleteData(result)
+			if result.DryRun != nil {
+				humanRenderer = output.JSONRenderer{}
+			}
+			return output.RenderSuccess(cmd.OutOrStdout(), opts, output.Result{
+				Data:          data,
+				RawBody:       result.RawBody,
+				Warnings:      warnings,
+				Meta:          meta,
+				HumanRenderer: humanRenderer,
+			})
+		},
+	}
+	deleteCmd.Flags().StringVar(&deleteReq.ID, "id", "", "payment ID")
+	deleteCmd.Flags().BoolVar(&deleteYes, "yes", false, "confirm payment deletion")
+	_ = deleteCmd.MarkFlagRequired("id")
+
+	paymentCmd.AddCommand(listCmd, getCmd, createCmd, updateCmd, deleteCmd)
+	return paymentCmd
+}
+
 func newPriceListCommand(deps Dependencies, globals *globalOptions) *cobra.Command {
 	priceListCmd := &cobra.Command{
 		Use:   "price-list",
@@ -2445,6 +2992,36 @@ func clientDeleteData(result *client.DeleteResponse) any {
 	return result
 }
 
+func categoryCreateData(result *category.CreateResponse) any {
+	if result == nil {
+		return nil
+	}
+	if result.DryRun != nil {
+		return result.DryRun
+	}
+	return result.Category
+}
+
+func categoryUpdateData(result *category.UpdateResponse) any {
+	if result == nil {
+		return nil
+	}
+	if result.DryRun != nil {
+		return result.DryRun
+	}
+	return result.Category
+}
+
+func categoryDeleteData(result *category.DeleteResponse) any {
+	if result == nil {
+		return nil
+	}
+	if result.DryRun != nil {
+		return result.DryRun
+	}
+	return result
+}
+
 func productCreateData(result *product.CreateResponse) any {
 	if result == nil {
 		return nil
@@ -2463,6 +3040,36 @@ func productUpdateData(result *product.UpdateResponse) any {
 		return result.DryRun
 	}
 	return result.Product
+}
+
+func paymentCreateData(result *payment.CreateResponse) any {
+	if result == nil {
+		return nil
+	}
+	if result.DryRun != nil {
+		return result.DryRun
+	}
+	return result.Payment
+}
+
+func paymentUpdateData(result *payment.UpdateResponse) any {
+	if result == nil {
+		return nil
+	}
+	if result.DryRun != nil {
+		return result.DryRun
+	}
+	return result.Payment
+}
+
+func paymentDeleteData(result *payment.DeleteResponse) any {
+	if result == nil {
+		return nil
+	}
+	if result.DryRun != nil {
+		return result.DryRun
+	}
+	return result
 }
 
 func priceListCreateData(result *pricelist.CreateResponse) any {

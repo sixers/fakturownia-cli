@@ -132,6 +132,14 @@ func (c *Client) PutJSONQuery(ctx context.Context, path string, query url.Values
 	return c.doJSON(ctx, http.MethodPut, path, query, payload, dest)
 }
 
+func (c *Client) PatchJSON(ctx context.Context, path string, payload map[string]any, dest any) (*Response, error) {
+	return c.doJSON(ctx, http.MethodPatch, path, nil, payload, dest)
+}
+
+func (c *Client) PatchJSONQuery(ctx context.Context, path string, query url.Values, payload map[string]any, dest any) (*Response, error) {
+	return c.doJSON(ctx, http.MethodPatch, path, query, payload, dest)
+}
+
 func (c *Client) DeleteJSON(ctx context.Context, path string, payload map[string]any, dest any) (*Response, error) {
 	return c.doJSON(ctx, http.MethodDelete, path, nil, payload, dest)
 }

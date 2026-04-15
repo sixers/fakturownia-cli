@@ -49,8 +49,8 @@ metadata:
 
 - `schema list` enumerates supported commands.
 - `schema <noun> <verb>` returns flags, env vars, examples, exit codes, output modes, and output schema details.
-- For product, client, invoice, and recurring commands, inspect `output.known_fields`, `path_syntax`, and the generated `data_schema` before building `--fields` selectors.
-- For product, client, invoice, and recurring write commands, inspect `request_body_schema` before constructing `--input` payloads.
+- For category, client, invoice, payment, product, and recurring commands, inspect `output.known_fields`, `path_syntax`, and the generated `data_schema` before building `--fields` selectors.
+- For category, client, invoice, payment, product, and recurring write commands, inspect `request_body_schema` before constructing `--input` payloads.
 
 ## Examples
 

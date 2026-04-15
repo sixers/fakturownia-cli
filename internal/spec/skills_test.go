@@ -36,7 +36,9 @@ func TestGeneratedSkillFilesMatchGolden(t *testing.T) {
 		bundleRootSkillPath(),
 		bundleIndexPath(),
 		skillAreaPath(sharedSkillArea(SkillBundle())),
+		filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "categories", "SKILL.md")),
 		filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "clients", "SKILL.md")),
+		filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "payments", "SKILL.md")),
 		filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "products", "SKILL.md")),
 		filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "price-lists", "SKILL.md")),
 		filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "invoices", "SKILL.md")),
@@ -141,6 +143,52 @@ func TestClientsSkillIncludesRequestDiscovery(t *testing.T) {
 	for _, needle := range want {
 		if !strings.Contains(clients, needle) {
 			t.Fatalf("expected clients skill to include %q: %s", needle, clients)
+		}
+	}
+}
+
+func TestCategoriesSkillIncludesRequestDiscovery(t *testing.T) {
+	t.Parallel()
+
+	files, err := RenderSkillFiles()
+	if err != nil {
+		t.Fatalf("RenderSkillFiles() error = %v", err)
+	}
+	byPath := generatedFileMap(files)
+
+	categories := byPath[filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "categories", "SKILL.md"))]
+	want := []string{
+		"fakturownia schema category list --json",
+		"fakturownia schema category create --json",
+		"request_body_schema",
+		"`--input` accepts inline JSON, `@file`, or `-` for stdin",
+	}
+	for _, needle := range want {
+		if !strings.Contains(categories, needle) {
+			t.Fatalf("expected categories skill to include %q: %s", needle, categories)
+		}
+	}
+}
+
+func TestPaymentsSkillIncludesRequestDiscovery(t *testing.T) {
+	t.Parallel()
+
+	files, err := RenderSkillFiles()
+	if err != nil {
+		t.Fatalf("RenderSkillFiles() error = %v", err)
+	}
+	byPath := generatedFileMap(files)
+
+	payments := byPath[filepath.ToSlash(filepath.Join("skills", "fakturownia", "subskills", "payments", "SKILL.md"))]
+	want := []string{
+		"fakturownia schema payment list --json",
+		"fakturownia schema payment create --json",
+		"`--include invoices`",
+		"invoice_ids[]",
+	}
+	for _, needle := range want {
+		if !strings.Contains(payments, needle) {
+			t.Fatalf("expected payments skill to include %q: %s", needle, payments)
 		}
 	}
 }

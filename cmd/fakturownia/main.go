@@ -4,9 +4,11 @@ import (
 	"os"
 
 	"github.com/sixers/fakturownia-cli/internal/auth"
+	"github.com/sixers/fakturownia-cli/internal/category"
 	"github.com/sixers/fakturownia-cli/internal/client"
 	"github.com/sixers/fakturownia-cli/internal/doctor"
 	"github.com/sixers/fakturownia-cli/internal/invoice"
+	"github.com/sixers/fakturownia-cli/internal/payment"
 	"github.com/sixers/fakturownia-cli/internal/pricelist"
 	"github.com/sixers/fakturownia-cli/internal/product"
 	"github.com/sixers/fakturownia-cli/internal/recurring"
@@ -23,8 +25,10 @@ func main() {
 
 	root := spec.NewRootCommand(spec.Dependencies{
 		Auth:      auth.NewService(store),
+		Category:  category.NewService(store),
 		Client:    client.NewService(store),
 		Invoice:   invoice.NewService(store),
+		Payment:   payment.NewService(store),
 		PriceList: pricelist.NewService(store),
 		Product:   product.NewService(store),
 		Recurring: recurring.NewService(store),

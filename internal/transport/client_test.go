@@ -205,6 +205,38 @@ func TestClientPutJSONQueryPreservesBodyAndQuery(t *testing.T) {
 	}
 }
 
+func TestClientPatchJSONUsesBodyToken(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPatch {
+			t.Fatalf("expected PATCH, got %s", r.Method)
+		}
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			t.Fatalf("ReadAll() error = %v", err)
+		}
+		var payload map[string]any
+		if err := json.Unmarshal(body, &payload); err != nil {
+			t.Fatalf("Unmarshal() error = %v", err)
+		}
+		if payload["api_token"] != "token" {
+			t.Fatalf("expected api_token in request body, got %#v", payload["api_token"])
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{"ok": true})
+	}))
+	defer server.Close()
+
+	client, err := NewClient(server.URL, "token", 5*time.Second, 0, server.Client())
+	if err != nil {
+		t.Fatalf("NewClient() error = %v", err)
+	}
+
+	if _, err := client.PatchJSON(context.Background(), "/banking/payments/1.json", map[string]any{"banking_payment": map[string]any{"name": "Renamed"}}, &map[string]any{}); err != nil {
+		t.Fatalf("PatchJSON() error = %v", err)
+	}
+}
+
 func TestUploadMultipartPostsFieldsAndFile(t *testing.T) {
 	t.Parallel()
 

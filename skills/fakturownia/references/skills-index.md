@@ -21,7 +21,9 @@ Task-focused API area skills.
 
 | Skill | Description |
 | --- | --- |
+| [fakturownia-categories](../subskills/categories/SKILL.md) | Fakturownia CLI categories: list, fetch, create, update, and delete categories, and inspect README-backed category fields and request schemas. |
 | [fakturownia-clients](../subskills/clients/SKILL.md) | Fakturownia CLI clients: list, fetch, create, update, and delete clients, and inspect README-backed client fields and request schemas. |
+| [fakturownia-payments](../subskills/payments/SKILL.md) | Fakturownia CLI payments: list, fetch, create, update, and delete banking payments, including the README-backed `include=invoices` list mode and request-body discovery. |
 | [fakturownia-products](../subskills/products/SKILL.md) | Fakturownia CLI products: list, fetch, create, and update products, including warehouse-aware reads and README-backed request schemas. |
 | [fakturownia-price-lists](../subskills/price-lists/SKILL.md) | Fakturownia CLI price lists: list, fetch, create, update, and delete price lists, including upstream-shaped position payloads and schema-backed discovery. |
 | [fakturownia-invoices](../subskills/invoices/SKILL.md) | Fakturownia CLI invoices: list, fetch, create, update, delete, email, cancel, print, attach files, derive public links, and discover invoice fields and payloads through schema output. |

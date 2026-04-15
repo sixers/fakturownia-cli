@@ -8,7 +8,7 @@ Generated skill docs for the installable `fakturownia` bundle.
 
 | Skill | Description |
 | --- | --- |
-| [fakturownia](../skills/fakturownia/SKILL.md) | Fakturownia CLI bundle: shared guidance, auth, clients, products, price lists, invoices, recurrings, warehouse documents, self-update, schema discovery, diagnostics, and generated invoice recipes for the `fakturownia` command. Use when an agent needs to work with Fakturownia through this CLI. |
+| [fakturownia](../skills/fakturownia/SKILL.md) | Fakturownia CLI bundle: shared guidance, auth, categories, clients, payments, products, price lists, invoices, recurrings, warehouse documents, self-update, schema discovery, diagnostics, and generated invoice recipes for the `fakturownia` command. Use when an agent needs to work with Fakturownia through this CLI. |
 
 ## Core
 
@@ -27,7 +27,9 @@ Task-focused API area skills.
 
 | Skill | Description |
 | --- | --- |
+| [fakturownia-categories](../skills/fakturownia/subskills/categories/SKILL.md) | Fakturownia CLI categories: list, fetch, create, update, and delete categories, and inspect README-backed category fields and request schemas. |
 | [fakturownia-clients](../skills/fakturownia/subskills/clients/SKILL.md) | Fakturownia CLI clients: list, fetch, create, update, and delete clients, and inspect README-backed client fields and request schemas. |
+| [fakturownia-payments](../skills/fakturownia/subskills/payments/SKILL.md) | Fakturownia CLI payments: list, fetch, create, update, and delete banking payments, including the README-backed `include=invoices` list mode and request-body discovery. |
 | [fakturownia-products](../skills/fakturownia/subskills/products/SKILL.md) | Fakturownia CLI products: list, fetch, create, and update products, including warehouse-aware reads and README-backed request schemas. |
 | [fakturownia-price-lists](../skills/fakturownia/subskills/price-lists/SKILL.md) | Fakturownia CLI price lists: list, fetch, create, update, and delete price lists, including upstream-shaped position payloads and schema-backed discovery. |
 | [fakturownia-invoices](../skills/fakturownia/subskills/invoices/SKILL.md) | Fakturownia CLI invoices: list, fetch, create, update, delete, email, cancel, print, attach files, derive public links, and discover invoice fields and payloads through schema output. |

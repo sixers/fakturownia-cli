@@ -21,6 +21,36 @@
       "verb": "logout"
     },
     {
+      "noun": "category",
+      "summary": "List categories",
+      "use": "list",
+      "verb": "list"
+    },
+    {
+      "noun": "category",
+      "summary": "Fetch a single category by ID",
+      "use": "get --id ID",
+      "verb": "get"
+    },
+    {
+      "noun": "category",
+      "summary": "Create a category",
+      "use": "create --input -|@file|JSON",
+      "verb": "create"
+    },
+    {
+      "noun": "category",
+      "summary": "Update a category",
+      "use": "update --id ID --input -|@file|JSON",
+      "verb": "update"
+    },
+    {
+      "noun": "category",
+      "summary": "Delete a category",
+      "use": "delete --id ID --yes",
+      "verb": "delete"
+    },
+    {
       "noun": "invoice",
       "summary": "List invoices",
       "use": "list",
@@ -143,6 +173,36 @@
     {
       "noun": "client",
       "summary": "Delete a client",
+      "use": "delete --id ID --yes",
+      "verb": "delete"
+    },
+    {
+      "noun": "payment",
+      "summary": "List payments",
+      "use": "list",
+      "verb": "list"
+    },
+    {
+      "noun": "payment",
+      "summary": "Fetch a single payment by ID",
+      "use": "get --id ID",
+      "verb": "get"
+    },
+    {
+      "noun": "payment",
+      "summary": "Create a payment",
+      "use": "create --input -|@file|JSON",
+      "verb": "create"
+    },
+    {
+      "noun": "payment",
+      "summary": "Update a payment",
+      "use": "update --id ID --input -|@file|JSON",
+      "verb": "update"
+    },
+    {
+      "noun": "payment",
+      "summary": "Delete a payment",
       "use": "delete --id ID --yes",
       "verb": "delete"
     },

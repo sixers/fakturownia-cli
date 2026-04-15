@@ -251,6 +251,14 @@ func renderAreaSkill(bundle SkillBundleSpec, area SkillAreaSpec) (string, error)
 		writeClientsDiscoverySection(&b)
 	}
 
+	if area.Key == "categories" {
+		writeCategoriesDiscoverySection(&b)
+	}
+
+	if area.Key == "payments" {
+		writePaymentsDiscoverySection(&b)
+	}
+
 	if area.Key == "products" {
 		writeProductsDiscoverySection(&b)
 	}
@@ -259,8 +267,8 @@ func renderAreaSkill(bundle SkillBundleSpec, area SkillAreaSpec) (string, error)
 		b.WriteString("## Schema Output\n\n")
 		b.WriteString("- `schema list` enumerates supported commands.\n")
 		b.WriteString("- `schema <noun> <verb>` returns flags, env vars, examples, exit codes, output modes, and output schema details.\n")
-		b.WriteString("- For product, client, invoice, and recurring commands, inspect `output.known_fields`, `path_syntax`, and the generated `data_schema` before building `--fields` selectors.\n")
-		b.WriteString("- For product, client, invoice, and recurring write commands, inspect `request_body_schema` before constructing `--input` payloads.\n\n")
+		b.WriteString("- For category, client, invoice, payment, product, and recurring commands, inspect `output.known_fields`, `path_syntax`, and the generated `data_schema` before building `--fields` selectors.\n")
+		b.WriteString("- For category, client, invoice, payment, product, and recurring write commands, inspect `request_body_schema` before constructing `--input` payloads.\n\n")
 	}
 
 	if area.Key == "doctor" {
@@ -353,6 +361,23 @@ func writeClientsDiscoverySection(b *strings.Builder) {
 	b.WriteString("- Read `output.known_fields` to discover README-backed client output fields such as `name`, `tax_no`, or `tag_list[]`.\n")
 	b.WriteString("- Use `fakturownia schema client create --json` and `fakturownia schema client update --json` to inspect `request_body_schema` and accepted `--input` modes.\n")
 	b.WriteString("- `--input` accepts inline JSON, `@file`, or `-` for stdin, and the CLI wraps the inner object into the upstream `client` envelope.\n\n")
+}
+
+func writeCategoriesDiscoverySection(b *strings.Builder) {
+	b.WriteString("## Output and Request Discovery\n\n")
+	b.WriteString("- Use `fakturownia schema category list --json` and `fakturownia schema category get --json` before building selectors.\n")
+	b.WriteString("- Read `output.known_fields` to discover README-backed category output fields such as `name` and `description`.\n")
+	b.WriteString("- Use `fakturownia schema category create --json` and `fakturownia schema category update --json` to inspect `request_body_schema` and accepted `--input` modes.\n")
+	b.WriteString("- `--input` accepts inline JSON, `@file`, or `-` for stdin, and the CLI wraps the inner object into the upstream `category` envelope.\n\n")
+}
+
+func writePaymentsDiscoverySection(b *strings.Builder) {
+	b.WriteString("## Output and Request Discovery\n\n")
+	b.WriteString("- Use `fakturownia schema payment list --json` and `fakturownia schema payment get --json` before building selectors.\n")
+	b.WriteString("- Read `output.known_fields` to discover README-backed payment output fields such as `name`, `price`, `paid`, `kind`, and conditional `invoices[]`.\n")
+	b.WriteString("- Use `fakturownia schema payment create --json` and `fakturownia schema payment update --json` to inspect `request_body_schema` and accepted `--input` modes.\n")
+	b.WriteString("- `--input` accepts inline JSON, `@file`, or `-` for stdin, and the CLI wraps the inner object into the upstream `banking_payment` envelope.\n")
+	b.WriteString("- Use `--include invoices` on `payment list` when you need the README-backed include mode, and inspect request fields such as `invoice_id` and `invoice_ids[]` before creating or updating payments.\n\n")
 }
 
 func writeProductsDiscoverySection(b *strings.Builder) {

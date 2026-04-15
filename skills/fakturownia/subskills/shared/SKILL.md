@@ -68,6 +68,9 @@ metadata:
 ```bash
 fakturownia auth login --prefix acme --api-token $FAKTUROWNIA_API_TOKEN
 fakturownia auth login --url https://acme.fakturownia.pl --api-token TOKEN --profile work --set-default
+fakturownia category list --json
+fakturownia category list --columns id,name,description
+fakturownia category list --page 2 --per-page 25 --raw
 fakturownia schema list
 fakturownia schema list --json
 fakturownia self update
@@ -77,6 +80,10 @@ fakturownia client list --json
 fakturownia client list --name Acme --columns id,name,email,country
 fakturownia client list --external-id ext-123 --json
 fakturownia client list --page 2 --per-page 25 --raw
+fakturownia payment list --json
+fakturownia payment list --include invoices --json
+fakturownia payment list --columns id,name,price,paid,kind
+fakturownia payment list --page 2 --per-page 25 --raw
 fakturownia product list --json
 fakturownia product list --date-from 2025-11-01 --json
 fakturownia product list --warehouse-id 7 --columns id,name,code,stock_level

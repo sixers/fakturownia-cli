@@ -17,6 +17,14 @@ The current implementation covers these command groups:
 - `auth status`
 - `auth logout`
 
+### Categories
+
+- `category list`
+- `category get`
+- `category create`
+- `category update`
+- `category delete`
+
 ### Clients
 
 - `client list`
@@ -24,6 +32,14 @@ The current implementation covers these command groups:
 - `client create`
 - `client update`
 - `client delete`
+
+### Payments
+
+- `payment list`
+- `payment get`
+- `payment create`
+- `payment update`
+- `payment delete`
 
 ### Products
 
@@ -264,8 +280,8 @@ Envelope shape:
 
 `schema` describes both the command contract and the README-backed output and request catalogs for supported resources.
 
-- `fakturownia schema invoice list --json`, `fakturownia schema invoice get --json`, `fakturownia schema client list --json`, `fakturownia schema product list --json`, `fakturownia schema price-list list --json`, `fakturownia schema price-list get --json`, `fakturownia schema recurring list --json`, `fakturownia schema warehouse-document list --json`, and `fakturownia schema warehouse-document get --json` expose `output.known_fields`
-- `fakturownia schema invoice create --json`, `fakturownia schema invoice update --json`, `fakturownia schema client create --json`, `fakturownia schema client update --json`, `fakturownia schema product create --json`, `fakturownia schema product update --json`, `fakturownia schema price-list create --json`, `fakturownia schema price-list update --json`, `fakturownia schema recurring create --json`, `fakturownia schema recurring update --json`, `fakturownia schema warehouse-document create --json`, and `fakturownia schema warehouse-document update --json` expose `request_body_schema`
+- `fakturownia schema invoice list --json`, `fakturownia schema invoice get --json`, `fakturownia schema category list --json`, `fakturownia schema category get --json`, `fakturownia schema client list --json`, `fakturownia schema payment list --json`, `fakturownia schema payment get --json`, `fakturownia schema product list --json`, `fakturownia schema price-list list --json`, `fakturownia schema price-list get --json`, `fakturownia schema recurring list --json`, `fakturownia schema warehouse-document list --json`, and `fakturownia schema warehouse-document get --json` expose `output.known_fields`
+- `fakturownia schema invoice create --json`, `fakturownia schema invoice update --json`, `fakturownia schema category create --json`, `fakturownia schema category update --json`, `fakturownia schema client create --json`, `fakturownia schema client update --json`, `fakturownia schema payment create --json`, `fakturownia schema payment update --json`, `fakturownia schema product create --json`, `fakturownia schema product update --json`, `fakturownia schema price-list create --json`, `fakturownia schema price-list update --json`, `fakturownia schema recurring create --json`, `fakturownia schema recurring update --json`, `fakturownia schema warehouse-document create --json`, and `fakturownia schema warehouse-document update --json` expose `request_body_schema`
 - `known_fields` and request body catalogs are curated from the upstream [Fakturownia README](https://github.com/fakturownia/API/blob/master/README.md)
 - nested paths use `dot_bracket` syntax such as `positions[].name`
 - the catalog is intentionally not exhaustive; syntactically valid paths outside the catalog are still allowed and produce warnings instead of hard failures
@@ -276,11 +292,15 @@ Examples:
 fakturownia schema invoice list --json
 fakturownia schema invoice create --json
 fakturownia schema recurring create --json
+fakturownia schema category create --json
 fakturownia schema client create --json
+fakturownia schema payment create --json
 fakturownia schema product create --json
 fakturownia schema price-list create --json
 fakturownia schema warehouse-document create --json
+fakturownia category list --fields name,description --json
 fakturownia client list --fields name,email --json
+fakturownia payment list --include invoices --fields name,price,paid --json
 fakturownia product list --fields name,code,stock_level --json
 fakturownia price-list get --id 8523 --fields id,name,price_list_positions[].price_gross --json
 fakturownia warehouse-document get --id 15 --fields id,kind,warehouse_actions[].quantity --json
@@ -309,6 +329,22 @@ fakturownia auth logout --yes
 fakturownia client list --json
 fakturownia client get --external-id ext-123 --json
 fakturownia client create --input '{"name":"Acme"}' --dry-run --json
+```
+
+### Categories
+
+```bash
+fakturownia category list --json
+fakturownia category get --id 100 --json
+fakturownia category create --input '{"name":"my_category","description":null}' --dry-run --json
+```
+
+### Payments
+
+```bash
+fakturownia payment list --include invoices --json
+fakturownia payment get --id 555 --json
+fakturownia payment create --input '{"name":"Payment 001","price":100.05,"invoice_id":null,"paid":true,"kind":"api"}' --dry-run --json
 ```
 
 ### Products
