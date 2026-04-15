@@ -4,4 +4,4 @@ dist/
 coverage.out
 *.test
 *.out
-fakturownia
+/fakturownia

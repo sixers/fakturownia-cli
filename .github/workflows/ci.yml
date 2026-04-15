@@ -28,5 +28,9 @@ jobs:
         run: go vet ./...
       - name: Staticcheck
         run: staticcheck ./...
+      - name: Check generated skills
+        run: |
+          go run ./cmd/gen-skills --check
+          git diff --exit-code
       - name: Smoke build
         run: go build ./cmd/fakturownia

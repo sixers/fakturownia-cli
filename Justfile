@@ -16,5 +16,8 @@ lint:
 build:
   {{go}} build ./cmd/fakturownia
 
+generate-skills:
+  {{go}} run ./cmd/gen-skills
+
 schema-help:
   {{go}} test ./internal/spec -run 'TestGolden' -count=1

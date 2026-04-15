@@ -23,6 +23,17 @@ The current implementation focuses on the first high-value read flows:
 
 The architecture is intentionally structured so more API resources can be added without changing the CLI contract.
 
+## Skills
+
+The repo ships a generated, single-installable skill bundle at `skills/fakturownia`.
+
+- root install target: `skills/fakturownia`
+- generated bundle-local index: `skills/fakturownia/references/skills-index.md`
+- generated repo index for browsing: `docs/skills.md`
+- regenerate from code: `just generate-skills`
+
+For GitHub-based skill installers, use repo `sixers/fakturownia-cli` with path `skills/fakturownia`.
+
 ## Install
 
 ### Install with the script
@@ -42,12 +53,12 @@ The installer:
 - installs `fakturownia` into `~/.local/bin` by default
 - prints a PATH hint if `~/.local/bin` is not already on your PATH
 - uses `GITHUB_TOKEN` or `GH_TOKEN` when set
-- falls back to `gh release download` when `gh` is installed and authenticated
+- can fall back to `gh release download` when `gh` is installed and authenticated
 
 Pin a specific version:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/sixers/fakturownia-cli/master/install.sh | VERSION=v0.1.0 bash
+curl -fsSL https://raw.githubusercontent.com/sixers/fakturownia-cli/master/install.sh | VERSION=v0.1.1 bash
 ```
 
 Install into a custom bin directory:
@@ -60,11 +71,29 @@ Run it from a local clone instead of piping from curl:
 
 ```bash
 ./install.sh
-VERSION=v0.1.0 ./install.sh
+VERSION=v0.1.1 ./install.sh
 BIN_DIR="$HOME/.local/bin" ./install.sh
 ```
 
-While the repo is still private, the local-clone path is the practical option. If `gh` is installed and authenticated, the script can still download private release assets. Once the repo is public, the `curl ... | bash` flow works as-is.
+The `curl ... | bash` path is the recommended install flow for public releases. Running `./install.sh` from a local clone is still handy for development or if you want to inspect the installer before executing it.
+
+### Update an existing install
+
+To update to the latest public release, rerun the installer:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/sixers/fakturownia-cli/master/install.sh | bash
+fakturownia --version
+```
+
+To pin a specific release during an update:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/sixers/fakturownia-cli/master/install.sh | VERSION=v0.1.1 bash
+fakturownia --version
+```
+
+The installer overwrites the existing `fakturownia` binary in `BIN_DIR` and leaves your config and keychain-stored token in place.
 
 ### Build from source
 
@@ -109,6 +138,7 @@ fakturownia --version
 Replace:
 
 - `VERSION` with a release tag such as `v0.1.0`
+  Example: `v0.1.1`
 - `OS` with `darwin` or `linux`
 - `ARCH` with `amd64` or `arm64`
 
