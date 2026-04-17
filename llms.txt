@@ -1,0 +1,32 @@
+# fakturownia-cli
+
+> Agent-first Go CLI for the Fakturownia API, with a generated installable skill bundle at `skills/fakturownia`.
+
+## Canonical Sources
+
+- README: https://github.com/sixers/fakturownia-cli/blob/master/README.md
+- CLI contract registry: https://github.com/sixers/fakturownia-cli/blob/master/internal/spec/specs.go
+- Root command wiring: https://github.com/sixers/fakturownia-cli/blob/master/internal/spec/root.go
+- Output behavior: https://github.com/sixers/fakturownia-cli/tree/master/internal/output
+
+## Skill Bundle
+
+- Root skill: https://github.com/sixers/fakturownia-cli/blob/master/skills/fakturownia/SKILL.md
+- Bundle-local index: https://github.com/sixers/fakturownia-cli/blob/master/skills/fakturownia/references/skills-index.md
+- Recipes index: https://github.com/sixers/fakturownia-cli/blob/master/skills/fakturownia/recipes/index.md
+- Repo browsing index: https://github.com/sixers/fakturownia-cli/blob/master/docs/skills.md
+- Bundle manifest: https://github.com/sixers/fakturownia-cli/blob/master/skills/fakturownia/manifest.json
+- Bundle changelog: https://github.com/sixers/fakturownia-cli/blob/master/skills/fakturownia/CHANGELOG.md
+
+## Release And Install
+
+- Latest release: https://github.com/sixers/fakturownia-cli/releases/latest
+- Release tags: https://github.com/sixers/fakturownia-cli/tags
+- Install script: https://github.com/sixers/fakturownia-cli/blob/master/install.sh
+- Raw install script: https://raw.githubusercontent.com/sixers/fakturownia-cli/master/install.sh
+
+## Notes For Agents
+
+- Prefer the generated bundle at `skills/fakturownia` for agent use.
+- Use the Go source tree to verify stable CLI contracts and output behavior.
+- The default branch for this repository is `master`.
