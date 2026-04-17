@@ -50,7 +50,7 @@ func TestListBuildsQueryAndPagination(t *testing.T) {
 
 func TestGetReturnsPayment(t *testing.T) {
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/banking/payment/555.json" {
+		if r.URL.Path != "/banking/payments/555.json" {
 			t.Fatalf("unexpected path: %s", r.URL.Path)
 		}
 		_ = json.NewEncoder(w).Encode(map[string]any{

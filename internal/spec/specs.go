@@ -20,6 +20,8 @@ import (
 	"github.com/sixers/fakturownia-cli/internal/output"
 	"github.com/sixers/fakturownia-cli/internal/payment"
 	"github.com/sixers/fakturownia-cli/internal/pricelist"
+	"github.com/sixers/fakturownia-cli/internal/product"
+	"github.com/sixers/fakturownia-cli/internal/recurring"
 	"github.com/sixers/fakturownia-cli/internal/selfupdate"
 	"github.com/sixers/fakturownia-cli/internal/warehouse"
 	"github.com/sixers/fakturownia-cli/internal/warehousedocument"
@@ -1190,6 +1192,26 @@ func Registry() []CommandSpec {
 			RequestBody:   recurringRequestBodySpec(),
 		},
 		{
+			Noun:  "recurring",
+			Verb:  "delete",
+			Use:   "delete --id ID --yes",
+			Short: "Delete a recurring invoice definition",
+			Examples: []string{
+				"fakturownia recurring delete --id 111 --yes --json",
+				"fakturownia recurring delete --id 111 --yes --dry-run --json",
+			},
+			EnvVars:      env,
+			OutputModes:  []string{"human", "json"},
+			ExitCodes:    exitCodes,
+			RawSupported: false,
+			Mutating:     true,
+			LocalFlags: []FlagSpec{
+				{Name: "id", Type: "string", Description: "Recurring definition ID", Required: true},
+				{Name: "yes", Type: "bool", Description: "Confirm recurring definition deletion", Required: true, Default: "false"},
+			},
+			DataPrototype: recurring.DeleteResponse{},
+		},
+		{
 			Noun:  "client",
 			Verb:  "list",
 			Use:   "list",
@@ -1617,6 +1639,26 @@ func Registry() []CommandSpec {
 			DataPrototype: map[string]any{},
 			Output:        productGetOutputSpec("product update"),
 			RequestBody:   productUpdateRequestBodySpec(),
+		},
+		{
+			Noun:  "product",
+			Verb:  "delete",
+			Use:   "delete --id ID --yes",
+			Short: "Delete a product",
+			Examples: []string{
+				"fakturownia product delete --id 333 --yes --json",
+				"fakturownia product delete --id 333 --yes --dry-run --json",
+			},
+			EnvVars:      env,
+			OutputModes:  []string{"human", "json"},
+			ExitCodes:    exitCodes,
+			RawSupported: false,
+			Mutating:     true,
+			LocalFlags: []FlagSpec{
+				{Name: "id", Type: "string", Description: "Product ID", Required: true},
+				{Name: "yes", Type: "bool", Description: "Confirm product deletion", Required: true, Default: "false"},
+			},
+			DataPrototype: product.DeleteResponse{},
 		},
 		{
 			Noun:  "price-list",

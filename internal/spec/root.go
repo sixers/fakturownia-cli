@@ -125,6 +125,7 @@ type ProductService interface {
 	Get(context.Context, product.GetRequest) (*product.GetResponse, error)
 	Create(context.Context, product.CreateRequest) (*product.CreateResponse, error)
 	Update(context.Context, product.UpdateRequest) (*product.UpdateResponse, error)
+	Delete(context.Context, product.DeleteRequest) (*product.DeleteResponse, error)
 }
 
 type PriceListService interface {
@@ -139,6 +140,7 @@ type RecurringService interface {
 	List(context.Context, recurring.ListRequest) (*recurring.ListResponse, error)
 	Create(context.Context, recurring.CreateRequest) (*recurring.CreateResponse, error)
 	Update(context.Context, recurring.UpdateRequest) (*recurring.UpdateResponse, error)
+	Delete(context.Context, recurring.DeleteRequest) (*recurring.DeleteResponse, error)
 }
 
 type WarehouseDocumentService interface {
@@ -3025,7 +3027,68 @@ func newRecurringCommand(deps Dependencies, globals *globalOptions) *cobra.Comma
 	_ = updateCmd.MarkFlagRequired("id")
 	_ = updateCmd.MarkFlagRequired("input")
 
-	recurringCmd.AddCommand(listCmd, createCmd, updateCmd)
+	deleteSpec, _ := FindCommand("recurring", "delete")
+	var deleteReq recurring.DeleteRequest
+	var deleteYes bool
+	deleteCmd := &cobra.Command{
+		Use:   deleteSpec.Use,
+		Short: deleteSpec.Short,
+		Long:  BuildLongDescription(deleteSpec),
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			opts, warnings, appErr := prepareOutputOptions(cmd, deleteSpec, globals)
+			if appErr != nil {
+				return writeCommandError(cmd, opts, output.Meta{Command: "recurring delete"}, appErr)
+			}
+			if !deleteYes {
+				return writeCommandError(cmd, opts, output.Meta{Command: "recurring delete"}, output.Usage("confirmation_required", "--yes is required for recurring delete", "rerun with --yes to delete the recurring definition"))
+			}
+
+			deleteReq.ConfigPath = globals.Config
+			deleteReq.Profile = globals.Profile
+			deleteReq.Env = config.LookupEnv()
+			deleteReq.Timeout = timeoutFromGlobals(globals)
+			deleteReq.MaxRetries = globals.MaxRetries
+			deleteReq.DryRun = globals.DryRun
+
+			start := time.Now()
+			result, err := deps.Recurring.Delete(cmd.Context(), deleteReq)
+			meta := output.Meta{
+				Command:    "recurring delete",
+				Profile:    resultProfile(result),
+				DurationMS: time.Since(start).Milliseconds(),
+			}
+			if result != nil {
+				meta.RequestID = result.RequestID
+			}
+			if err != nil {
+				return writeCommandError(cmd, opts, meta, err)
+			}
+			writeWarnings(cmd.ErrOrStderr(), opts, warnings)
+
+			humanRenderer := output.HumanRenderer(output.LinesRenderer{
+				Lines: func(data any) ([]string, error) {
+					res := data.(*recurring.DeleteResponse)
+					return []string{fmt.Sprintf("deleted recurring definition %s", res.ID)}, nil
+				},
+			})
+			data := recurringDeleteData(result)
+			if result.DryRun != nil {
+				humanRenderer = output.JSONRenderer{}
+			}
+			return output.RenderSuccess(cmd.OutOrStdout(), opts, output.Result{
+				Data:          data,
+				RawBody:       result.RawBody,
+				Warnings:      warnings,
+				Meta:          meta,
+				HumanRenderer: humanRenderer,
+			})
+		},
+	}
+	deleteCmd.Flags().StringVar(&deleteReq.ID, "id", "", "recurring definition ID")
+	deleteCmd.Flags().BoolVar(&deleteYes, "yes", false, "confirm recurring definition deletion")
+	_ = deleteCmd.MarkFlagRequired("id")
+
+	recurringCmd.AddCommand(listCmd, createCmd, updateCmd, deleteCmd)
 	return recurringCmd
 }
 
@@ -3229,7 +3292,68 @@ func newProductCommand(deps Dependencies, globals *globalOptions) *cobra.Command
 	_ = updateCmd.MarkFlagRequired("id")
 	_ = updateCmd.MarkFlagRequired("input")
 
-	productCmd.AddCommand(listCmd, getCmd, createCmd, updateCmd)
+	deleteSpec, _ := FindCommand("product", "delete")
+	var deleteReq product.DeleteRequest
+	var deleteYes bool
+	deleteCmd := &cobra.Command{
+		Use:   deleteSpec.Use,
+		Short: deleteSpec.Short,
+		Long:  BuildLongDescription(deleteSpec),
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			opts, warnings, appErr := prepareOutputOptions(cmd, deleteSpec, globals)
+			if appErr != nil {
+				return writeCommandError(cmd, opts, output.Meta{Command: "product delete"}, appErr)
+			}
+			if !deleteYes {
+				return writeCommandError(cmd, opts, output.Meta{Command: "product delete"}, output.Usage("confirmation_required", "--yes is required for product delete", "rerun with --yes to delete the product"))
+			}
+
+			deleteReq.ConfigPath = globals.Config
+			deleteReq.Profile = globals.Profile
+			deleteReq.Env = config.LookupEnv()
+			deleteReq.Timeout = timeoutFromGlobals(globals)
+			deleteReq.MaxRetries = globals.MaxRetries
+			deleteReq.DryRun = globals.DryRun
+
+			start := time.Now()
+			result, err := deps.Product.Delete(cmd.Context(), deleteReq)
+			meta := output.Meta{
+				Command:    "product delete",
+				Profile:    resultProfile(result),
+				DurationMS: time.Since(start).Milliseconds(),
+			}
+			if result != nil {
+				meta.RequestID = result.RequestID
+			}
+			if err != nil {
+				return writeCommandError(cmd, opts, meta, err)
+			}
+			writeWarnings(cmd.ErrOrStderr(), opts, warnings)
+
+			humanRenderer := output.HumanRenderer(output.LinesRenderer{
+				Lines: func(data any) ([]string, error) {
+					res := data.(*product.DeleteResponse)
+					return []string{fmt.Sprintf("deleted product %s", res.ID)}, nil
+				},
+			})
+			data := productDeleteData(result)
+			if result.DryRun != nil {
+				humanRenderer = output.JSONRenderer{}
+			}
+			return output.RenderSuccess(cmd.OutOrStdout(), opts, output.Result{
+				Data:          data,
+				RawBody:       result.RawBody,
+				Warnings:      warnings,
+				Meta:          meta,
+				HumanRenderer: humanRenderer,
+			})
+		},
+	}
+	deleteCmd.Flags().StringVar(&deleteReq.ID, "id", "", "product ID")
+	deleteCmd.Flags().BoolVar(&deleteYes, "yes", false, "confirm product deletion")
+	_ = deleteCmd.MarkFlagRequired("id")
+
+	productCmd.AddCommand(listCmd, getCmd, createCmd, updateCmd, deleteCmd)
 	return productCmd
 }
 
@@ -5115,6 +5239,16 @@ func productUpdateData(result *product.UpdateResponse) any {
 	return result.Product
 }
 
+func productDeleteData(result *product.DeleteResponse) any {
+	if result == nil {
+		return nil
+	}
+	if result.DryRun != nil {
+		return result.DryRun
+	}
+	return result
+}
+
 func paymentCreateData(result *payment.CreateResponse) any {
 	if result == nil {
 		return nil
@@ -5355,6 +5489,16 @@ func recurringUpdateData(result *recurring.UpdateResponse) any {
 		return result.DryRun
 	}
 	return result.Recurring
+}
+
+func recurringDeleteData(result *recurring.DeleteResponse) any {
+	if result == nil {
+		return nil
+	}
+	if result.DryRun != nil {
+		return result.DryRun
+	}
+	return result
 }
 
 func warehouseDocumentCreateData(result *warehousedocument.CreateResponse) any {

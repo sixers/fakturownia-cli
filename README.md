@@ -84,6 +84,7 @@ The current implementation covers these command groups:
 - `product get`
 - `product create`
 - `product update`
+- `product delete`
 
 ### Price Lists
 
@@ -116,6 +117,7 @@ The current implementation covers these command groups:
 - `recurring list`
 - `recurring create`
 - `recurring update`
+- `recurring delete`
 
 ### Warehouses
 
@@ -610,6 +612,30 @@ just build
 ```
 
 Golden tests cover help and schema output for the public CLI contract. Run `just schema-help` when you want to refresh just that contract-focused test target.
+
+### Bun E2E
+
+The repo also ships Bun-based real-account e2e coverage under `e2e/`.
+
+Required environment:
+
+- `FAKTUROWNIA_BIN` defaults to `/Users/mateusz/.local/bin/fakturownia`
+- `FAKTUROWNIA_PROFILE` defaults to `cli`
+- `MAILTEST_API_BASE_URL` defaults to `https://api.mailtestapi.com`
+- `MAILTEST_API_KEY` must be set
+
+Run the suite with Bun's native parallel file execution and global preload setup:
+
+```bash
+bun install
+bun test
+```
+
+Or use the package script:
+
+```bash
+bun run test:e2e
+```
 
 ## Release
 

@@ -394,7 +394,7 @@ func SkillBundle() SkillBundleSpec {
 				Key:          "products",
 				Name:         "fakturownia-products",
 				Title:        "Products",
-				Description:  "Fakturownia CLI products: list, fetch, create, and update products, including warehouse-aware reads and README-backed request schemas.",
+				Description:  "Fakturownia CLI products: list, fetch, create, update, and delete products, including warehouse-aware reads and README-backed request schemas.",
 				Category:     "api-area",
 				Prerequisite: "shared",
 				RelatedSkills: []string{
@@ -407,12 +407,13 @@ func SkillBundle() SkillBundleSpec {
 					{Noun: "product", Verb: "get"},
 					{Noun: "product", Verb: "create"},
 					{Noun: "product", Verb: "update"},
+					{Noun: "product", Verb: "delete"},
 				},
 				CLIHelp: "fakturownia product --help",
 				RequiresBins: []string{
 					"fakturownia",
 				},
-				DiscoveryHint: "Use `fakturownia schema product list --json` for output fields and `fakturownia schema product create --json` or `product update --json` for request-body discovery before building selectors or payloads.",
+				DiscoveryHint: "Use `fakturownia schema product list --json` for output fields and `fakturownia schema product create --json` or `product update --json` for request-body discovery before building selectors or payloads, and `product delete --dry-run --json` to confirm destructive targets.",
 				WhenToUse: []string{
 					"The task is about reading or mutating products, including warehouse-aware stock views.",
 					"You need to inspect README-backed product fields or package-product payload requirements before create or update calls.",
@@ -496,7 +497,7 @@ func SkillBundle() SkillBundleSpec {
 				Key:          "recurrings",
 				Name:         "fakturownia-recurrings",
 				Title:        "Recurrings",
-				Description:  "Fakturownia CLI recurrings: list, create, and update recurring invoice definitions with README-backed request and output discovery.",
+				Description:  "Fakturownia CLI recurrings: list, create, update, and delete recurring invoice definitions with README-backed request and output discovery.",
 				Category:     "api-area",
 				Prerequisite: "shared",
 				RelatedSkills: []string{
@@ -509,12 +510,13 @@ func SkillBundle() SkillBundleSpec {
 					{Noun: "recurring", Verb: "list"},
 					{Noun: "recurring", Verb: "create"},
 					{Noun: "recurring", Verb: "update"},
+					{Noun: "recurring", Verb: "delete"},
 				},
 				CLIHelp: "fakturownia recurring --help",
 				RequiresBins: []string{
 					"fakturownia",
 				},
-				DiscoveryHint: "Use `fakturownia schema recurring list --json` and `fakturownia schema recurring create --json` before building selectors or payloads.",
+				DiscoveryHint: "Use `fakturownia schema recurring list --json` and `fakturownia schema recurring create --json` before building selectors or payloads, and `recurring delete --dry-run --json` before destructive cleanup.",
 				WhenToUse: []string{
 					"The task is about recurring invoice definitions rather than concrete invoice documents.",
 					"You need README-backed `request_body_schema` guidance for recurring creation or next-date updates.",

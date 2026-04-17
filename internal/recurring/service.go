@@ -90,6 +90,32 @@ func (r *UpdateResponse) GetProfile() string {
 	return r.Profile
 }
 
+type DeleteRequest struct {
+	ConfigPath string
+	Profile    string
+	Env        config.Env
+	Timeout    time.Duration
+	MaxRetries int
+	ID         string
+	DryRun     bool
+}
+
+type DeleteResponse struct {
+	ID        string                 `json:"id"`
+	Deleted   bool                   `json:"deleted"`
+	Profile   string                 `json:"profile"`
+	RequestID string                 `json:"request_id,omitempty"`
+	DryRun    *transport.RequestPlan `json:"dry_run,omitempty"`
+	RawBody   []byte                 `json:"-"`
+}
+
+func (r *DeleteResponse) GetProfile() string {
+	if r == nil {
+		return ""
+	}
+	return r.Profile
+}
+
 func NewService(store config.TokenStore) *Service {
 	return &Service{store: store}
 }
@@ -170,6 +196,35 @@ func (s *Service) Update(ctx context.Context, req UpdateRequest) (*UpdateRespons
 		RawBody:   resp.RawBody,
 		Profile:   resolved.Name,
 		RequestID: resp.RequestID,
+	}, nil
+}
+
+func (s *Service) Delete(ctx context.Context, req DeleteRequest) (*DeleteResponse, error) {
+	if strings.TrimSpace(req.ID) == "" {
+		return nil, output.Usage("missing_id", "recurring ID is required", "pass --id <recurring-id>")
+	}
+
+	resolved, client, err := s.resolveClient(req.ConfigPath, req.Profile, req.Env, req.Timeout, req.MaxRetries)
+	if err != nil {
+		return nil, err
+	}
+
+	path := fmt.Sprintf("/recurrings/%s.json", url.PathEscape(req.ID))
+	if req.DryRun {
+		plan := transport.PlanJSONRequest(http.MethodDelete, path, nil, nil)
+		return &DeleteResponse{ID: req.ID, Profile: resolved.Name, DryRun: &plan}, nil
+	}
+
+	resp, err := client.DeleteJSON(ctx, path, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &DeleteResponse{
+		ID:        req.ID,
+		Deleted:   true,
+		Profile:   resolved.Name,
+		RequestID: resp.RequestID,
+		RawBody:   resp.RawBody,
 	}, nil
 }
 

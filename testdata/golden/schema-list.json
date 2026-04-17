@@ -291,6 +291,12 @@
       "verb": "update"
     },
     {
+      "noun": "recurring",
+      "summary": "Delete a recurring invoice definition",
+      "use": "delete --id ID --yes",
+      "verb": "delete"
+    },
+    {
       "noun": "client",
       "summary": "List clients",
       "use": "list",
@@ -403,6 +409,12 @@
       "summary": "Update a product",
       "use": "update --id ID --input -|@file|JSON",
       "verb": "update"
+    },
+    {
+      "noun": "product",
+      "summary": "Delete a product",
+      "use": "delete --id ID --yes",
+      "verb": "delete"
     },
     {
       "noun": "price-list",

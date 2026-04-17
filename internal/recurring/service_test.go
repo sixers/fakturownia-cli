@@ -110,3 +110,43 @@ func TestUpdateSendsWrappedPayload(t *testing.T) {
 		t.Fatalf("unexpected update result: %#v", result)
 	}
 }
+
+func TestDeleteAndDeleteDryRun(t *testing.T) {
+	t.Parallel()
+
+	server := useTLSTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodDelete {
+			t.Fatalf("unexpected method %q", r.Method)
+		}
+		if r.URL.Path != "/recurrings/9.json" {
+			t.Fatalf("unexpected path %q", r.URL.Path)
+		}
+		w.WriteHeader(http.StatusOK)
+	})
+
+	service := NewService(nil)
+	deleted, err := service.Delete(context.Background(), DeleteRequest{
+		ConfigPath: filepath.Join(t.TempDir(), "config.json"),
+		Env:        config.Env{URL: server.URL, APIToken: "token"},
+		ID:         "9",
+	})
+	if err != nil {
+		t.Fatalf("Delete() error = %v", err)
+	}
+	if !deleted.Deleted || deleted.ID != "9" {
+		t.Fatalf("unexpected delete result: %#v", deleted)
+	}
+
+	plan, err := service.Delete(context.Background(), DeleteRequest{
+		ConfigPath: filepath.Join(t.TempDir(), "config.json"),
+		Env:        config.Env{URL: "https://acme.fakturownia.pl", APIToken: "token"},
+		ID:         "9",
+		DryRun:     true,
+	})
+	if err != nil {
+		t.Fatalf("Delete() dry-run error = %v", err)
+	}
+	if plan.DryRun == nil || plan.DryRun.Method != http.MethodDelete || plan.DryRun.Path != "/recurrings/9.json" {
+		t.Fatalf("unexpected dry-run plan: %#v", plan.DryRun)
+	}
+}

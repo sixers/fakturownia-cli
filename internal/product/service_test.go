@@ -158,6 +158,57 @@ func TestCreateUpdateAndDryRun(t *testing.T) {
 	}
 }
 
+func TestDeleteAndDeleteDryRun(t *testing.T) {
+	var seenMethods []string
+	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		seenMethods = append(seenMethods, r.Method)
+		if r.Method != http.MethodDelete {
+			t.Fatalf("unexpected method %s", r.Method)
+		}
+		if r.URL.Path != "/products/11.json" {
+			t.Fatalf("unexpected path %s", r.URL.Path)
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+	restore := swapDefaultTransport(server.Client().Transport)
+	defer restore()
+
+	service := NewService(stubTokenStore{})
+	env := config.Env{URL: server.URL, APIToken: "token"}
+
+	deleted, err := service.Delete(context.Background(), DeleteRequest{
+		Env:        env,
+		Timeout:    5 * time.Second,
+		MaxRetries: 1,
+		ID:         "11",
+	})
+	if err != nil {
+		t.Fatalf("Delete() error = %v", err)
+	}
+	if !deleted.Deleted || deleted.ID != "11" {
+		t.Fatalf("unexpected delete response: %#v", deleted)
+	}
+
+	plan, err := service.Delete(context.Background(), DeleteRequest{
+		Env:        env,
+		Timeout:    5 * time.Second,
+		MaxRetries: 1,
+		ID:         "11",
+		DryRun:     true,
+	})
+	if err != nil {
+		t.Fatalf("Delete() dry-run error = %v", err)
+	}
+	if plan.DryRun == nil || plan.DryRun.Method != http.MethodDelete || plan.DryRun.Path != "/products/11.json" {
+		t.Fatalf("unexpected dry-run plan: %#v", plan.DryRun)
+	}
+
+	if strings.Join(seenMethods, ",") != "DELETE" {
+		t.Fatalf("unexpected method sequence: %v", seenMethods)
+	}
+}
+
 func swapDefaultTransport(transport http.RoundTripper) func() {
 	previous := http.DefaultTransport
 	http.DefaultTransport = transport

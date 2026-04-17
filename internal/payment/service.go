@@ -182,10 +182,10 @@ func (s *Service) List(ctx context.Context, req ListRequest) (*ListResponse, err
 		return nil, err
 	}
 	return &ListResponse{
-		Payments:   payments,
-		RawBody:    resp.RawBody,
-		Profile:    resolved.Name,
-		RequestID:  resp.RequestID,
+		Payments:    payments,
+		RawBody:     resp.RawBody,
+		Profile:     resolved.Name,
+		RequestID:   resp.RequestID,
 		IncludeUsed: include,
 		Pagination: output.Pagination{
 			Page:     req.Page,
@@ -207,7 +207,7 @@ func (s *Service) Get(ctx context.Context, req GetRequest) (*GetResponse, error)
 	}
 
 	var payment map[string]any
-	resp, err := httpClient.GetJSON(ctx, fmt.Sprintf("/banking/payment/%s.json", url.PathEscape(req.ID)), nil, &payment)
+	resp, err := httpClient.GetJSON(ctx, fmt.Sprintf("/banking/payments/%s.json", url.PathEscape(req.ID)), nil, &payment)
 	if err != nil {
 		return nil, err
 	}

@@ -1,0 +1,4 @@
+[test]
+root = "e2e"
+preload = ["./e2e/preload.ts"]
+timeout = 120000

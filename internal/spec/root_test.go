@@ -589,6 +589,7 @@ type fakeProductService struct {
 	getReq    product.GetRequest
 	createReq product.CreateRequest
 	updateReq product.UpdateRequest
+	deleteReq product.DeleteRequest
 }
 
 func (f *fakeProductService) List(_ context.Context, req product.ListRequest) (*product.ListResponse, error) {
@@ -663,6 +664,15 @@ func (f *fakeProductService) Update(_ context.Context, req product.UpdateRequest
 		Profile:   req.Profile,
 		RequestID: "req-product-update",
 	}, nil
+}
+
+func (f *fakeProductService) Delete(_ context.Context, req product.DeleteRequest) (*product.DeleteResponse, error) {
+	f.deleteReq = req
+	if req.DryRun {
+		plan := transport.PlanJSONRequest("DELETE", "/products/"+req.ID+".json", nil, nil)
+		return &product.DeleteResponse{ID: req.ID, Profile: req.Profile, DryRun: &plan}, nil
+	}
+	return &product.DeleteResponse{ID: req.ID, Deleted: true, Profile: req.Profile, RequestID: "req-product-delete"}, nil
 }
 
 type fakePriceListService struct {
@@ -754,6 +764,7 @@ type fakeRecurringService struct {
 	listReq   recurring.ListRequest
 	createReq recurring.CreateRequest
 	updateReq recurring.UpdateRequest
+	deleteReq recurring.DeleteRequest
 }
 
 func (f *fakeRecurringService) List(_ context.Context, req recurring.ListRequest) (*recurring.ListResponse, error) {
@@ -792,6 +803,15 @@ func (f *fakeRecurringService) Update(_ context.Context, req recurring.UpdateReq
 		Profile:   req.Profile,
 		RequestID: "req-recurring-update",
 	}, nil
+}
+
+func (f *fakeRecurringService) Delete(_ context.Context, req recurring.DeleteRequest) (*recurring.DeleteResponse, error) {
+	f.deleteReq = req
+	if req.DryRun {
+		plan := transport.PlanJSONRequest("DELETE", "/recurrings/"+req.ID+".json", nil, nil)
+		return &recurring.DeleteResponse{ID: req.ID, Profile: req.Profile, DryRun: &plan}, nil
+	}
+	return &recurring.DeleteResponse{ID: req.ID, Deleted: true, Profile: req.Profile, RequestID: "req-recurring-delete"}, nil
 }
 
 type fakeWarehouseService struct {
@@ -1784,10 +1804,12 @@ func TestGolden(t *testing.T) {
 		{name: "schema-bank-account-update-json", args: []string{"schema", "bank-account", "update", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-bank-account-update.json")},
 		{name: "schema-bank-account-delete-json", args: []string{"schema", "bank-account", "delete", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-bank-account-delete.json")},
 		{name: "product-list-help", args: []string{"product", "list", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "product-list-help.txt")},
+		{name: "product-delete-help", args: []string{"product", "delete", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "product-delete-help.txt")},
 		{name: "schema-product-list-json", args: []string{"schema", "product", "list", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-product-list.json")},
 		{name: "schema-product-get-json", args: []string{"schema", "product", "get", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-product-get.json")},
 		{name: "schema-product-create-json", args: []string{"schema", "product", "create", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-product-create.json")},
 		{name: "schema-product-update-json", args: []string{"schema", "product", "update", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-product-update.json")},
+		{name: "schema-product-delete-json", args: []string{"schema", "product", "delete", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-product-delete.json")},
 		{name: "price-list-list-help", args: []string{"price-list", "list", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "price-list-list-help.txt")},
 		{name: "price-list-get-help", args: []string{"price-list", "get", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "price-list-get-help.txt")},
 		{name: "price-list-create-help", args: []string{"price-list", "create", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "price-list-create-help.txt")},
@@ -1834,9 +1856,11 @@ func TestGolden(t *testing.T) {
 		{name: "recurring-list-help", args: []string{"recurring", "list", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "recurring-list-help.txt")},
 		{name: "recurring-create-help", args: []string{"recurring", "create", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "recurring-create-help.txt")},
 		{name: "recurring-update-help", args: []string{"recurring", "update", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "recurring-update-help.txt")},
+		{name: "recurring-delete-help", args: []string{"recurring", "delete", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "recurring-delete-help.txt")},
 		{name: "schema-recurring-list-json", args: []string{"schema", "recurring", "list", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-recurring-list.json")},
 		{name: "schema-recurring-create-json", args: []string{"schema", "recurring", "create", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-recurring-create.json")},
 		{name: "schema-recurring-update-json", args: []string{"schema", "recurring", "update", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-recurring-update.json")},
+		{name: "schema-recurring-delete-json", args: []string{"schema", "recurring", "delete", "--json"}, file: filepath.Join("..", "..", "testdata", "golden", "schema-recurring-delete.json")},
 		{name: "warehouse-list-help", args: []string{"warehouse", "list", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "warehouse-list-help.txt")},
 		{name: "warehouse-get-help", args: []string{"warehouse", "get", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "warehouse-get-help.txt")},
 		{name: "warehouse-create-help", args: []string{"warehouse", "create", "--help"}, file: filepath.Join("..", "..", "testdata", "golden", "warehouse-create-help.txt")},
