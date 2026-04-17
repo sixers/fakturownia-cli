@@ -21,6 +21,14 @@ Use this as the entrypoint for the generated Fakturownia CLI skill bundle.
 2. Read [fakturownia-shared](subskills/shared/SKILL.md) for auth prerequisites, global flags, output behavior, and schema discovery.
 3. Then open the subskill that matches the task area.
 
+## Before You Use It
+
+- If `fakturownia` is not already on `PATH`, install the public release with `curl -fsSL https://raw.githubusercontent.com/sixers/fakturownia-cli/master/install.sh | bash`.
+- Run `fakturownia --version` after install so later steps do not fail on a missing binary or stale shell PATH.
+- Save credentials before API calls with `fakturownia auth login --prefix acme --api-token "$FAKTUROWNIA_API_TOKEN"`.
+- If the environment already provides credentials, still run `fakturownia auth status --json` to confirm the resolved profile, prefix, and token source.
+- Run `fakturownia account get --json` as the first authenticated smoke test before attempting task-specific writes or reads.
+
 ## Subskills
 
 - [fakturownia-shared](subskills/shared/SKILL.md): Fakturownia CLI shared patterns: authentication prerequisites, global flags, output modes, `--fields` vs `--columns`, `--raw`, schema discovery, and binary maintenance. Use before any area-specific fakturownia task.

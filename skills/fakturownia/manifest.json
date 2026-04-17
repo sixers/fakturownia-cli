@@ -4,7 +4,7 @@
   "slug": "fakturownia",
   "display_name": "Fakturownia CLI",
   "description": "Generated skill bundle for the fakturownia CLI, covering authentication, schema discovery, diagnostics, and the main Fakturownia API areas through a stable agent-first command contract.",
-  "version": "0.6.4",
+  "version": "0.6.5",
   "author": {
     "name": "sixers",
     "url": "https://github.com/sixers"
@@ -23,8 +23,8 @@
     "recipes": "https://github.com/sixers/fakturownia-cli/blob/master/skills/fakturownia/recipes/index.md"
   },
   "release": {
-    "tag": "v0.6.4",
-    "url": "https://github.com/sixers/fakturownia-cli/releases/tag/v0.6.4"
+    "tag": "v0.6.5",
+    "url": "https://github.com/sixers/fakturownia-cli/releases/tag/v0.6.5"
   },
   "entrypoint": "SKILL.md",
   "files": [

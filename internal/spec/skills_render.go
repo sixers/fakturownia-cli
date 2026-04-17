@@ -129,6 +129,7 @@ func renderRootSkill(bundle SkillBundleSpec) (string, error) {
 	b.WriteString("1. Open the [skills index](references/skills-index.md) to choose the right subskill.\n")
 	b.WriteString("2. Read [fakturownia-shared](subskills/shared/SKILL.md) for auth prerequisites, global flags, output behavior, and schema discovery.\n")
 	b.WriteString("3. Then open the subskill that matches the task area.\n\n")
+	writeBootstrapSection(&b, true)
 	b.WriteString("## Subskills\n\n")
 	for _, area := range bundle.Areas {
 		fmt.Fprintf(&b, "- [%s](subskills/%s/SKILL.md): %s\n", area.Name, area.Key, area.Description)
@@ -226,6 +227,7 @@ func renderAreaSkill(bundle SkillBundleSpec, area SkillAreaSpec) (string, error)
 	writeEnvSection(&b, envVars)
 
 	if area.Key == "shared" {
+		writeBootstrapSection(&b, false)
 		b.WriteString("## Output and Discovery\n\n")
 		b.WriteString("- `--json` or `--output json` writes the structured envelope to stdout.\n")
 		b.WriteString("- `--fields` projects JSON envelope `data` fields.\n")
@@ -334,6 +336,19 @@ func renderAreaSkill(bundle SkillBundleSpec, area SkillAreaSpec) (string, error)
 	}
 
 	return b.String(), nil
+}
+
+func writeBootstrapSection(b *strings.Builder, root bool) {
+	if root {
+		b.WriteString("## Before You Use It\n\n")
+	} else {
+		b.WriteString("## Install, Authenticate, And Verify\n\n")
+	}
+	b.WriteString("- If `fakturownia` is not already on `PATH`, install the public release with `curl -fsSL https://raw.githubusercontent.com/sixers/fakturownia-cli/master/install.sh | bash`.\n")
+	b.WriteString("- Run `fakturownia --version` after install so later steps do not fail on a missing binary or stale shell PATH.\n")
+	b.WriteString("- Save credentials before API calls with `fakturownia auth login --prefix acme --api-token \"$FAKTUROWNIA_API_TOKEN\"`.\n")
+	b.WriteString("- If the environment already provides credentials, still run `fakturownia auth status --json` to confirm the resolved profile, prefix, and token source.\n")
+	b.WriteString("- Run `fakturownia account get --json` as the first authenticated smoke test before attempting task-specific writes or reads.\n\n")
 }
 
 func renderRecipesIndex(recipes []RecipeSpec) (string, error) {

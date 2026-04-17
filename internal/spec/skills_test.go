@@ -110,6 +110,30 @@ func TestRootSkillReferencesIndexAndShared(t *testing.T) {
 	}
 }
 
+func TestRootSkillIncludesBootstrapGuidance(t *testing.T) {
+	t.Parallel()
+
+	files, err := RenderSkillFiles()
+	if err != nil {
+		t.Fatalf("RenderSkillFiles() error = %v", err)
+	}
+	byPath := generatedFileMap(files)
+
+	root := byPath[bundleRootSkillPath()]
+	want := []string{
+		"## Before You Use It",
+		"curl -fsSL https://raw.githubusercontent.com/sixers/fakturownia-cli/master/install.sh | bash",
+		"fakturownia auth login --prefix acme --api-token \"$FAKTUROWNIA_API_TOKEN\"",
+		"fakturownia auth status --json",
+		"fakturownia account get --json",
+	}
+	for _, needle := range want {
+		if !strings.Contains(root, needle) {
+			t.Fatalf("expected root skill to include %q: %s", needle, root)
+		}
+	}
+}
+
 func TestInvoicesSkillIncludesOutputDiscovery(t *testing.T) {
 	t.Parallel()
 
@@ -153,6 +177,31 @@ func TestAuthSkillIncludesExchangeGuidance(t *testing.T) {
 	for _, needle := range want {
 		if !strings.Contains(authSkill, needle) {
 			t.Fatalf("expected auth skill to include %q: %s", needle, authSkill)
+		}
+	}
+}
+
+func TestSharedSkillIncludesBootstrapGuidance(t *testing.T) {
+	t.Parallel()
+
+	files, err := RenderSkillFiles()
+	if err != nil {
+		t.Fatalf("RenderSkillFiles() error = %v", err)
+	}
+	byPath := generatedFileMap(files)
+
+	shared := byPath[skillAreaPath(sharedSkillArea(SkillBundle()))]
+	want := []string{
+		"## Install, Authenticate, And Verify",
+		"curl -fsSL https://raw.githubusercontent.com/sixers/fakturownia-cli/master/install.sh | bash",
+		"fakturownia --version",
+		"fakturownia auth login --prefix acme --api-token \"$FAKTUROWNIA_API_TOKEN\"",
+		"fakturownia auth status --json",
+		"fakturownia account get --json",
+	}
+	for _, needle := range want {
+		if !strings.Contains(shared, needle) {
+			t.Fatalf("expected shared skill to include %q: %s", needle, shared)
 		}
 	}
 }

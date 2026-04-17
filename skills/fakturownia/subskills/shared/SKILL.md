@@ -48,6 +48,14 @@ metadata:
 - `FAKTUROWNIA_URL`: Override the base account URL from any profile
 - `FAKTUROWNIA_API_TOKEN`: Override the API token from any profile
 
+## Install, Authenticate, And Verify
+
+- If `fakturownia` is not already on `PATH`, install the public release with `curl -fsSL https://raw.githubusercontent.com/sixers/fakturownia-cli/master/install.sh | bash`.
+- Run `fakturownia --version` after install so later steps do not fail on a missing binary or stale shell PATH.
+- Save credentials before API calls with `fakturownia auth login --prefix acme --api-token "$FAKTUROWNIA_API_TOKEN"`.
+- If the environment already provides credentials, still run `fakturownia auth status --json` to confirm the resolved profile, prefix, and token source.
+- Run `fakturownia account get --json` as the first authenticated smoke test before attempting task-specific writes or reads.
+
 ## Output and Discovery
 
 - `--json` or `--output json` writes the structured envelope to stdout.
