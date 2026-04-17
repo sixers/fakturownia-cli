@@ -609,9 +609,12 @@ fakturownia doctor run --json
 just test
 just lint
 just build
+just secrets
 ```
 
 Golden tests cover help and schema output for the public CLI contract. Run `just schema-help` when you want to refresh just that contract-focused test target.
+
+`just secrets` runs `gitleaks` with the repo's root [gitleaks.toml](gitleaks.toml). Install it first with `go install github.com/zricethezav/gitleaks/v8@v8.30.1` if `$(go env GOPATH)/bin/gitleaks` is not already available.
 
 ### Bun E2E
 
