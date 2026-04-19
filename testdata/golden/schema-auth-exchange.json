@@ -498,7 +498,7 @@
         {
           "path": "token_stored",
           "type": "boolean",
-          "description": "Whether the token was stored in the OS keychain",
+          "description": "Whether the token was stored in the configured credential store",
           "projectable": true,
           "selectable": true,
           "commands": [

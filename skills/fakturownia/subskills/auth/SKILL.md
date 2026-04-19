@@ -29,7 +29,7 @@ metadata:
 ## Use This Skill When
 
 - You need to save a profile, exchange login credentials for an API token, verify which profile is active, or clean up a persisted token.
-- You need to explain or troubleshoot how env vars, profiles, keychain-backed credentials, and sanitized secret-handling resolve.
+- You need to explain or troubleshoot how env vars, profiles, credential-store-backed secrets, and sanitized secret-handling resolve.
 
 ## Covered Commands
 

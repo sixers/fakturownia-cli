@@ -311,7 +311,7 @@ func renderAreaSkill(bundle SkillBundleSpec, area SkillAreaSpec) (string, error)
 
 	if area.Key == "doctor" {
 		b.WriteString("## Diagnostics Focus\n\n")
-		b.WriteString("- `doctor run` checks config-path resolution, keychain access, DNS/TLS reachability, and authenticated API access.\n")
+		b.WriteString("- `doctor run` checks config-path resolution, credential-store access, DNS/TLS reachability, and authenticated API access.\n")
 		b.WriteString("- Add `--check-release-integrity` when you need checksum verification against the published release.\n\n")
 	}
 

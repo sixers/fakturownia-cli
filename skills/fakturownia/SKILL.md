@@ -50,7 +50,7 @@ Use this as the entrypoint for the generated Fakturownia CLI skill bundle.
 - [fakturownia-warehouse-actions](subskills/warehouse-actions/SKILL.md): Fakturownia CLI warehouse actions: list warehouse actions with explicit README-backed filters and inspect conservative action fields through schema output.
 - [fakturownia-warehouse-documents](subskills/warehouse-documents/SKILL.md): Fakturownia CLI warehouse documents: list, fetch, create, update, and delete warehouse documents, including kind selection and invoice linking through payload fields.
 - [fakturownia-schema](subskills/schema/SKILL.md): Fakturownia CLI schema discovery: inspect supported commands, flags, examples, exit codes, and output schemas with `fakturownia schema ...`.
-- [fakturownia-doctor](subskills/doctor/SKILL.md): Fakturownia CLI diagnostics: validate config resolution, keychain access, reachability, authenticated API access, and release integrity with `fakturownia doctor run`.
+- [fakturownia-doctor](subskills/doctor/SKILL.md): Fakturownia CLI diagnostics: validate config resolution, credential-store access, reachability, authenticated API access, and release integrity with `fakturownia doctor run`.
 
 ## Recipes
 

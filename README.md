@@ -296,13 +296,15 @@ The manual install path is mostly useful for debugging or air-gapped installs. T
 
 ## Authentication
 
-The CLI persists API tokens in the OS keychain and stores only profile metadata in the config file.
+The CLI persists API tokens in the configured credential store and stores only profile metadata in the config file.
 
 Supported config inputs:
 
 - `FAKTUROWNIA_API_TOKEN`
 - `FAKTUROWNIA_URL`
 - `FAKTUROWNIA_PROFILE`
+- `FAKTUROWNIA_KEYRING_BACKEND`
+- `FAKTUROWNIA_KEYRING_PASSWORD`
 
 Example:
 
@@ -311,6 +313,16 @@ fakturownia auth login --prefix acme --api-token "$FAKTUROWNIA_API_TOKEN"
 fakturownia auth exchange --login user@example.com --password secret --json
 fakturownia auth status --json
 ```
+
+For headless Linux, SSH, or container sessions without a working OS credential store, use the encrypted file backend:
+
+```bash
+export FAKTUROWNIA_KEYRING_BACKEND=file
+export FAKTUROWNIA_KEYRING_PASSWORD='choose-a-strong-passphrase'
+fakturownia auth login --prefix acme --api-token "$FAKTUROWNIA_API_TOKEN"
+```
+
+Use `FAKTUROWNIA_KEYRING_BACKEND=auto` to keep the default behavior, or `FAKTUROWNIA_KEYRING_BACKEND=keychain` as an alias for the native OS-backed store only.
 
 ## Output Contract
 

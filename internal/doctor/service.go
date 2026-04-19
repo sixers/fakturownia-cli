@@ -93,18 +93,18 @@ func (s *Service) Run(ctx context.Context, req RunRequest) (*RunResult, error) {
 
 	if err := s.store.Probe(); err != nil {
 		result.Report.Checks = append(result.Report.Checks, Check{
-			Name:    "keychain",
+			Name:    "credential-store",
 			Status:  "error",
 			Message: err.Error(),
-			Hint:    "verify that the OS keychain is available for this session",
+			Hint:    "verify that the configured credential store is available for this session",
 		})
 		result.Report.Status = "error"
 		return result, nil
 	}
 	result.Report.Checks = append(result.Report.Checks, Check{
-		Name:    "keychain",
+		Name:    "credential-store",
 		Status:  "ok",
-		Message: "keychain access succeeded",
+		Message: "credential store access succeeded",
 	})
 
 	resolved, resolveErr := config.Resolve(req.ConfigPath, req.Env, req.Profile, s.store)

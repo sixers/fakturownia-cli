@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
@@ -18,6 +20,16 @@ import (
 )
 
 var ErrSecretNotFound = config.ErrSecretNotFound
+
+const (
+	envKeyringBackend  = "FAKTUROWNIA_KEYRING_BACKEND"
+	envKeyringPassword = "FAKTUROWNIA_KEYRING_PASSWORD"
+
+	keyringBackendAuto     = "auto"
+	keyringBackendFile     = "file"
+	keyringBackendNative   = "native"
+	keyringBackendKeychain = "keychain"
+)
 
 type Store interface {
 	config.ProbeableTokenStore
@@ -123,24 +135,116 @@ type LogoutResult struct {
 }
 
 func NewKeyringStore() (Store, error) {
-	if runtime.GOOS == "darwin" {
-		securityPath, err := exec.LookPath("security")
-		if err != nil {
-			return nil, output.Internal(err, "locate security command")
+	backend, err := resolveKeyringBackendEnv(strings.TrimSpace(os.Getenv(envKeyringBackend)))
+	if err != nil {
+		return nil, err
+	}
+	password := strings.TrimSpace(os.Getenv(envKeyringPassword))
+
+	switch backend {
+	case keyringBackendFile:
+		return openKeyringStore([]keyring.BackendType{keyring.FileBackend}, password)
+	case keyringBackendNative:
+		if runtime.GOOS == "darwin" {
+			return newSecurityStore()
 		}
-		return &SecurityStore{
-			service:      config.ServiceName,
-			securityPath: securityPath,
-		}, nil
+		return openKeyringStore(nativeBackends(false), password)
+	default:
+		if runtime.GOOS == "darwin" {
+			return newSecurityStore()
+		}
+		return openKeyringStore(nativeBackends(password != ""), password)
+	}
+}
+
+func newSecurityStore() (Store, error) {
+	securityPath, err := exec.LookPath("security")
+	if err != nil {
+		return nil, output.Internal(err, "locate security command")
+	}
+	return &SecurityStore{
+		service:      config.ServiceName,
+		securityPath: securityPath,
+	}, nil
+}
+
+func openKeyringStore(allowed []keyring.BackendType, password string) (Store, error) {
+	cfg := keyring.Config{
+		ServiceName:     config.ServiceName,
+		AllowedBackends: allowed,
+	}
+	if containsBackend(allowed, keyring.FileBackend) {
+		fileDir, err := defaultFileKeyringDir()
+		if err != nil {
+			return nil, err
+		}
+		cfg.FileDir = fileDir
+		cfg.FilePasswordFunc = fileKeyringPasswordFunc(password)
 	}
 
-	ring, err := keyring.Open(keyring.Config{
-		ServiceName: config.ServiceName,
-	})
+	ring, err := keyring.Open(cfg)
 	if err != nil {
-		return nil, output.Internal(err, "open keychain")
+		return nil, output.Internal(err, "open credential store")
 	}
 	return &KeyringStore{ring: ring}, nil
+}
+
+func nativeBackends(includeFile bool) []keyring.BackendType {
+	backends := make([]keyring.BackendType, 0, len(keyring.AvailableBackends()))
+	for _, backend := range keyring.AvailableBackends() {
+		if backend == keyring.FileBackend && !includeFile {
+			continue
+		}
+		backends = append(backends, backend)
+	}
+	return backends
+}
+
+func containsBackend(backends []keyring.BackendType, want keyring.BackendType) bool {
+	for _, backend := range backends {
+		if backend == want {
+			return true
+		}
+	}
+	return false
+}
+
+func resolveKeyringBackendEnv(raw string) (string, error) {
+	switch strings.ToLower(strings.TrimSpace(raw)) {
+	case "", keyringBackendAuto:
+		return keyringBackendAuto, nil
+	case keyringBackendFile:
+		return keyringBackendFile, nil
+	case keyringBackendNative, keyringBackendKeychain:
+		return keyringBackendNative, nil
+	default:
+		return "", output.Usage(
+			"invalid_keyring_backend",
+			fmt.Sprintf("unsupported %s value %q", envKeyringBackend, raw),
+			fmt.Sprintf("use %s=%s, %s, %s, or %s", envKeyringBackend, keyringBackendAuto, keyringBackendNative, keyringBackendFile, keyringBackendKeychain),
+		)
+	}
+}
+
+func defaultFileKeyringDir() (string, error) {
+	configPath, err := config.ResolveConfigPath("")
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(filepath.Dir(configPath), "keyring"), nil
+}
+
+func fileKeyringPasswordFunc(password string) keyring.PromptFunc {
+	return func(_ string) (string, error) {
+		if strings.TrimSpace(password) == "" {
+			return "", output.Usage(
+				"missing_keyring_password",
+				fmt.Sprintf("file credential store requires %s", envKeyringPassword),
+				fmt.Sprintf("set %s or switch %s back to %s", envKeyringPassword, envKeyringBackend, keyringBackendAuto),
+			)
+		}
+		return password, nil
+	}
 }
 
 func (s *KeyringStore) Get(name string) (string, error) {
@@ -149,7 +253,7 @@ func (s *KeyringStore) Get(name string) (string, error) {
 		return "", ErrSecretNotFound
 	}
 	if err != nil {
-		return "", output.Internal(err, "read token from keychain")
+		return "", wrapStoreError(err, "read token from credential store")
 	}
 	return string(item.Data), nil
 }
@@ -159,7 +263,7 @@ func (s *KeyringStore) Set(name, value string) error {
 		Key:  name,
 		Data: []byte(value),
 	}); err != nil {
-		return output.Internal(err, "write token to keychain")
+		return wrapStoreError(err, "write token to credential store")
 	}
 	return nil
 }
@@ -204,7 +308,7 @@ func (s *SecurityStore) Probe() error {
 
 func (s *KeyringStore) Delete(name string) error {
 	if err := s.ring.Remove(name); err != nil && !errors.Is(err, keyring.ErrKeyNotFound) {
-		return output.Internal(err, "delete token from keychain")
+		return wrapStoreError(err, "delete token from credential store")
 	}
 	return nil
 }
@@ -269,6 +373,14 @@ func wrapSecurityError(err error, stderr string) error {
 		return err
 	}
 	return fmt.Errorf("%s: %w", message, err)
+}
+
+func wrapStoreError(err error, message string) error {
+	var appErr *output.AppError
+	if errors.As(err, &appErr) {
+		return appErr
+	}
+	return output.Internal(err, message)
 }
 
 func NewService(store Store) *Service {

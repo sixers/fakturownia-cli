@@ -22,7 +22,7 @@ func authExchangeOutputSpec() *OutputSpec {
 			{Path: "last_name", Type: "string", Description: "User last name", Projectable: true, Selectable: true, Commands: commands, Presence: "conditional", SourceSection: "Logowanie i pobranie danych przez API"},
 			{Path: "api_token_present", Type: "boolean", Description: "Whether the upstream response included an API token", Projectable: true, Selectable: true, Commands: commands, Presence: "common", SourceSection: "Logowanie i pobranie danych przez API"},
 			{Path: "saved_profile", Type: "string", Description: "Persisted profile name", Projectable: true, Selectable: true, Commands: commands, Presence: "common", SourceSection: "CLI"},
-			{Path: "token_stored", Type: "boolean", Description: "Whether the token was stored in the OS keychain", Projectable: true, Selectable: true, Commands: commands, Presence: "common", SourceSection: "CLI"},
+			{Path: "token_stored", Type: "boolean", Description: "Whether the token was stored in the configured credential store", Projectable: true, Selectable: true, Commands: commands, Presence: "common", SourceSection: "CLI"},
 			{Path: "config_path", Type: "string", Description: "Config file path used for profile persistence", Projectable: true, Selectable: true, Commands: commands, Presence: "common", SourceSection: "CLI"},
 		},
 	}

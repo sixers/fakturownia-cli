@@ -1,6 +1,6 @@
 ---
 name: "fakturownia-doctor"
-description: "Fakturownia CLI diagnostics: validate config resolution, keychain access, reachability, authenticated API access, and release integrity with `fakturownia doctor run`."
+description: "Fakturownia CLI diagnostics: validate config resolution, credential-store access, reachability, authenticated API access, and release integrity with `fakturownia doctor run`."
 metadata:
   bundle: "fakturownia"
   category: "core"
@@ -43,7 +43,7 @@ metadata:
 
 ## Diagnostics Focus
 
-- `doctor run` checks config-path resolution, keychain access, DNS/TLS reachability, and authenticated API access.
+- `doctor run` checks config-path resolution, credential-store access, DNS/TLS reachability, and authenticated API access.
 - Add `--check-release-integrity` when you need checksum verification against the published release.
 
 ## Examples

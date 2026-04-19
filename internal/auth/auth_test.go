@@ -155,6 +155,63 @@ func TestExchangeFailsWhenNoTokenReturned(t *testing.T) {
 	}
 }
 
+func TestNewKeyringStoreSupportsEncryptedFileBackend(t *testing.T) {
+	configHome := t.TempDir()
+	t.Setenv("HOME", configHome)
+	t.Setenv("XDG_CONFIG_HOME", configHome)
+	t.Setenv(envKeyringBackend, keyringBackendFile)
+	t.Setenv(envKeyringPassword, "passphrase")
+
+	store, err := NewKeyringStore()
+	if err != nil {
+		t.Fatalf("NewKeyringStore() error = %v", err)
+	}
+	if err := store.Set("acme", "secret-token"); err != nil {
+		t.Fatalf("Set() error = %v", err)
+	}
+	got, err := store.Get("acme")
+	if err != nil {
+		t.Fatalf("Get() error = %v", err)
+	}
+	if got != "secret-token" {
+		t.Fatalf("unexpected stored token %q", got)
+	}
+}
+
+func TestNewKeyringStoreFileBackendRequiresPassword(t *testing.T) {
+	configHome := t.TempDir()
+	t.Setenv("HOME", configHome)
+	t.Setenv("XDG_CONFIG_HOME", configHome)
+	t.Setenv(envKeyringBackend, keyringBackendFile)
+	t.Setenv(envKeyringPassword, "")
+
+	store, err := NewKeyringStore()
+	if err != nil {
+		t.Fatalf("NewKeyringStore() error = %v", err)
+	}
+	err = store.Set("acme", "secret-token")
+	if err == nil {
+		t.Fatal("expected missing password error")
+	}
+	appErr := output.AsAppError(err)
+	if appErr.Detail().Code != "missing_keyring_password" {
+		t.Fatalf("expected missing_keyring_password, got %#v", appErr.Detail())
+	}
+}
+
+func TestNewKeyringStoreRejectsInvalidBackend(t *testing.T) {
+	t.Setenv(envKeyringBackend, "bogus")
+
+	_, err := NewKeyringStore()
+	if err == nil {
+		t.Fatal("expected invalid backend error")
+	}
+	appErr := output.AsAppError(err)
+	if appErr.Detail().Code != "invalid_keyring_backend" {
+		t.Fatalf("expected invalid_keyring_backend, got %#v", appErr.Detail())
+	}
+}
+
 func rewriteClient(server *httptest.Server) *http.Client {
 	target, err := url.Parse(server.URL)
 	if err != nil {

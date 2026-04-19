@@ -120,7 +120,7 @@ func SkillBundle() SkillBundleSpec {
 				DiscoveryHint: "Use `auth login` before API calls, or `auth status --json` to inspect the resolved profile and token source.",
 				WhenToUse: []string{
 					"You need to save a profile, exchange login credentials for an API token, verify which profile is active, or clean up a persisted token.",
-					"You need to explain or troubleshoot how env vars, profiles, keychain-backed credentials, and sanitized secret-handling resolve.",
+					"You need to explain or troubleshoot how env vars, profiles, credential-store-backed secrets, and sanitized secret-handling resolve.",
 				},
 			},
 			{
@@ -654,7 +654,7 @@ func SkillBundle() SkillBundleSpec {
 				Key:          "doctor",
 				Name:         "fakturownia-doctor",
 				Title:        "Doctor",
-				Description:  "Fakturownia CLI diagnostics: validate config resolution, keychain access, reachability, authenticated API access, and release integrity with `fakturownia doctor run`.",
+				Description:  "Fakturownia CLI diagnostics: validate config resolution, credential-store access, reachability, authenticated API access, and release integrity with `fakturownia doctor run`.",
 				Category:     "core",
 				Prerequisite: "shared",
 				RelatedSkills: []string{

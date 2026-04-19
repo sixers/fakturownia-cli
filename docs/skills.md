@@ -20,7 +20,7 @@ Core workflow and support skills.
 | [fakturownia-auth](../skills/fakturownia/subskills/auth/SKILL.md) | Fakturownia CLI auth: persist, inspect, and remove profiles and API tokens with `fakturownia auth ...`. |
 | [fakturownia-accounts](../skills/fakturownia/subskills/accounts/SKILL.md) | Fakturownia CLI accounts: create, inspect, delete, and unlink system accounts using the README-backed account contract, with sanitized structured output and optional profile persistence. |
 | [fakturownia-schema](../skills/fakturownia/subskills/schema/SKILL.md) | Fakturownia CLI schema discovery: inspect supported commands, flags, examples, exit codes, and output schemas with `fakturownia schema ...`. |
-| [fakturownia-doctor](../skills/fakturownia/subskills/doctor/SKILL.md) | Fakturownia CLI diagnostics: validate config resolution, keychain access, reachability, authenticated API access, and release integrity with `fakturownia doctor run`. |
+| [fakturownia-doctor](../skills/fakturownia/subskills/doctor/SKILL.md) | Fakturownia CLI diagnostics: validate config resolution, credential-store access, reachability, authenticated API access, and release integrity with `fakturownia doctor run`. |
 
 ## API Areas
 
