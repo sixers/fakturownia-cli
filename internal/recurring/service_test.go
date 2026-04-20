@@ -25,8 +25,6 @@ func useTLSTestServer(t *testing.T, handler http.HandlerFunc) *httptest.Server {
 }
 
 func TestListReadsRecurringDefinitions(t *testing.T) {
-	t.Parallel()
-
 	server := useTLSTestServer(t, func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/recurrings.json" {
 			t.Fatalf("unexpected path %q", r.URL.Path)
@@ -53,8 +51,6 @@ func TestListReadsRecurringDefinitions(t *testing.T) {
 }
 
 func TestCreateDryRunWrapsRecurringObject(t *testing.T) {
-	t.Parallel()
-
 	service := NewService(nil)
 	result, err := service.Create(context.Background(), CreateRequest{
 		ConfigPath: filepath.Join(t.TempDir(), "config.json"),
@@ -76,8 +72,6 @@ func TestCreateDryRunWrapsRecurringObject(t *testing.T) {
 }
 
 func TestUpdateSendsWrappedPayload(t *testing.T) {
-	t.Parallel()
-
 	server := useTLSTestServer(t, func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPut {
 			t.Fatalf("unexpected method %q", r.Method)
@@ -112,8 +106,6 @@ func TestUpdateSendsWrappedPayload(t *testing.T) {
 }
 
 func TestDeleteAndDeleteDryRun(t *testing.T) {
-	t.Parallel()
-
 	server := useTLSTestServer(t, func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodDelete {
 			t.Fatalf("unexpected method %q", r.Method)
