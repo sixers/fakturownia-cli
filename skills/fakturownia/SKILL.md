@@ -23,8 +23,7 @@ Use this as the entrypoint for the generated Fakturownia CLI skill bundle.
 
 ## Before You Use It
 
-- If `fakturownia` is not already on `PATH`, install the public release with `curl -fsSL https://raw.githubusercontent.com/sixers/fakturownia-cli/master/install.sh | bash`.
-- Run `fakturownia --version` after install so later steps do not fail on a missing binary or stale shell PATH.
+- Confirm `fakturownia` is already available on `PATH` with `fakturownia --version` before attempting task-specific commands.
 - Save credentials before API calls with `fakturownia auth login --prefix acme --api-token "$FAKTUROWNIA_API_TOKEN"`.
 - If the environment already provides credentials, still run `fakturownia auth status --json` to confirm the resolved profile, prefix, and token source.
 - Run `fakturownia account get --json` as the first authenticated smoke test before attempting task-specific writes or reads.

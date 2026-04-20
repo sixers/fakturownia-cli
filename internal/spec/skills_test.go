@@ -110,7 +110,7 @@ func TestRootSkillReferencesIndexAndShared(t *testing.T) {
 	}
 }
 
-func TestRootSkillIncludesBootstrapGuidance(t *testing.T) {
+func TestRootSkillIncludesReadinessGuidance(t *testing.T) {
 	t.Parallel()
 
 	files, err := RenderSkillFiles()
@@ -122,7 +122,7 @@ func TestRootSkillIncludesBootstrapGuidance(t *testing.T) {
 	root := byPath[bundleRootSkillPath()]
 	want := []string{
 		"## Before You Use It",
-		"curl -fsSL https://raw.githubusercontent.com/sixers/fakturownia-cli/master/install.sh | bash",
+		"fakturownia --version",
 		"fakturownia auth login --prefix acme --api-token \"$FAKTUROWNIA_API_TOKEN\"",
 		"fakturownia auth status --json",
 		"fakturownia account get --json",
@@ -131,6 +131,9 @@ func TestRootSkillIncludesBootstrapGuidance(t *testing.T) {
 		if !strings.Contains(root, needle) {
 			t.Fatalf("expected root skill to include %q: %s", needle, root)
 		}
+	}
+	if strings.Contains(root, "curl -fsSL https://raw.githubusercontent.com/sixers/fakturownia-cli/master/install.sh | bash") {
+		t.Fatalf("expected root skill to omit installer guidance: %s", root)
 	}
 }
 
@@ -181,7 +184,7 @@ func TestAuthSkillIncludesExchangeGuidance(t *testing.T) {
 	}
 }
 
-func TestSharedSkillIncludesBootstrapGuidance(t *testing.T) {
+func TestSharedSkillIncludesReadinessGuidance(t *testing.T) {
 	t.Parallel()
 
 	files, err := RenderSkillFiles()
@@ -192,8 +195,7 @@ func TestSharedSkillIncludesBootstrapGuidance(t *testing.T) {
 
 	shared := byPath[skillAreaPath(sharedSkillArea(SkillBundle()))]
 	want := []string{
-		"## Install, Authenticate, And Verify",
-		"curl -fsSL https://raw.githubusercontent.com/sixers/fakturownia-cli/master/install.sh | bash",
+		"## Verify, Authenticate, And Smoke Test",
 		"fakturownia --version",
 		"fakturownia auth login --prefix acme --api-token \"$FAKTUROWNIA_API_TOKEN\"",
 		"fakturownia auth status --json",
@@ -203,6 +205,9 @@ func TestSharedSkillIncludesBootstrapGuidance(t *testing.T) {
 		if !strings.Contains(shared, needle) {
 			t.Fatalf("expected shared skill to include %q: %s", needle, shared)
 		}
+	}
+	if strings.Contains(shared, "curl -fsSL https://raw.githubusercontent.com/sixers/fakturownia-cli/master/install.sh | bash") {
+		t.Fatalf("expected shared skill to omit installer guidance: %s", shared)
 	}
 }
 

@@ -238,7 +238,7 @@ func renderAreaSkill(bundle SkillBundleSpec, area SkillAreaSpec) (string, error)
 		b.WriteString("## Binary Maintenance\n\n")
 		b.WriteString("- Use `fakturownia self update` to replace the running binary with the latest GitHub Release build.\n")
 		b.WriteString("- Add `--version vX.Y.Z` to pin a specific release.\n")
-		b.WriteString("- Add `--dry-run --json` to preview the download URLs and target install path without modifying the binary.\n\n")
+		b.WriteString("- Add `--dry-run --json` to preview the download URLs and target binary path without modifying the binary.\n\n")
 	}
 
 	if area.Key == "auth" {
@@ -342,10 +342,9 @@ func writeBootstrapSection(b *strings.Builder, root bool) {
 	if root {
 		b.WriteString("## Before You Use It\n\n")
 	} else {
-		b.WriteString("## Install, Authenticate, And Verify\n\n")
+		b.WriteString("## Verify, Authenticate, And Smoke Test\n\n")
 	}
-	b.WriteString("- If `fakturownia` is not already on `PATH`, install the public release with `curl -fsSL https://raw.githubusercontent.com/sixers/fakturownia-cli/master/install.sh | bash`.\n")
-	b.WriteString("- Run `fakturownia --version` after install so later steps do not fail on a missing binary or stale shell PATH.\n")
+	b.WriteString("- Confirm `fakturownia` is already available on `PATH` with `fakturownia --version` before attempting task-specific commands.\n")
 	b.WriteString("- Save credentials before API calls with `fakturownia auth login --prefix acme --api-token \"$FAKTUROWNIA_API_TOKEN\"`.\n")
 	b.WriteString("- If the environment already provides credentials, still run `fakturownia auth status --json` to confirm the resolved profile, prefix, and token source.\n")
 	b.WriteString("- Run `fakturownia account get --json` as the first authenticated smoke test before attempting task-specific writes or reads.\n\n")

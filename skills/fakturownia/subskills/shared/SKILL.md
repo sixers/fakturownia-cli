@@ -48,10 +48,9 @@ metadata:
 - `FAKTUROWNIA_URL`: Override the base account URL from any profile
 - `FAKTUROWNIA_API_TOKEN`: Override the API token from any profile
 
-## Install, Authenticate, And Verify
+## Verify, Authenticate, And Smoke Test
 
-- If `fakturownia` is not already on `PATH`, install the public release with `curl -fsSL https://raw.githubusercontent.com/sixers/fakturownia-cli/master/install.sh | bash`.
-- Run `fakturownia --version` after install so later steps do not fail on a missing binary or stale shell PATH.
+- Confirm `fakturownia` is already available on `PATH` with `fakturownia --version` before attempting task-specific commands.
 - Save credentials before API calls with `fakturownia auth login --prefix acme --api-token "$FAKTUROWNIA_API_TOKEN"`.
 - If the environment already provides credentials, still run `fakturownia auth status --json` to confirm the resolved profile, prefix, and token source.
 - Run `fakturownia account get --json` as the first authenticated smoke test before attempting task-specific writes or reads.
@@ -69,7 +68,7 @@ metadata:
 
 - Use `fakturownia self update` to replace the running binary with the latest GitHub Release build.
 - Add `--version vX.Y.Z` to pin a specific release.
-- Add `--dry-run --json` to preview the download URLs and target install path without modifying the binary.
+- Add `--dry-run --json` to preview the download URLs and target binary path without modifying the binary.
 
 ## Examples
 
